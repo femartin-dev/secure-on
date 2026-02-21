@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inicio de Sesión - Centro de Monitoreo</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111521",
+                        "surface-dark": "#1c1f26", // Slightly lighter than background-dark for cards/inputs
+                        "border-dark": "#3d4252",
+                        "text-muted": "#9ea5b7",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-white transition-colors duration-200"><div class="fixed inset-0 -z-10 overflow-hidden">
+<video autoplay="" class="absolute min-w-full min-h-full object-cover" loop="" muted="" playsinline="">
+<source src="https://securionglobal.com/wp-content/uploads/2025/04/videoslider.mp4" type="video/mp4"/>
+</video>
+<div class="absolute inset-0 bg-background-dark/80 backdrop-blur-[2px]"></div>
+</div>
+<div class="relative flex min-h-screen w-full flex-col justify-center items-center p-4 lg:p-8 pb-32">
+<!-- Decorative Background Element -->
+<div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none"></div>
+<div class="w-full z-10">
+<div class="bg-[#0a122a]/80 backdrop-blur-xl border-[8px] border-white/10 rounded-[50px] p-10 md:p-14 shadow-2xl relative overflow-hidden transition-all mx-auto w-full min-[600px]:max-w-[95%] min-[1200px]:max-w-[70%] max-[500px]:bg-transparent max-[500px]:border-0 max-[500px]:shadow-none max-[500px]:p-4">
+<!-- Security Pattern Overlay -->
+<div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 30px 30px;"></div>
+<div class="relative z-10 flex flex-col gap-8"><div class="w-full max-w-[1050px] mx-auto flex flex-col gap-8">
+<!-- Header Section -->
+<div class="flex flex-col items-center gap-6 text-center">
+<div class="h-32 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner backdrop-blur-md w-48">
+<img alt="Securion Logo" class="h-auto object-contain w-40" src="{{DATA:IMAGE:IMAGE_41}}"/>
+</div>
+<div class="flex flex-col gap-2">
+<h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white whitespace-nowrap">
+                Centro de Monitoreo
+            </h2>
+<p class="text-base text-text-muted">
+                Ingresa tus credenciales para acceder
+            </p>
+</div>
+</div>
+<!-- Login Form -->
+<form class="flex flex-col gap-5 w-full" onsubmit="event.preventDefault();">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-white/90 ml-1">Usuario</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-text-muted z-10">person</span>
+<input class="form-input w-full rounded-xl text-white focus:ring-2 focus:ring-primary/50 border-white/10 bg-white/5 focus:border-primary h-14 placeholder:text-text-muted/50 pl-12 pr-4 transition-all" placeholder="Usuario o correo" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-white/90 ml-1">Contraseña</label>
+<div class="relative flex w-full items-stretch">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted z-10">lock</span>
+<input class="form-input w-full rounded-l-xl text-white focus:ring-2 focus:ring-primary/50 border-white/10 bg-white/5 focus:border-primary h-14 placeholder:text-text-muted/50 pl-12 pr-12 transition-all border-r-0" placeholder="Ingresa su contraseña" type="password"/>
+<div class="flex items-center justify-center pr-4 pl-2 bg-white/5 border border-l-0 border-white/10 rounded-r-xl cursor-pointer group hover:bg-white/10 transition-colors" onclick="const input = this.previousElementSibling; const icon = this.querySelector('span'); if(input.type === 'password') { input.type = 'text'; icon.textContent = 'visibility'; } else { input.type = 'password'; icon.textContent = 'visibility_off'; }">
+<span class="material-symbols-outlined text-text-muted group-hover:text-primary transition-colors">visibility_off</span>
+</div>
+</div>
+</div>
+<div class="flex justify-end">
+<a class="text-sm font-medium text-primary hover:text-blue-400 transition-colors" href="#">¿Olvidaste tu contraseña?</a>
+</div>
+<button class="w-full h-14 mt-4 bg-primary hover:bg-blue-700 active:scale-[0.98] text-white text-lg font-bold rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-3">
+<span>Iniciar Sesión</span>
+<span class="material-symbols-outlined text-[24px]">login</span>
+</button>
+</form>
+<div class="text-center">
+<p class="text-text-muted text-sm">
+            ¿No tienes una cuenta? 
+            <a class="text-primary font-bold hover:underline ml-1" href="#">Regístrate</a>
+</p>
+</div>
+</div></div>
+</div>
+<!-- Version Footer -->
+<div class="fixed bottom-8 left-0 right-0 flex flex-col items-center gap-4 z-20">
+<img alt="Securitas Logo" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity h-8 h-12" src="{{DATA:IMAGE:IMAGE_44}}"/>
+<div class="flex flex-col items-center gap-1">
+<p class="text-[10px] text-text-muted/60 uppercase tracking-widest text-center lg:text-xs">© 2024 SECURITAS. TODOS LOS DERECHOS RESERVADOS.</p>
+<p class="text-[10px] text-text-muted/40 font-mono">v1.0.2</p>
+</div>
+</div>
+</div>
+</div>
+</body></html>

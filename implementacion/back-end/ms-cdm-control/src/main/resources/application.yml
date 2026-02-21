@@ -22,11 +22,11 @@ server:
 
 thirdparty:
     twilio:
-        account-sid: "AC9cf7355031ab2f52ba33de04090be613"
-        auth-token: "677a8e00779b631b4db76723bc35d9d7"
-        sms-from-number: "+18777804236"
-        whatsapp-from-number : "whatsapp:+14155238886"
-        alphanumeric-sender : "Secure-ON"
+        account-sid: "${TWILIO_ACCOUNT_SID}" 
+        auth-token: "${TWILIO_AUTH_TOKEN}"
+        sms-from-number: "${TWILIO_PHONE_NUMBER}"
+        whatsapp-from-number : ${TWILIO_WHATSAPP_NUMBER}                                                V"
+        alphanumeric-sender : ${TWILIO_ALPHANUMERIC_SENDER}
 
 app:
     jwt:
@@ -73,7 +73,7 @@ ws-gateway:
                 auditoria: /queue/cdm/auditoria
 
 api-gateway:
-    server_url: http://localhost:8090
+    server-url: http://localhost:8090
     endpoints:
         ws-internal: /ws/internal
         app-movil: /api/secure-on/servicios-moviles

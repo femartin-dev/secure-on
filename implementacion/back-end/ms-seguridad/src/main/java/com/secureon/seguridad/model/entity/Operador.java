@@ -37,7 +37,7 @@ public class Operador {
     private String email;
 
     @Column(unique = true, nullable = false, length = 50)
-    private String usuario;
+    private String telefono;
 
     @Column(name = "hash_contrasena", nullable = false)
     private String hashContrasena;
