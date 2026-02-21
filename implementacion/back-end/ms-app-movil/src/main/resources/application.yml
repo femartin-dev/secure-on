@@ -1,0 +1,87 @@
+spring:
+    application:
+        name: ms-app-services
+    datasource:
+        url: jdbc:postgresql://localhost:5432/secure_on_db
+        username: secure_on_admin
+        password: admin-123
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        hibernate:
+            ddl-auto: validate  
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+                default_schema: secure_on_movil
+        show-sql: true
+    cache:
+        type: simple
+
+server:
+    port: 8091
+
+thirdparty:
+    twilio:
+        account-sid: "AC9cf7355031ab2f52ba33de04090be613"
+        auth-token: "677a8e00779b631b4db76723bc35d9d7"
+        sms-from-number: "+18777804236"
+        whatsapp-from-number : "whatsapp:+14155238886"
+        alphanumeric-sender : "Secure-ON"
+
+app:
+    jwt:
+        secret: "rN3tF0nX5kK7d8JmP4z6Ww2Xb3L0E9A5R8Q1sHjDkC7ZP2M4J9F6LQYtE8gVwUSecret34frt34EMUIrsCore45"
+        expiration: 86400000     # 24 horas en milisegundos
+        refresh-expiration: 604800000 # 7 días
+    static-values:
+        estado-alarma:
+            activa: 1
+            cancelada: 2
+            finalizada: 3
+
+ws-gateway:
+    server-urls: 
+        ws: ws://localhost:8090
+        http: http://localhost:8090
+    endpoints: /ws/secure-on
+    destinations:
+        topics:
+            alarma:
+                nueva: /topic/alarma/nueva
+                cambio-estado: /topic/alarma/cambio-estado
+                reactivacion: /topic/alarma/reactivacion
+                finalizacion: /topic/alarma/finalizacion
+                asignacion: /topic/alarma/asignacion
+            ubicacion:
+                realtime: /topic/ubicacion/realtime
+                historial: /topic/ubicacion/historial
+            operador:
+                estado: /topic/operador/estado
+                asignacion: /topic/operador/asignacion
+            sistema:
+                salud: /topic/sistema/salud
+                alertas: /topic/sistema/alertas
+        queues:
+            usuario:
+                notificaciones: /queue/usuario/notificaciones
+                alertas: /queue/usuario/alertas
+            operador:
+                tareas: /queue/operador/tareas
+                asignaciones: /queue/operador/asignaciones
+            cdm:
+                control: /queue/cdm/control
+                auditoria: /queue/cdm/auditoria
+
+api-gateway:
+    server_url: http://localhost:8090
+    endpoints:
+        ws-internal: /ws/internal
+        app-movil: /api/secure-on/servicios-moviles
+        cmd-control: /api/secure-on/centro-de-monitoreo
+        seguridad: /api/secure-on/seguridad
+    
+
+logging:
+    level:
+        com.secureon.appmovil: DEBUG
+        org.springframework.security: DEBUG

@@ -1,0 +1,200 @@
+<div class="min-h-screen flex flex-col bg-background-dark">
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-700 py-4 px-6 flex items-center gap-4 shadow-lg sticky top-0 z-50">
+    <button
+      (click)="goBack()"
+      class="flex items-center justify-center size-10 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
+    >
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-white uppercase font-display">Secureon</h1>
+      <h2 class="text-slate-400 text-sm font-medium tracking-widest uppercase">{{ getModeTitle() }}</h2>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex-grow flex items-center justify-center">
+    <div class="animate-spin text-primary text-4xl">⟳</div>
+  </div>
+
+  <!-- Content -->
+  <main *ngIf="!isLoading && alert" class="flex-grow p-6 grid grid-cols-12 gap-6 max-w-[1600px] mx-auto w-full overflow-y-auto">
+    <!-- User Information Section -->
+    <section class="col-span-12 card-dark rounded-xl p-5 flex flex-wrap lg:flex-nowrap items-center gap-8 shadow-md bg-slate-800/50 border border-slate-700">
+      <div class="flex items-center gap-4">
+        <div class="w-24 h-24 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden border-4 border-slate-600 flex-shrink-0">
+          <span class="material-symbols-outlined text-4xl text-slate-400">person</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">{{ alert.userName }}</h3>
+          <p class="text-blue-400 font-mono text-sm">ID: #{{ alert.userId.substring(0, 8) }}</p>
+          <p class="text-slate-400 text-sm flex items-center mt-1">
+            <span class="material-symbols-outlined text-sm mr-1">call</span>
+            {{ alert.userPhone }}
+          </p>
+        </div>
+      </div>
+
+      <div class="h-16 w-px bg-slate-700 hidden lg:block"></div>
+
+      <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <span class="text-xs font-bold text-slate-500 uppercase block mb-2">Información del Evento</span>
+          <div class="space-y-1">
+            <p class="text-sm text-slate-300"><strong>Tipo:</strong> {{ alert.type }}</p>
+            <p class="text-sm text-slate-300"><strong>Hora:</strong> {{ alert.createdAt | date:'HH:mm:ss' }}</p>
+            <p class="text-sm text-slate-300"><strong>Fecha:</strong> {{ alert.createdAt | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+
+        <div>
+          <span class="text-xs font-bold text-slate-500 uppercase block mb-2">Estado Actual</span>
+          <p class="text-sm text-emerald-400 mb-2">Batería: 84%</p>
+          <p class="text-sm text-slate-400">Precisión GPS: 5m</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="col-span-12 lg:col-span-9">
+      <div class="map-container rounded-xl overflow-hidden relative border border-slate-700 shadow-inner bg-slate-800 h-[500px]">
+        <div #map class="w-full h-full"></div>
+        
+        <!-- Map Info Overlay -->
+        <div class="absolute top-4 left-4 bg-slate-900/80 p-3 rounded text-xs backdrop-blur-sm border border-slate-700 text-slate-300">
+          <strong>Trayecto de Localización:</strong>
+          <p>{{ getLocationHistory().length }} puntos registrados</p>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="absolute bottom-6 right-6 flex flex-col gap-2">
+          <button class="bg-slate-900 w-10 h-10 rounded shadow-lg flex items-center justify-center hover:bg-slate-800 text-xl font-bold border border-slate-700 text-white">+</button>
+          <button class="bg-slate-900 w-10 h-10 rounded shadow-lg flex items-center justify-center hover:bg-slate-800 text-xl font-bold border border-slate-700 text-white">−</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sidebar - Controls -->
+    <aside class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+      <!-- Status Card -->
+      <div class="card-dark rounded-xl p-5 shadow-lg bg-slate-800/50 border border-slate-700">
+        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Gestión de Alarma</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Estado del Incidente</label>
+            <select
+              [(ngModel)]="alert.status"
+              (change)="updateAlertStatus(alert.status)"
+              [disabled]="fieldsDisabled.status"
+              class="w-full bg-slate-700 border border-slate-600 text-white rounded-md text-sm p-2 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="active">🔴 Activo</option>
+              <option value="review">🟡 En Revisión</option>
+              <option value="dispatched">🔵 Despachado</option>
+              <option value="resolved">🟢 Resuelto</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Prioridad</label>
+            <select
+              [(ngModel)]="alert.priority"
+              [disabled]="fieldsDisabled.priority"
+              class="w-full bg-slate-700 border border-slate-600 text-white rounded-md text-sm p-2 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="critical">🔴 CRÍTICA</option>
+              <option value="high">🟠 ALTA</option>
+              <option value="medium">🟡 MEDIA</option>
+              <option value="low">🟢 BAJA</option>
+            </select>
+          </div>
+
+          <button
+            (click)="updateAlert()"
+            [disabled]="fieldsDisabled.status && fieldsDisabled.priority && fieldsDisabled.notes"
+            class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed py-2.5 rounded-lg font-bold text-sm transition-colors mt-2 text-white"
+          >
+            Actualizar Registro
+          </button>
+        </div>
+      </div>
+
+      <!-- Evidence Card -->
+      <div class="card-dark rounded-xl p-5 shadow-lg flex-grow bg-slate-800/50 border border-slate-700">
+        <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Evidencia Capturada</h3>
+        <div *ngIf="hasEvidence()" class="grid grid-cols-2 gap-3">
+          <div *ngFor="let url of alert.evidenceUrls; let i = index" class="relative group cursor-pointer">
+            <img
+              [src]="url"
+              [alt]="'Evidence ' + (i + 1)"
+              class="rounded-lg border border-slate-700 opacity-80 hover:opacity-100 transition-opacity w-full h-[105px] object-cover"
+            />
+            <span class="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1 rounded text-white">
+              {{ alert.updatedAt | date:'HH:mm' }}
+            </span>
+          </div>
+        </div>
+        <div *ngIf="!hasEvidence()" class="text-center py-8 text-slate-400">
+          No hay evidencia capturada
+        </div>
+      </div>
+    </aside>
+
+    <!-- Location History -->
+    <section class="col-span-12 card-dark rounded-xl p-5 shadow-lg bg-slate-800/50 border border-slate-700">
+      <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Historial de Ubicaciones</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div *ngFor="let location of getLocationHistory(); let i = index" class="p-3 bg-slate-700 rounded-lg border border-slate-600">
+          <p class="text-xs text-slate-400 mb-1">Punto {{ i + 1 }}</p>
+          <p class="text-sm text-slate-300 font-mono break-all">{{ location.latitude }}, {{ location.longitude }}</p>
+          <p class="text-xs text-slate-500 mt-1">{{ location.timestamp | date:'HH:mm:ss' }}</p>
+        </div>
+        <div *ngIf="getLocationHistory().length === 0" class="col-span-full text-center py-8 text-slate-400">
+          No hay historial de ubicaciones disponible
+        </div>
+      </div>
+    </section>
+
+    <!-- Authorities Section (when mode is 'notify') -->
+    <section *ngIf="mode === 'notify'" class="col-span-12 card-dark rounded-xl p-5 shadow-lg bg-slate-800/50 border border-slate-700">
+      <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center">
+        <span class="material-symbols-outlined mr-2">location_on</span>
+        Autoridades Cercanas
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div *ngFor="let authority of getNearbyAuthorities()" class="bg-slate-700/50 p-4 rounded-lg border border-slate-600 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-blue-900/30 text-blue-400 rounded-full">
+              <span class="material-symbols-outlined">shield</span>
+            </div>
+            <div>
+              <p class="font-bold text-sm text-white">{{ authority.name }}</p>
+              <p class="text-xs text-slate-400">{{ authority.unit }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-emerald-400 font-bold text-lg">{{ authority.eta }} min</span>
+            <p class="text-[10px] text-slate-500 uppercase">ETA estimado</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notes Section (when mode is 'notify' or 'edit') -->
+    <section *ngIf="mode === 'notify' || mode === 'edit'" class="col-span-12 card-dark rounded-xl p-5 shadow-lg bg-slate-800/50 border border-slate-700">
+      <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Notas</h3>
+      <textarea
+        [(ngModel)]="alert.notes"
+        [disabled]="fieldsDisabled.notes"
+        class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed h-32 resize-none"
+        placeholder="Agregue notas sobre el incidente..."
+      ></textarea>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 border-t border-slate-700 py-3 px-6 text-center text-xs text-slate-500">
+    © 2024 Securitas Global - Oficial Partner
+  </footer>
+</div>

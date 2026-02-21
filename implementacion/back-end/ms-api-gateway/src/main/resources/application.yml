@@ -1,0 +1,89 @@
+spring:
+    application:
+        name: ms-api-gateway
+    datasource:
+        url: jdbc:postgresql://localhost:5432/secure_on_db
+        username: secure_on_admin
+        password: admin-123
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        hibernate:
+            ddl-auto: validate  
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+        show-sql: true
+    cache:
+        type: simple
+
+server:
+    port: 8090
+
+
+app:
+    jwt:
+        secret: "rN3tF0nX5kK7d8JmP4z6Ww2Xb3L0E9A5R8Q1sHjDkC7ZP2M4J9F6LQYtE8gVwUSecret34frt34EMUIrsCore45"
+        expiration: 86400000     # 24 horas en milisegundos
+        refresh-expiration: 604800000 # 7 días
+
+api-gateway:
+    security:
+        estrategy: none
+        paths-habilitados: /ws/internal/**,/ws/secure-on/**,/api/secure-on/**,/auth/**
+    config:
+        gateway-paths:
+            app-movil: /servicios-moviles
+            cmd-control: /centro-de-monitoreo
+            seguridad: /seguridad
+        services-paths:
+            app-movil: /api/app-movil/v1
+            cmd-control: /api/cdm-control/v1
+            seguridad: /api/seguridad/v1
+        services-url:
+            app-movil: http://localhost:8091
+            cmd-control: http://localhost:8092
+            seguridad: http://localhost:8093
+        prefix-api: /api/secure-on
+        prefix-ws: /ws/secure-on
+        
+
+ws-gateway:
+    config:
+        server-url: http://localhost:8090
+        endpoint-ws: /ws/secure-on
+        enabled-brokers: /topic,/queue
+        app-destination: /app
+        user-destination: /user
+    routes:
+        topics:
+            alarma:
+                nueva: /topic/alarma/nueva
+                cambio-estado: /topic/alarma/cambio-estado
+                reactivacion: /topic/alarma/reactivacion
+                finalizacion: /topic/alarma/finalizacion
+                asignacion: /topic/alarma/asignacion
+            ubicacion:
+                realtime: /topic/ubicacion/realtime
+                historial: /topic/ubicacion/historial
+            operador:
+                estado: /topic/operador/estado
+                asignacion: /topic/operador/asignacion
+            sistema:
+                salud: /topic/sistema/salud
+                alertas: /topic/sistema/alertas
+        queues:
+            usuario:
+                notificaciones: /queue/usuario/notificaciones
+                alertas: /queue/usuario/alertas
+            operador:
+                tareas: /queue/operador/tareas
+                asignaciones: /queue/operador/asignaciones
+            cdm:
+                control: /queue/cdm/control
+                auditoria: /queue/cdm/auditoria
+
+
+logging:
+    level:
+        com.secureon.apigateway: DEBUG
+        org.springframework.security: DEBUG

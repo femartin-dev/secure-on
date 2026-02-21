@@ -1,0 +1,5 @@
+/* Register Component Styles */
+:host {
+  display: block;
+  height: 100%;
+}

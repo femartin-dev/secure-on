@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Centro de Monitoreo Secureon</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#0a0e14",
+                        "navy-900": "#0a0e14",
+                        "navy-800": "#121926",
+                        "navy-700": "#1c2533",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+            background-color: #0a0e14;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0a0e14;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1c2533;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #ec5b13;
+        }
+        .map-overlay-gradient {
+            background: linear-gradient(0deg, rgba(10,14,20,1) 0%, rgba(10,14,20,0) 100%);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-slate-100 overflow-hidden font-display">
+<div class="flex flex-col h-screen w-full">
+<!-- Header -->
+<header class="h-14 bg-navy-900 border-b border-navy-700 flex items-center justify-between px-4 z-50">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-navy-700 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-300">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-xl">shield</span>
+</div>
+<div class="flex flex-col leading-none">
+<h1 class="font-bold text-lg tracking-tight">SECUREON</h1>
+<span class="text-[10px] text-primary font-medium tracking-widest uppercase">Monitoring Hub</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+<div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+<span class="text-xs font-medium text-green-500">SYSTEM ONLINE</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-navy-700 border border-navy-600 flex items-center justify-center overflow-hidden">
+<img alt="Operator Avatar" data-alt="Security operator profile picture avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_sCczvvHlx6mSjcoVj9dwwYwkHMyANAsOvbFukIHbX4HG9BF_m1nrRzAtW7JtWi9HYk7yroS69lwO8uIAALcPU_CwdUURvpcI8DpBTWC1gFbIXpARKKvNIf13k5C8PtGCMgEEckPGVcw9S9nqonFSTeFSKtbRxw0W2lIVwbJ7GrVkmUHdwPdzp43SwSHFfSdYw9C_SiBNFXa09_fGJ5ZDi9r_sy3y5u9XtiVeN2Zl2QuZQI6m1kAIxUbCMvYTwPWTTrdCVpOAm8k"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="flex flex-1 overflow-hidden relative">
+<!-- Map Section -->
+<main class="flex-1 relative bg-navy-800">
+<!-- Search Floating UI -->
+<div class="absolute top-6 left-6 z-10 w-80">
+<div class="bg-navy-900/90 backdrop-blur-md border border-navy-700 rounded-xl p-1 shadow-2xl flex items-center">
+<span class="material-symbols-outlined px-3 text-slate-400">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full text-slate-200 placeholder-slate-500" placeholder="Search zones or client IDs..." type="text"/>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+</div>
+<!-- Map Visualization Placeholder -->
+<div class="w-full h-full bg-navy-900 relative">
+<div class="absolute inset-0 grayscale contrast-125 opacity-40 bg-cover bg-center" data-alt="Dark themed city map of Cordoba Argentina" data-location="Cordoba, Argentina" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCsqM6MewfIEVLC1NZdX2CT8eZ5xAFbhYoUP0m8aZaLE-YX5VkTBQGz6WlR2woSjbDDlIOAlYr-9XJ0uLXSZjViq0WrWvBIx0NWUTcwvMTsajQQywHBIVlTkaIKXPpACdUPgaLUoRif1D8KC0HdkK1-VtI7ZryaJ0MdrfDFPH2dzi6B3gX-Sd71ZJCgGkDGqXa-LqQxvPLonUdffYAbkjVbCEVX-FVQhBB6mtU0fjxhTh2YVKKAg-9vrEPM_zf7FVX8mA2HJ9aDTDA')"></div>
+<!-- Pulsing Alarm Markers -->
+<div class="absolute top-[45%] left-[48%]">
+<div class="relative flex items-center justify-center">
+<div class="absolute w-12 h-12 bg-primary/30 rounded-full animate-ping"></div>
+<div class="w-6 h-6 bg-primary border-2 border-white rounded-full flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-[14px] text-white">priority_high</span>
+</div>
+</div>
+</div>
+<div class="absolute top-[52%] left-[55%] opacity-60">
+<div class="w-4 h-4 bg-slate-500 border-2 border-slate-300 rounded-full"></div>
+</div>
+<div class="absolute top-[38%] left-[42%] opacity-60">
+<div class="w-4 h-4 bg-slate-500 border-2 border-slate-300 rounded-full"></div>
+</div>
+<!-- Map Legend / Controls Overlay -->
+<div class="absolute bottom-10 left-6 flex flex-col gap-2">
+<button class="bg-navy-900/90 backdrop-blur-md border border-navy-700 p-2 rounded-lg text-slate-300 hover:text-white transition-colors shadow-lg">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="bg-navy-900/90 backdrop-blur-md border border-navy-700 p-2 rounded-lg text-slate-300 hover:text-white transition-colors shadow-lg">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<button class="bg-navy-900/90 backdrop-blur-md border border-navy-700 p-2 rounded-lg text-slate-300 hover:text-white transition-colors shadow-lg mt-2">
+<span class="material-symbols-outlined text-primary">my_location</span>
+</button>
+</div>
+</div>
+<!-- Footer Overlay -->
+<div class="absolute bottom-0 left-0 right-0 h-20 map-overlay-gradient pointer-events-none flex items-end px-6 pb-4">
+<p class="text-[10px] text-slate-500 uppercase tracking-widest font-medium">powered by Securitas Group © 2024</p>
+</div>
+</main>
+<!-- Sidebar -->
+<aside class="w-96 bg-navy-900 border-l border-navy-700 flex flex-col z-20">
+<div class="p-6 border-b border-navy-700">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-lg font-bold">Active Alarms</h2>
+<span class="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-bold">3 CRITICAL</span>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 text-[11px] font-bold py-1.5 rounded bg-navy-700 text-slate-300 border border-navy-600 hover:bg-navy-600">ALL</button>
+<button class="flex-1 text-[11px] font-bold py-1.5 rounded bg-primary/10 text-primary border border-primary/20">PENDING</button>
+<button class="flex-1 text-[11px] font-bold py-1.5 rounded bg-navy-700 text-slate-300 border border-navy-600 hover:bg-navy-600">HISTORY</button>
+</div>
+</div>
+<!-- Alarm Cards List -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+<!-- Alarm Card: Critical -->
+<div class="bg-navy-800 border-l-4 border-primary rounded-xl overflow-hidden shadow-lg transition-transform hover:scale-[1.01]">
+<div class="p-4">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">warning</span>
+<span class="text-xs font-bold text-primary tracking-wide">CRITICAL INTRUSION</span>
+</div>
+<span class="text-[10px] text-slate-500 font-mono">14:22:15</span>
+</div>
+<h3 class="text-sm font-bold text-slate-100 mb-1">Zone 04 - Residencia Privada</h3>
+<p class="text-xs text-slate-400 mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                Av. Colón 1200, Córdoba, AR
+                            </p>
+<!-- Snapshot Placeholder -->
+<div class="w-full h-32 bg-navy-900 rounded-lg mb-4 overflow-hidden relative group">
+<img alt="CCTV Snapshot" class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" data-alt="CCTV security camera black and white footage showing hallway" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAM8zsCi6LX3Ijm31D_-FBDpb5P91oS91ktoeZ819sbKgw9yi66-zMWXZUafC2vTvQeytf3fXl-i3j2r8fwFL42ezfisGYUIb1en1kfLB6AKo2FwJ1WSm1tfHkrD-AraObbUN4TfRQ6Np3balrKYTMmHgEKwQxiD8yNyVkoXJ843zd7dntJ9KVWtQlrjtlJ2UDnZEj6UU8Ce1dTLdnhwoJ0e-WXyR5WTAN-euJd81CK9kRZgSFjlHdkyQw7Pk0JSR3KA-Nrqj_OtUU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-navy-900 to-transparent"></div>
+<div class="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-red-600 rounded text-[9px] font-bold text-white">
+<div class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div> LIVE
+                                </div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-white text-xs font-bold py-2.5 rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-primary/20">
+                                    ACKNOWLEDGE
+                                </button>
+<button class="p-2 bg-navy-700 text-slate-300 rounded-lg hover:bg-navy-600 transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Alarm Card: Sensor Fault -->
+<div class="bg-navy-800 border-l-4 border-amber-500 rounded-xl overflow-hidden shadow-lg opacity-80">
+<div class="p-4">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500">settings_alert</span>
+<span class="text-xs font-bold text-amber-500 tracking-wide">SENSOR FAULT</span>
+</div>
+<span class="text-[10px] text-slate-500 font-mono">14:18:42</span>
+</div>
+<h3 class="text-sm font-bold text-slate-100 mb-1">Sector B - Warehouse 02</h3>
+<p class="text-xs text-slate-400 mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                Zona Industrial, Ferreyra, Córdoba
+                            </p>
+<div class="flex gap-2">
+<button class="flex-1 bg-navy-700 text-slate-200 text-xs font-bold py-2 rounded-lg hover:bg-navy-600 transition-colors">
+                                    DISMISS
+                                </button>
+<button class="flex-1 bg-navy-700 text-slate-200 text-xs font-bold py-2 rounded-lg hover:bg-navy-600 transition-colors">
+                                    DETAILS
+                                </button>
+</div>
+</div>
+</div>
+<!-- Alarm Card: Medical Panic -->
+<div class="bg-navy-800 border-l-4 border-red-500 rounded-xl overflow-hidden shadow-lg transition-transform hover:scale-[1.01]">
+<div class="p-4">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500">medical_services</span>
+<span class="text-xs font-bold text-red-500 tracking-wide">MEDICAL PANIC</span>
+</div>
+<span class="text-[10px] text-slate-500 font-mono">14:05:10</span>
+</div>
+<h3 class="text-sm font-bold text-slate-100 mb-1">Unidad 12 - Senior Care</h3>
+<p class="text-xs text-slate-400 mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                B° Cerro de las Rosas, Córdoba
+                            </p>
+<div class="flex gap-2">
+<button class="flex-1 bg-red-500 text-white text-xs font-bold py-2.5 rounded-lg hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20">
+                                    DISPATCH HELP
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Footer Status -->
+<div class="p-4 bg-navy-800/50 border-t border-navy-700 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold tracking-tight">Active Duty</span>
+<span class="text-xs font-medium text-slate-300">Op. Carlos Mendez</span>
+</div>
+<div class="flex gap-1">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<div class="w-2 h-2 rounded-full bg-slate-600"></div>
+</div>
+</div>
+</aside>
+</div>
+</div>
+</body></html>

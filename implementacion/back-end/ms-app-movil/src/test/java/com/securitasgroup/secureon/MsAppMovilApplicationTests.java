@@ -1,0 +1,13 @@
+package com.securitasgroup.secureon;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class MsAppMovilApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pantalla de Alarma de Emergencia</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111521",
+                        "alert": "#ef4444", 
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>@keyframes urgent-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .animate-urgent {
+            animation: urgent-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased overflow-x-hidden selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col">
+<div class="sticky top-0 z-50 flex items-center justify-between p-4 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-alert/20 text-alert animate-urgent">
+<span class="material-symbols-outlined" style="font-size: 24px;">e911_emergency</span>
+</div>
+<div class="flex flex-col items-center">
+<h2 class="text-alert text-base font-bold leading-tight tracking-wider uppercase animate-urgent">Alarma Activa</h2>
+<span class="text-xs font-medium text-slate-500 dark:text-slate-400">Señal Enviada</span>
+</div>
+<div class="flex size-10 items-center justify-center">
+<button class="flex items-center justify-center rounded-full text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors h-10 w-10">
+<span class="material-symbols-outlined" style="font-size: 24px;">info</span>
+</button>
+</div>
+</div>
+<main class="flex-1 flex flex-col items-center w-full max-w-md mx-auto px-4 py-6 gap-6">
+<div class="flex flex-col items-center justify-center w-full">
+<h1 class="text-slate-900 dark:text-white text-[48px] font-bold leading-none tracking-tight">14:32</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium pt-2">Martes, 24 Oct, 2023</p>
+</div>
+<div class="w-full bg-white dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+<p class="text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Tiempo Transcurrido</p>
+<div class="flex gap-3 justify-center">
+<div class="flex flex-col items-center gap-2">
+<div class="flex h-16 w-14 items-center justify-center rounded-lg bg-slate-100 dark:bg-background-dark border border-slate-200 dark:border-slate-600">
+<p class="text-slate-900 dark:text-white text-2xl font-bold">00</p>
+</div>
+<span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Min</span>
+</div>
+<div class="flex h-16 items-center justify-center pb-6">
+<span class="text-slate-400 dark:text-slate-600 text-2xl font-bold">:</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="flex h-16 w-14 items-center justify-center rounded-lg bg-slate-100 dark:bg-background-dark border border-slate-200 dark:border-slate-600">
+<p class="text-primary text-2xl font-bold">45</p>
+</div>
+<span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Seg</span>
+</div>
+</div>
+</div>
+<div class="w-full flex flex-col gap-3">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Ubicación Actual</h3>
+<div class="flex items-center gap-1 text-primary text-xs font-medium">
+<span class="material-symbols-outlined text-[16px]">my_location</span>
+<span>Rastreo en Vivo</span>
+</div>
+</div>
+<div class="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm group">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Vista estilizada del mapa" data-location="Mexico City" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1RNPCReZ_4j4re8y_xKqBtPE3-9HA9tIlTBJMuxZCr2-JTyBRoV3cPajvRnQW-k1PN59TEq8EGjE6AZNwi-0rnWl9oiC_TtNUeCUsEnl-uVR_JDdqAqwwAwMrIzWKSw6SFSJLAq7meN4S26n2vwpOVkzRHgAo5aczgWLVg9iz1dqzvn-X3TyreB1OpWb9k1vl2Ndj5eMITTjhSPRH293kDv0JSVZm0s-eTOWG_RRG6yeNQi8y7xL9K8n4cx3pijAoOWVJETq5zlQ'); filter: grayscale(100%) brightness(0.7) contrast(1.2);">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark/90 via-transparent to-transparent"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+<div class="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-primary/40 opacity-75"></div>
+<div class="relative inline-flex rounded-full h-4 w-4 bg-primary border-2 border-white dark:border-background-dark"></div>
+</div>
+<div class="absolute bottom-3 left-3 right-3 flex items-start gap-3 bg-background-light/90 dark:bg-slate-900/90 backdrop-blur p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-primary mt-0.5" style="font-size: 20px;">location_on</span>
+<div class="flex flex-col min-w-0">
+<p class="text-sm font-bold text-slate-900 dark:text-white truncate">Av. Reforma 222</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">Juárez, Ciudad de México</p>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3 px-1">Instrucciones</h3>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-green-500" style="font-size: 20px;">check_circle</span>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">Mantenga esta pantalla abierta</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-green-500" style="font-size: 20px;">check_circle</span>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">Operadores rastreando su ubicación</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-green-500" style="font-size: 20px;">check_circle</span>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">Mantenga la calma, la ayuda va en camino</span>
+</div>
+</div>
+</div>
+</main>
+<div class="sticky bottom-0 w-full p-6 pb-8 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light dark:via-background-dark to-transparent">
+<div class="relative flex items-center justify-between w-full h-14 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden p-1 shadow-inner">
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="text-sm font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase">Deslizar para Desactivar</span>
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 ml-1 text-sm">chevron_right</span>
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 -ml-1 text-sm opacity-50">chevron_right</span>
+</div>
+<div class="relative h-12 w-14 bg-white dark:bg-slate-700 rounded-full shadow-md flex items-center justify-center z-10 cursor-pointer border border-slate-300 dark:border-slate-600">
+<span class="material-symbols-outlined text-slate-900 dark:text-white" style="font-size: 24px;">close</span>
+</div>
+</div>
+<p class="text-center text-xs text-slate-400 dark:text-slate-600 mt-4">Ingrese su PIN de seguridad al deslizar</p>
+</div>
+</div>
+
+</body></html>

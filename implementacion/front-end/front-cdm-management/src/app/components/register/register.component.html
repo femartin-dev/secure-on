@@ -1,0 +1,212 @@
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden max-w-lg mx-auto bg-background-light dark:bg-background-dark shadow-2xl">
+  <!-- Top App Bar -->
+  <header class="flex items-center px-4 py-3 justify-between sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-border-dark/30">
+    <button
+      type="button"
+      (click)="goBack()"
+      class="text-gray-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="material-symbols-outlined">arrow_back_ios_new</span>
+    </button>
+    <h1 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10 text-gray-900 dark:text-white font-display">
+      Registro de Usuario
+    </h1>
+  </header>
+
+  <!-- Content Area -->
+  <main class="flex-1 flex flex-col w-full pb-6 overflow-y-auto">
+    <!-- Hero Section -->
+    <div class="@container">
+      <div class="px-4 py-4 @[480px]:px-6">
+        <div class="w-full h-[140px] rounded-xl bg-cover bg-center relative overflow-hidden shadow-lg border border-gray-200 dark:border-border-dark/50"
+          style="background: linear-gradient(135deg, #183daa 0%, #1c1f26 100%);">
+          <div class="absolute inset-0 flex flex-col justify-end p-4">
+            <div class="flex items-center gap-2 text-white/90 mb-1">
+              <span class="material-symbols-outlined text-white/80">security</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-white/70">Seguridad Privada</span>
+            </div>
+            <h2 class="text-white text-xl font-bold leading-tight">Nueva Cuenta</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intro Text -->
+    <div class="px-4 pb-2 @[480px]:px-6">
+      <p class="text-gray-600 dark:text-text-muted text-sm font-normal leading-normal text-center">
+        Ingrese los datos del nuevo operador para darle acceso al centro de monitoreo.
+      </p>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="error" class="mx-4 p-4 mb-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-sm">
+      {{ error }}
+    </div>
+
+    <!-- Registration Form -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="px-4 py-4 flex flex-col gap-5 @[480px]:px-6">
+      <!-- Name & Surname Grid -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Nombre</label>
+          <input
+            formControlName="firstName"
+            type="text"
+            placeholder="Juan"
+            class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 px-4 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+          />
+          <div *ngIf="submitted && f['firstName'].errors" class="text-red-500 text-xs mt-1">
+            <p *ngIf="f['firstName'].errors['required']">Nombre es requerido</p>
+          </div>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Apellido</label>
+          <input
+            formControlName="lastName"
+            type="text"
+            placeholder="Pérez"
+            class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 px-4 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+          />
+          <div *ngIf="submitted && f['lastName'].errors" class="text-red-500 text-xs mt-1">
+            <p *ngIf="f['lastName'].errors['required']">Apellido es requerido</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div class="flex flex-col">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Email</label>
+        <input
+          formControlName="email"
+          type="email"
+          placeholder="correo@ejemplo.com"
+          class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 px-4 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+        />
+        <div *ngIf="submitted && f['email'].errors" class="text-red-500 text-xs mt-1">
+          <p *ngIf="f['email'].errors['required']">Email es requerido</p>
+          <p *ngIf="f['email'].errors['email']">Email inválido</p>
+        </div>
+      </div>
+
+      <!-- Username Field -->
+      <div class="flex flex-col">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Usuario</label>
+        <input
+          formControlName="username"
+          type="text"
+          placeholder="usuario123"
+          class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 px-4 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+        />
+        <div *ngIf="submitted && f['username'].errors" class="text-red-500 text-xs mt-1">
+          <p *ngIf="f['username'].errors['required']">Usuario es requerido</p>
+        </div>
+      </div>
+
+      <!-- Address Field -->
+      <div class="flex flex-col">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Dirección</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined">location_on</span>
+          <input
+            formControlName="address"
+            type="text"
+            placeholder="Calle Falsa 123, Ciudad"
+            class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 pl-11 pr-4 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+          />
+        </div>
+        <div *ngIf="submitted && f['address'].errors" class="text-red-500 text-xs mt-1">
+          <p *ngIf="f['address'].errors['required']">Dirección es requerida</p>
+        </div>
+      </div>
+
+      <!-- Phone Field -->
+      <div class="flex flex-col">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Teléfono</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined">call</span>
+          <input
+            formControlName="phone"
+            type="tel"
+            placeholder="+54 11 1234 5678"
+            class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 pl-11 pr-4 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+          />
+        </div>
+        <div *ngIf="submitted && f['phone'].errors" class="text-red-500 text-xs mt-1">
+          <p *ngIf="f['phone'].errors['required']">Teléfono es requerido</p>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="flex flex-col">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Contraseña</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined">lock</span>
+          <input
+            formControlName="password"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="••••••••"
+            class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 pl-11 pr-11 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+          />
+          <button
+            type="button"
+            (click)="togglePasswordVisibility('password')"
+            class="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-gray-400 dark:text-text-muted hover:text-primary dark:hover:text-white transition-colors focus:outline-none"
+          >
+            <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        <div *ngIf="submitted && f['password'].errors" class="text-red-500 text-xs mt-1">
+          <p *ngIf="f['password'].errors['required']">Contraseña es requerida</p>
+          <p *ngIf="f['password'].errors['minlength']">Contraseña debe tener al menos 8 caracteres</p>
+        </div>
+      </div>
+
+      <!-- Confirm Password Field -->
+      <div class="flex flex-col">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-gray-700 dark:text-white">Confirmar Contraseña</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined">encrypted</span>
+          <input
+            formControlName="confirmPassword"
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            placeholder="••••••••"
+            class="form-input flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark focus:border-primary h-12 pl-11 pr-11 placeholder:text-gray-400 dark:placeholder:text-text-muted text-base transition-all shadow-sm"
+          />
+          <button
+            type="button"
+            (click)="togglePasswordVisibility('confirmPassword')"
+            class="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-gray-400 dark:text-text-muted hover:text-primary dark:hover:text-white transition-colors focus:outline-none"
+          >
+            <span class="material-symbols-outlined">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        <div *ngIf="submitted && (f['confirmPassword'].errors || form.errors?.['passwordMismatch'])" class="text-red-500 text-xs mt-1">
+          <p *ngIf="f['confirmPassword'].errors?.['required']">Confirmación de contraseña es requerida</p>
+          <p *ngIf="form.errors?.['passwordMismatch']">Las contraseñas no coinciden</p>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <!-- Action Buttons -->
+  <div class="px-4 pb-8 flex flex-col gap-3 @[480px]:px-6">
+    <button
+      (click)="onSubmit()"
+      [disabled]="loading"
+      class="flex w-full items-center justify-center rounded-lg bg-primary hover:bg-primary-hover h-12 px-5 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark shadow-lg shadow-primary/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <span *ngIf="!loading" class="text-white text-base font-bold tracking-wide">Aceptar</span>
+      <span *ngIf="loading" class="text-white text-base font-bold animate-spin">⟳</span>
+    </button>
+    <button
+      type="button"
+      (click)="goBack()"
+      class="flex w-full items-center justify-center rounded-lg border border-transparent hover:bg-gray-100 dark:hover:bg-white/5 h-12 px-5 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none"
+    >
+      <span class="text-base font-medium">Cancelar</span>
+    </button>
+  </div>
+
+  <!-- Bottom safe area spacer -->
+  <div class="h-4 w-full bg-transparent"></div>
+</div>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Securitas Panic Button</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "background-dark": "#111521",
+                        "surface": "#1e2330",
+                        "panic": "#d32f2f", // Material Red 700
+                    },
+                    fontFamily: {
+                        "sans": ["Roboto", "sans-serif"]
+                    },
+                    backgroundImage: {
+                        'panic-gradient': 'radial-gradient(circle at center, rgba(37,99,235,0.15) 0%, rgba(17,21,33,0.95) 75%)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+        .ring-glow-1 {
+            box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2), 0 0 20px rgba(220, 38, 38, 0.4);
+        }.loading-fill {
+            stroke-dasharray: 302;stroke-dashoffset: 302;
+            opacity: 0;transition: stroke-dashoffset 0.25s ease-out, opacity 0.2s ease-out;
+        }
+        .group:active .loading-fill {
+            stroke-dashoffset: 0;
+            opacity: 1;transition: stroke-dashoffset 3s linear, opacity 0.1s ease-in;
+        }
+        .loading-track {
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        .group:active .loading-track {
+            opacity: 1;
+        }.no-select {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-dark font-sans antialiased overflow-hidden text-white selection:bg-red-500/30">
+<input class="peer hidden" id="drawer-toggle" type="checkbox"/>
+<div class="relative flex h-screen w-full flex-col bg-background-dark transition-transform duration-300 ease-out peer-checked:scale-[0.92] peer-checked:opacity-40 overflow-hidden">
+<div class="absolute inset-0 z-0 h-full w-full pointer-events-none">
+<video autoplay="" class="absolute inset-0 h-full w-full object-cover" loop="" muted="" playsinline="">
+<source src="https://securionglobal.com/wp-content/uploads/2025/04/videoslider.mp4" type="video/mp4"/>
+</video>
+<div class="absolute inset-0 bg-blue-900/60 mix-blend-overlay"></div>
+<div class="absolute inset-0 bg-[#060b14]/70 mix-blend-multiply"></div>
+<div class="absolute inset-0 bg-panic-gradient"></div>
+</div>
+<header class="relative z-20 flex w-full items-center justify-between px-4 pt-12 pb-2">
+<label class="group flex size-12 cursor-pointer items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 active:bg-white/20" for="drawer-toggle">
+<span class="material-symbols-outlined text-[28px]">menu</span>
+</label>
+<div class="size-12"></div>
+</header>
+<main class="relative z-10 flex flex-grow flex-col items-center justify-center px-6 pb-20">
+<div class="flex flex-col items-center gap-10">
+<button class="group relative flex size-64 cursor-pointer flex-col items-center justify-center rounded-full bg-panic text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all active:scale-95 active:shadow-inner border border-red-400/20 hover:bg-red-700 no-select outline-none tap-highlight-transparent">
+<div class="absolute -inset-4 rounded-full border border-red-500/20 pointer-events-none"></div>
+<div class="absolute -inset-10 rounded-full border border-red-500/5 bg-red-900/5 pointer-events-none"></div>
+<svg class="absolute inset-0 size-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
+<circle class="loading-track" cx="50" cy="50" fill="none" r="48" stroke="rgba(255,255,255,0.15)" stroke-width="4"></circle>
+<circle class="loading-fill drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" cx="50" cy="50" fill="none" r="48" stroke="white" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<span class="material-symbols-outlined text-[72px] mb-1 drop-shadow-md group-active:opacity-90 relative z-10">e911_emergency</span>
+<span class="text-3xl font-black tracking-[0.2em] drop-shadow-md relative z-10">ALARMA</span>
+</button>
+<p class="text-blue-100/70 text-sm font-medium tracking-wider uppercase text-center max-w-[240px]">
+                    Mantenga presionado por 3 segundos para activar
+                </p>
+</div>
+</main>
+<footer class="absolute bottom-0 left-0 w-full pb-8 pt-4 text-center z-20">
+<div class="flex flex-col items-center gap-1">
+<p class="text-white text-lg font-bold tracking-tight drop-shadow-sm">Securitas</p>
+<p class="text-white/40 text-[11px] font-normal tracking-wide">Desarrollado por Fernando Martin</p>
+</div>
+</footer>
+</div>
+<label class="fixed inset-0 z-40 hidden h-full w-full bg-black/60 backdrop-blur-sm peer-checked:block transition-opacity" for="drawer-toggle"></label>
+<aside class="fixed left-0 top-0 z-50 h-full w-[80%] max-w-[320px] -translate-x-full flex-col bg-surface shadow-2xl transition-transform duration-300 ease-out peer-checked:translate-x-0 border-r border-white/5">
+<div class="flex items-center justify-between px-6 pt-12 pb-6 border-b border-white/5">
+<h2 class="text-xl font-medium text-white tracking-tight">Menú</h2>
+<label class="flex size-10 cursor-pointer items-center justify-center rounded-full text-white/70 hover:bg-white/5 hover:text-white" for="drawer-toggle">
+<span class="material-symbols-outlined">close</span>
+</label>
+</div>
+<div class="flex flex-col py-4">
+<a class="flex items-center gap-4 px-6 py-4 text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-gray-400">account_circle</span>
+<div class="flex flex-col">
+<span class="text-base font-medium">Perfil</span>
+<span class="text-xs text-gray-400">Usuario activo</span>
+</div>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-gray-400">settings</span>
+<span class="text-base font-medium">Configuración</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-gray-400">history</span>
+<span class="text-base font-medium">Historial</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-gray-400">contact_support</span>
+<span class="text-base font-medium">Soporte</span>
+</a>
+</div>
+<div class="mt-auto p-6 border-t border-white/5">
+<div class="flex items-start gap-3 rounded-lg bg-red-900/20 px-4 py-3 border border-red-500/10">
+<span class="material-symbols-outlined text-red-400 text-xl mt-0.5">info</span>
+<p class="text-xs text-red-200/80 leading-relaxed">El uso indebido de este botón puede resultar en sanciones. Úselo solo en emergencias reales.</p>
+</div>
+</div>
+</aside>
+
+</body></html>

@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# production
+dist/
+build/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Angular
+.angular/
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# misc
+*.log

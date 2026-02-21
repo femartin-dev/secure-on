@@ -1,0 +1,635 @@
+Guia de desarollo de codigo
+------
+
+--
+Java & Spring Boot
+----
+¡Claro! Te hago un resumen conciso pero completo de convenciones y estructuras comunes en Java, útil tanto para código limpio como para proyectos profesionales.
+
+1. Nombres y Convenciones
+Elemento	Convención
+Clases	PascalCase → Cliente, AlarmaOperador
+Interfaces	PascalCase → Runnable, Serializable
+Métodos	camelCase → calcularTotal(), enviarAlerta()
+Variables	camelCase → numeroIntentos, fechaCreacion
+Constantes	UPPER_SNAKE_CASE → MAX_INTENTOS, URL_BASE
+Paquetes	todo en minúsculas, generalmente dominio inverso → com.miempresa.seguridad
+
+💡 Tip: Los nombres deben ser descriptivos y claros.
+
+2. Formato y Estilo
+
+Indentación: 4 espacios por nivel (no tabulaciones).
+
+Llaves:
+
+if(condicion) {
+    // código
+} else {
+    // código
+}
+
+Espacios:
+
+int x = 5;
+lista.add(item);
+
+Evitar líneas muy largas (>120 caracteres).
+
+3. Estructura básica de una clase
+package com.miempresa.seguridad;
+
+import java.util.List;
+
+public class Alarma {
+
+    // Constantes
+    public static final int MAX_INTENTOS = 3;
+
+    // Variables de instancia
+    private int id;
+    private String nombre;
+    private List<String> contactos;
+
+    // Constructor
+    public Alarma(int id, String nombre) {
+        this.id = id;
+        this.nombre = nombre;
+    }
+
+    // Getters y Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    // Métodos
+    public void activar() {
+        System.out.println("Alarma activada");
+    }
+
+    @Override
+    public String toString() {
+        return "Alarma{" + "id=" + id + ", nombre=" + nombre + '}';
+    }
+}
+4. Estructuras de control
+Condicionales
+if(condicion) {
+    // ...
+} else if(otraCondicion) {
+    // ...
+} else {
+    // ...
+}
+Switch
+switch(dia) {
+    case "Lunes" -> System.out.println("Inicio de semana");
+    case "Viernes" -> System.out.println("Fin de semana");
+    default -> System.out.println("Día cualquiera");
+}
+Bucles
+for(int i = 0; i < 10; i++) { ... }
+for(String s : lista) { ... }  // foreach
+while(condicion) { ... }
+do { ... } while(condicion);
+5. Manejo de excepciones
+try {
+    // código que puede fallar
+} catch(IOException e) {
+    e.printStackTrace();
+} finally {
+    // siempre se ejecuta
+}
+
+💡 Buenas prácticas:
+
+Atrapar solo las excepciones necesarias.
+
+Usar throws en métodos que delegan manejo.
+
+6. Comentarios
+
+JavaDoc para clases/métodos públicos:
+
+/**
+ * Calcula el total de una alarma.
+ * @param monto base
+ * @return total con impuestos
+ */
+public double calcularTotal(double monto) { ... }
+
+Comentarios inline (evitar exceso):
+
+int intentos = 0; // contador de intentos
+7. Buenas prácticas adicionales
+
+Inmutabilidad cuando se pueda → final.
+
+Evitar variables globales y estáticas innecesarias.
+
+Separar responsabilidades → cada clase debe tener una sola responsabilidad (SRP).
+
+Nombres descriptivos → calcularIntentosRestantes() > calc().
+
+Uso de interfaces y polimorfismo → para flexibilidad y pruebas.
+
+Evitar “magic numbers” → usar constantes con nombres claros.
+
+
+-----------
+SQL / PostgreSQL / SQLite
+------------
+
+¡Claro! Te hago un resumen conciso pero completo de convenciones y estructuras comunes en Java, útil tanto para código limpio como para proyectos profesionales.
+
+1. Nombres y Convenciones
+Elemento	Convención
+Clases	PascalCase → Cliente, AlarmaOperador
+Interfaces	PascalCase → Runnable, Serializable
+Métodos	camelCase → calcularTotal(), enviarAlerta()
+Variables	camelCase → numeroIntentos, fechaCreacion
+Constantes	UPPER_SNAKE_CASE → MAX_INTENTOS, URL_BASE
+Paquetes	todo en minúsculas, generalmente dominio inverso → com.miempresa.seguridad
+
+💡 Tip: Los nombres deben ser descriptivos y claros.
+
+2. Formato y Estilo
+
+Indentación: 4 espacios por nivel (no tabulaciones).
+
+Llaves:
+
+if(condicion) {
+    // código
+} else {
+    // código
+}
+
+Espacios:
+
+int x = 5;
+lista.add(item);
+
+Evitar líneas muy largas (>120 caracteres).
+
+3. Estructura básica de una clase
+package com.miempresa.seguridad;
+
+import java.util.List;
+
+public class Alarma {
+
+    // Constantes
+    public static final int MAX_INTENTOS = 3;
+
+    // Variables de instancia
+    private int id;
+    private String nombre;
+    private List<String> contactos;
+
+    // Constructor
+    public Alarma(int id, String nombre) {
+        this.id = id;
+        this.nombre = nombre;
+    }
+
+    // Getters y Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    // Métodos
+    public void activar() {
+        System.out.println("Alarma activada");
+    }
+
+    @Override
+    public String toString() {
+        return "Alarma{" + "id=" + id + ", nombre=" + nombre + '}';
+    }
+}
+4. Estructuras de control
+Condicionales
+if(condicion) {
+    // ...
+} else if(otraCondicion) {
+    // ...
+} else {
+    // ...
+}
+Switch
+switch(dia) {
+    case "Lunes" -> System.out.println("Inicio de semana");
+    case "Viernes" -> System.out.println("Fin de semana");
+    default -> System.out.println("Día cualquiera");
+}
+Bucles
+for(int i = 0; i < 10; i++) { ... }
+for(String s : lista) { ... }  // foreach
+while(condicion) { ... }
+do { ... } while(condicion);
+5. Manejo de excepciones
+try {
+    // código que puede fallar
+} catch(IOException e) {
+    e.printStackTrace();
+} finally {
+    // siempre se ejecuta
+}
+
+💡 Buenas prácticas:
+
+Atrapar solo las excepciones necesarias.
+
+Usar throws en métodos que delegan manejo.
+
+6. Comentarios
+
+JavaDoc para clases/métodos públicos:
+
+/**
+ * Calcula el total de una alarma.
+ * @param monto base
+ * @return total con impuestos
+ */
+public double calcularTotal(double monto) { ... }
+
+Comentarios inline (evitar exceso):
+
+int intentos = 0; // contador de intentos
+7. Buenas prácticas adicionales
+
+Inmutabilidad cuando se pueda → final.
+
+Evitar variables globales y estáticas innecesarias.
+
+Separar responsabilidades → cada clase debe tener una sola responsabilidad (SRP).
+
+Nombres descriptivos → calcularIntentosRestantes() > calc().
+
+Uso de interfaces y polimorfismo → para flexibilidad y pruebas.
+
+Evitar “magic numbers” → usar constantes con nombres claros.
+
+Si querés, puedo armarte un “cheat sheet” visual de Java que incluya todo esto + ejemplos de estructuras de datos y JPA básico, listo para tenerlo como referencia rápida. Esto te sirve mucho para proyectos grandes.
+
+¿Querés que haga eso?
+
+Dame una breve guia de convenciones de uso y administracion de Postgresql y SQLite
+
+¡Perfecto! Te hago un resumen práctico y breve de convenciones y buenas prácticas para PostgreSQL y SQLite, enfocadas en uso, administración y diseño de bases de datos.
+
+1. Nombres y Convenciones de Objetos
+Objeto	Convención recomendada
+Bases de datos	minúsculas, sin espacios, separado por _ → app_seguridad
+Tablas	singular o plural, minúsculas, separado por _ → usuario, alarma_operador
+Columnas	minúsculas, separado por _ → fecha_creacion, id_supervisor
+Índices	idx_<tabla>_<columna> → idx_alarma_fecha
+Constraints	pk_<tabla>, fk_<tabla>_<referenciada> → pk_usuario, fk_alarma_usuario
+Secuencias	seq_<tabla>_<columna> → seq_usuario_id
+Vistas	vw_<nombre> → vw_usuarios_activos
+Triggers	trg_<tabla>_<acción> → trg_alarma_before_insert
+
+💡 Postgres es case-sensitive, usa minúsculas siempre para evitar problemas.
+
+2. Tipos de datos comunes
+Uso	PostgreSQL	SQLite
+Enteros	INTEGER, BIGINT, SERIAL	INTEGER, INTEGER PRIMARY KEY AUTOINCREMENT
+Texto	TEXT, VARCHAR(n)	TEXT
+Fecha/Hora	DATE, TIMESTAMP, TIMESTAMPTZ	TEXT (ISO8601), INTEGER (epoch)
+Booleano	BOOLEAN	INTEGER (0=false,1=true)
+JSON	JSON, JSONB	TEXT (guardar JSON serializado)
+3. Claves primarias y foráneas
+
+Postgres: soporta SERIAL o IDENTITY para autoincrement.
+
+SQLite: INTEGER PRIMARY KEY AUTOINCREMENT crea autoincrement.
+
+Convención: siempre nombrar explícitamente PK y FK, y usar ON DELETE CASCADE solo cuando tenga sentido.
+
+-- PostgreSQL
+CREATE TABLE usuario (
+    id SERIAL PRIMARY KEY,
+    nombre TEXT NOT NULL
+);
+
+-- SQLite
+CREATE TABLE usuario (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL
+);
+4. Índices y performance
+
+Crear índices en columnas usadas en JOINs, WHERE y ORDER BY.
+
+Evitar demasiados índices: ralentizan INSERT/UPDATE.
+
+Convención: idx_<tabla>_<columna>.
+
+CREATE INDEX idx_alarma_fecha ON alarma(fecha_creacion);
+
+SQLite: CREATE INDEX igual, pero cuidado con tablas muy grandes (no es tan eficiente como Postgres en índices complejos).
+
+5. Nombres de secuencias y triggers
+
+Postgres: seq_<tabla>_<columna>
+
+Triggers: trg_<tabla>_<accion>
+
+Ejemplo:
+
+CREATE SEQUENCE seq_usuario_id START 1;
+CREATE TRIGGER trg_alarma_before_insert
+BEFORE INSERT ON alarma
+FOR EACH ROW
+EXECUTE FUNCTION alarma_audit();
+
+SQLite soporta triggers, pero no secuencias separadas (usa autoincrement).
+
+6. Administracion y mantenimiento
+PostgreSQL
+
+Usar roles y permisos:
+
+CREATE ROLE operador LOGIN PASSWORD '123';
+GRANT SELECT, INSERT ON alarma TO operador;
+
+Backup y restore:
+
+pg_dump dbname > backup.sql
+psql dbname < backup.sql
+
+Monitorizar tablas grandes con VACUUM y ANALYZE:
+
+VACUUM FULL;
+ANALYZE;
+SQLite
+
+Base de datos en un solo archivo .db.
+
+Hacer backup copiando el archivo o usando:
+
+.backup 'backup.db'
+
+Para performance en escritura:
+
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+7. Buenas prácticas generales
+
+Usar convenciones de nombres consistentes.
+
+Documentar constraints, triggers e índices.
+
+Evitar SELECT * en producción.
+
+Normalizar datos al menos hasta 3NF.
+
+Para SQLite, recordar que no hay restricciones estrictas de tipos (tipado dinámico).
+
+Para Postgres, aprovechar tipos avanzados (JSONB, ARRAY, UUID).
+
+Mantener backups periódicos y scripts de migración (Flyway, Liquibase).
+
+
+----------
+Angular 18
+----------
+
+Perfecto. Te dejo una guía breve, clara y práctica de convenciones de código y estructura en Angular 18, alineada con Angular Style Guide oficial + buenas prácticas reales de proyectos grandes.
+
+📘 Guía breve de Convenciones y Estructuras en Angular 18
+1️⃣ Convenciones de nombres
+Archivos
+Tipo	Convención
+Component	nombre.component.ts
+Template	nombre.component.html
+Styles	nombre.component.scss
+Service	nombre.service.ts
+Module	nombre.module.ts
+Guard	nombre.guard.ts
+Interceptor	nombre.interceptor.ts
+Pipe	nombre.pipe.ts
+Model / Interface	nombre.model.ts
+
+📌 Siempre kebab-case
+
+alarma-operador.component.ts
+usuario.service.ts
+login.guard.ts
+Clases
+export class AlarmaOperadorComponent {}
+export class UsuarioService {}
+
+PascalCase
+
+Variables y métodos
+fechaCreacion: Date;
+obtenerUsuarios(): Observable<Usuario[]>
+
+camelCase
+
+Constantes
+export const API_URL = 'https://api.midominio.com';
+
+UPPER_SNAKE_CASE
+
+2️⃣ Estructura de carpetas recomendada
+📦 Arquitectura modular (recomendada)
+src/app
+ ├── core
+ │    ├── services
+ │    ├── guards
+ │    ├── interceptors
+ │    └── models
+ │
+ ├── shared
+ │    ├── components
+ │    ├── directives
+ │    ├── pipes
+ │    └── utils
+ │
+ ├── features
+ │    ├── auth
+ │    │     ├── pages
+ │    │     ├── components
+ │    │     ├── services
+ │    │     └── auth.routes.ts
+ │    │
+ │    ├── alarmas
+ │    │     ├── pages
+ │    │     ├── components
+ │    │     ├── services
+ │    │     └── alarmas.routes.ts
+ │
+ ├── app.routes.ts
+ └── app.config.ts
+📌 Significado
+Carpeta	Contenido
+core	servicios globales (auth, config, interceptors)
+shared	componentes reutilizables
+features	módulos funcionales
+app	configuración principal
+3️⃣ Convenciones de Componentes
+Naming
+@Component({
+  selector: 'app-alarma-lista',
+  templateUrl: './alarma-lista.component.html'
+})
+<app-alarma-lista></app-alarma-lista>
+
+Prefijo app- obligatorio
+
+Estructura interna recomendada
+export class AlarmaListaComponent implements OnInit {
+
+  // ================================
+  // Inyecciones
+  // ================================
+  constructor(
+    private alarmaService: AlarmaService
+  ) {}
+
+  // ================================
+  // Variables públicas
+  // ================================
+  alarmas: Alarma[] = [];
+
+  // ================================
+  // Ciclo de vida
+  // ================================
+  ngOnInit(): void {
+    this.cargarAlarmas();
+  }
+
+  // ================================
+  // Métodos públicos
+  // ================================
+  cargarAlarmas(): void {
+    this.alarmaService.getAll().subscribe(...);
+  }
+}
+4️⃣ Servicios (Services)
+@Injectable({
+  providedIn: 'root'
+})
+export class AlarmaService {
+
+  private readonly API = '/api/alarmas';
+
+  constructor(private http: HttpClient) {}
+
+  getAll(): Observable<Alarma[]> {
+    return this.http.get<Alarma[]>(this.API);
+  }
+}
+
+📌 Reglas clave:
+
+No lógica de UI
+
+Solo reglas de negocio + backend
+
+Stateless
+
+5️⃣ Modelos e Interfaces
+export interface Alarma {
+  id: number;
+  estado: string;
+  fechaCreacion: string;
+}
+
+📌 Interfaces > clases (menos memoria y más claridad)
+
+6️⃣ Routing (Angular 18 + Standalone)
+export const routes: Routes = [
+  {
+    path: 'alarmas',
+    loadChildren: () =>
+      import('./features/alarmas/alarmas.routes')
+        .then(m => m.ALARMAS_ROUTES)
+  }
+];
+export const ALARMAS_ROUTES: Routes = [
+  {
+    path: '',
+    component: AlarmaListaComponent
+  }
+];
+7️⃣ Standalone Components (Angular moderno)
+@Component({
+  standalone: true,
+  selector: 'app-login',
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './login.component.html'
+})
+export class LoginComponent {}
+
+📌 Angular 18 → standalone first
+
+8️⃣ Convenciones HTML
+<div class="container">
+  <app-alarma-card
+    *ngFor="let alarma of alarmas"
+    [alarma]="alarma"
+    (onSelect)="verDetalle($event)">
+  </app-alarma-card>
+</div>
+
+📌
+
+Inputs → [input]
+
+Outputs → (event)
+
+Variables → let item of lista
+
+9️⃣ RxJS — Buenas prácticas
+this.alarmas$ = this.service.getAll().pipe(
+  tap(() => this.loading = true),
+  finalize(() => this.loading = false),
+  catchError(() => of([]))
+);
+
+📌
+
+Evitar .subscribe() dentro del component si se puede → usar async
+
+Usar pipe()
+
+🔟 Convenciones SCSS
+.alarma-card {
+  display: flex;
+
+  &__header {
+    font-weight: bold;
+  }
+
+  &--active {
+    background: green;
+  }
+}
+
+📌 Metodología BEM
+
+1️⃣1️⃣ Buenas prácticas clave
+
+✅ Lazy loading
+✅ Standalone components
+✅ Smart vs Dumb components
+✅ OnPush change detection
+✅ Signals (Angular 17+)
+✅ Tipado estricto
+✅ Arquitectura por features
+
+📌 Estructura ideal resumida
+core       → infraestructura
+shared     → reutilizable
+features   → negocio
+🏆 Reglas PRO (equipos grandes)
+
+ESLint + Prettier
+
+Husky + precommit hooks
+
+Nx Monorepo (proyectos grandes)
+
+Arquitectura hexagonal en frontend
