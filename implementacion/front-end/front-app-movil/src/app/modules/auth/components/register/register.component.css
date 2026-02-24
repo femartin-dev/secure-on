@@ -1,0 +1,92 @@
+/* Register Component Styles */
+:host {
+  display: block;
+}
+
+/* Form Input Customization */
+.form-input {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(24, 61, 170, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.form-input::placeholder {
+  opacity: 0.6;
+}
+
+/* Logo white filter */
+.white-logo {
+  filter: brightness(0) invert(1);
+}
+
+/* Material Icons */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  user-select: none;
+}
+
+/* Checkbox customization */
+input[type="checkbox"] {
+  accent-color: #183daa;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #183daa;
+  border-color: #183daa;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Button hover effects */
+button:hover:not(:disabled) .text-white {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* Input error state animation */
+.border-red-500 {
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+/* Hero image fallback gradient */
+.bg-cover {
+  background-color: #183daa;
+}
+
+/* Scrollbar hiding */
+::-webkit-scrollbar {
+  display: none;
+}
+
+:host {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

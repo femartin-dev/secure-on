@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cambiar Contraseña - Secureon</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration for custom colors/themes -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#0a0f1e',
+            'brand-blue': '#1d4ed8',
+            'brand-blue-hover': '#1e40af',
+            'input-bg': '#161b2c',
+          },
+          borderRadius: {
+            'v-large': '25%',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="background-video-styles">
+    /* Video background styling */
+    .video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      /* Applying a dark blue overlay as requested based on IMAGE_12 */
+      filter: brightness(0.4) contrast(1.1);
+      background-color: #0a0f1e;
+    }
+  </style>
+<style data-purpose="layout-and-container">
+    /* Main container sizing logic */
+    .main-container {
+      width: 95%; /* Tablet default */
+      max-width: 1050px;
+    }
+
+    @media (min-width: 1200px) {
+      .main-container {
+        width: 70%;
+      }
+    }
+
+    /* Mobile specific hiding of container styling */
+    @media (max-width: 500px) {
+      .main-container {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 100%;
+      }
+    }
+
+    /* Security texture effect */
+    .security-texture {
+      background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-white transition-colors duration-200">
+<!-- BEGIN: Background -->
+<!-- Context suggests a video background using tones from IMAGE_12 ->
+<img alt="Background Overlay" class="video-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_0t4jOWg1kWoUif_Cg9uz3gMnxRHifyQYnMcVJCxr8Pd2O5q53emiDDImO-H-mDFbN_Lke9cpyYh7lANaeZv0ci_2FTSB0VIXDAzM0TJps8frCWzx73LDPdraujh8OPIsxUa-s3mCLKaEitVCqr74-n7NOw52VBUJXmMYfXmvrcF03DAtIEjSyzYX5gVrE0QWFBqZIIgybWOGiyCB1X4UUCS6RiwBwshagEiIA2FDs4wbCyeuVG_nd9mY8sa95WqN53wue91oJ1s"/>
+<!-- END: Background -->
+<!-- BEGIN: Change Password Container -->
+<main class="main-container security-texture bg-brand-dark/90 border-4 border-white/10 rounded-[25%] p-8 md:p-12 lg:p-16 flex flex-col items-center shadow-2xl backdrop-blur-sm" data-purpose="password-change-card">
+<!-- BEGIN: Header -->
+<header class="w-full text-center mb-10">
+<img alt="Secureon Logo" class="h-16 md:h-20 mx-auto mb-6 object-contain" data-purpose="brand-logo" src="file://C:\Users\Strix\Downloads\secureon-logo.png"/>
+<h1 class="text-2xl md:text-3xl font-bold whitespace-nowrap" data-purpose="page-title">
+        Cambiar Contraseña
+      </h1>
+<p class="text-slate-400 mt-2 text-sm md:text-base">Por favor, ingresa los datos para actualizar tu seguridad.</p>
+</header>
+<!-- END: Header -->
+<!-- BEGIN: Form -->
+<form action="#" class="w-full max-w-[500px] space-y-6" data-purpose="password-form" method="POST">
+<!-- Current Password -->
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-300 ml-1" for="current-password">Contraseña Actual</label>
+<div class="relative">
+<input class="w-full bg-input-bg border-slate-700 rounded-xl px-4 py-3 focus:ring-brand-blue focus:border-brand-blue text-white placeholder-slate-500 transition-all" id="current-password" name="current-password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- New Password -->
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-300 ml-1" for="new-password">Nueva Contraseña</label>
+<div class="relative">
+<input class="w-full bg-input-bg border-slate-700 rounded-xl px-4 py-3 focus:ring-brand-blue focus:border-brand-blue text-white placeholder-slate-500 transition-all" id="new-password" name="new-password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- Confirm New Password -->
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-300 ml-1" for="confirm-password">Confirmar Nueva Contraseña</label>
+<div class="relative">
+<input class="w-full bg-input-bg border-slate-700 rounded-xl px-4 py-3 focus:ring-brand-blue focus:border-brand-blue text-white placeholder-slate-500 transition-all" id="confirm-password" name="confirm-password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- BEGIN: Action Buttons -->
+<div class="flex flex-col space-y-4 pt-4" data-purpose="form-actions">
+<button class="w-full bg-brand-blue hover:bg-brand-blue-hover text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-blue/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98]" type="submit">
+          Cambiar Contraseña
+          <svg class="h-5 w-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" fill-rule="evenodd"></path>
+</svg>
+</button>
+<button class="w-full border border-slate-600 hover:bg-white/5 text-slate-300 font-medium py-3 rounded-xl transition-all" type="button">
+          Cancelar
+        </button>
+</div>
+<!-- END: Action Buttons -->
+</form>
+<!-- END: Form -->
+<!-- BEGIN: Footer Inside Container (Mobile Friendly) -->
+<footer class="mt-12 flex flex-col items-center space-y-4" data-purpose="container-footer">
+<img alt="Securitas Partner" class="h-8 opacity-80" data-purpose="partner-logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9z-hNGQwLThg5XQZQ8zlqXYY4pLxaVgi4GaVbm945wIiOqRdUpxUdaJG-x_kGdwdUpdnQqeDpzvvVxhoytg2JMBgOdse0wZqVH7BlUmB1429f4JD1zV71n5qZufYs4w8cwQ9ZBXrn1ZpxpLKchWNilcZ1tAoNgwyFWc9vBaqmnpTa-rgA2HmmHdBFN7hLdfdcmvD30JCivuIhjX2_jYEaLBVqurCKRn4EaY2HWZZ--bCfBAAdiVAdvkRMM_C9Ort9FCUyXoJlrLY"/>
+<div class="text-[10px] md:text-xs text-slate-500 text-center uppercase tracking-widest">
+        © 2026 SECURITAS. TODOS LOS DERECHOS RESERVADOS.
+      </div>
+</footer>
+<!-- END: Footer -->
+</main>
+<!-- END: Change Password Container -->
+</body></html>

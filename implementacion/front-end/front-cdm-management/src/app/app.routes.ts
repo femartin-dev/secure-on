@@ -17,9 +17,7 @@ export const routes: Routes = [
   },
   {
     path: 'register',
-    component: RegisterComponent,
-    canActivate: [AuthGuard],
-    data: { requireAdmin: true }
+    component: RegisterComponent
   },
   {
     path: 'dashboard',

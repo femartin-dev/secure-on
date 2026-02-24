@@ -35,6 +35,16 @@ public class SesionService {
 
     @Transactional
     public String autenticar(String username, String password) {
+        // sanitize username: trim and normalize to NFC (UTF-8 compatible)
+        if (username != null) {
+            username = username.trim();
+            // normalize any composed characters so database lookup is consistent
+            username = java.text.Normalizer.normalize(username, java.text.Normalizer.Form.NFC);
+        }
+
+        // log for debugging (remove/adjust level in production)
+        // log.debug("auth request username='{}' (len={})", username, username != null ? username.length() : 0);
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
         );

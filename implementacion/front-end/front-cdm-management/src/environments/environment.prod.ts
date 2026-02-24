@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.secureon.com/api',
-  socketUrl: 'https://api.secureon.com',
-  googleMapsApiKey: 'YOUR_GOOGLE_MAPS_API_KEY_HERE'
+  logSensitiveData: false,
+  apiUrl: "http://localhost:8090/api/secure-on",
+  socketUrl: "ws://localhost:8090/ws/secure-on",
+  googleMapsApiKey: "AIzaSyAlTK4mI1tcPSl_aOwuB8NupV2NHE7aEwg",
 };

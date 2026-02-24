@@ -1,0 +1,5 @@
+:host { display: flex; flex: 1; min-height: 0; }
+
+.filled-icon {
+  font-variation-settings: 'FILL' 1;
+}

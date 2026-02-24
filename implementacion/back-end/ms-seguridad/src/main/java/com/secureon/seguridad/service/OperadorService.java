@@ -40,7 +40,7 @@ public class OperadorService {
         if (operadorRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException(messageService.getMessage("err.email.invalid"));
         }
-        if (operadorRepository.existsByUsuario(request.getUsuario())) {
+        if (operadorRepository.existsByTelefono(request.getTelefono())) {
             throw new BadRequestException(messageService.getMessage("err.uname.invalid"));
         }
         if (operadorRepository.existsByLegajo(request.getLegajo())) {
@@ -52,7 +52,7 @@ public class OperadorService {
         operador.setApellido(request.getApellido());
         operador.setLegajo(request.getLegajo());
         operador.setEmail(request.getEmail());
-        operador.setUsuario(request.getUsuario());
+        operador.setTelefono(request.getTelefono());
         operador.setHashContrasena(passwordEncoder.encode(request.getPassword()));
         //operador.setEsAdministrador(request.getEsAdministrador() != null ? request.getEsAdministrador() : false);
         operador.setEsAdministrador(esAdministrador);

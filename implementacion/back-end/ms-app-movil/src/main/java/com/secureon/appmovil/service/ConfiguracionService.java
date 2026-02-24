@@ -3,6 +3,7 @@ package com.secureon.appmovil.service;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.secureon.appmovil.dto.request.ConfiguracionRequest;
 import com.secureon.appmovil.model.entity.ConfiguracionUsuario;
@@ -17,21 +18,32 @@ import lombok.RequiredArgsConstructor;
 public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
+    private final UsuarioService usuarioService;
+    private final DispositivoService dispositivoService;
+
+    public ConfiguracionUsuario getConfiguracionUsuario(UUID usuarioId, UUID dispositivoId) {
+        return configuracionRepository.findByUsuarioIdAndDispositivoId(usuarioId, dispositivoId)
+                        .orElseThrow(() -> new RuntimeException("Configuracion no encontrada"));
+    }
 
     public ConfiguracionUsuario getConfiguracionUsuario(Usuario usuario, Dispositivo dispositivo) {
         return configuracionRepository.findByUsuarioAndDispositivo(usuario, dispositivo)
                         .orElseThrow(() -> new RuntimeException("Configuracion no encontrada"));
     }
 
+    @Transactional
     public ConfiguracionUsuario guardarConfiguracion(UUID configuracionId, ConfiguracionRequest request) {
         ConfiguracionUsuario configuracion;
         if (configuracionId == null) {
             configuracion = new ConfiguracionUsuario();
+            configuracion.setUsuario(usuarioService.getUsuario(request.getUsuarioId()));
+            configuracion.setDispositivo(dispositivoService.getDispositivo(request.getDispositivoId()));
         } else {
             configuracion = configuracionRepository.findById(configuracionId)
                 .orElseThrow(() -> new RuntimeException("Configuracion de usuario no encontrada"));
         }
         setConfiguracion(configuracion, request);
+        configuracionRepository.save(configuracion);
         return configuracion;
     }
 
@@ -60,7 +72,7 @@ public class ConfiguracionService {
         configuracionUsuario.setUbicacionWifi(request.getUbicacionWifi());
         configuracionUsuario.setUmbralBateriaBaja(request.getUmbralBateriaBaja());
         configuracionUsuario.setUmbralBateriaMedia(request.getUmbralBateriaMedia());
-        configuracionUsuario.setUmbralBateriaCritica(request.getUmbralBateriaMedia());
+        configuracionUsuario.setUmbralBateriaCritica(request.getUmbralBateriaCritica());
     }
 }
 

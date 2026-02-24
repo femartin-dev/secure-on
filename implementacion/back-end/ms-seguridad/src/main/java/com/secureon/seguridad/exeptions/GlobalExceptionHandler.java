@@ -1,6 +1,5 @@
 package com.secureon.seguridad.exeptions;
 
-import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,73 +11,67 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 import com.secureon.seguridad.util.MessagesService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @Autowired
     private MessagesService messageService;
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<?> resourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", OffsetDateTime.now());
-        body.put("message", ex.getMessage());
-        body.put("status", HttpStatus.NOT_FOUND.value());
+    public ResponseEntity<ApiErrorResponse> resourceNotFoundException(ResourceNotFoundException ex) {
+        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.NOT_FOUND.value(), ex.getMessage());
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<?> badRequestException(BadRequestException ex, WebRequest request) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", OffsetDateTime.now());
-        body.put("message", ex.getMessage());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
+    public ResponseEntity<ApiErrorResponse> badRequestException(BadRequestException ex) {
+        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<?> badCredentialsException(BadCredentialsException ex, WebRequest request) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", OffsetDateTime.now());
-        body.put("message", messageService.getMessage("err.user.login"));
-        body.put("status", HttpStatus.UNAUTHORIZED.value());
+    public ResponseEntity<ApiErrorResponse> badCredentialsException(BadCredentialsException ex) {
+        log.error("Bad credentials exception: ", ex);
+        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.UNAUTHORIZED.value(),
+                messageService.getMessage("err.user.login"));
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<?> unauthorizedException(UnauthorizedException ex, WebRequest request) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", OffsetDateTime.now());
-        body.put("message", ex.getMessage());
-        body.put("status", HttpStatus.UNAUTHORIZED.value());
+    public ResponseEntity<ApiErrorResponse> unauthorizedException(UnauthorizedException ex) {
+        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> validationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiErrorResponse> validationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", OffsetDateTime.now());
-        body.put("errors", errors);
-        body.put("status", HttpStatus.BAD_REQUEST.value());
+        ApiErrorResponse body = ApiErrorResponse.validation(HttpStatus.BAD_REQUEST.value(), errors);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiErrorResponse> methodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
+        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.METHOD_NOT_ALLOWED.value(), ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> globalExceptionHandler(Exception ex, WebRequest request) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", OffsetDateTime.now());
-        body.put("message", messageService.getMessage("err.server.internal", ex.getMessage()));
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    public ResponseEntity<ApiErrorResponse> globalExceptionHandler(Exception ex) {
+        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                messageService.getMessage("err.server.internal", ex.getMessage()));
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

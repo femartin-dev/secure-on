@@ -31,25 +31,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String username = "anonymous";
         try {
             String token = resolveToken(request);
             if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
                 Authentication auth = tokenProvider.getAuthentication(token);
-                String username = tokenProvider.getUsername(token);
+                username = tokenProvider.getUsername(token);
                 SecurityContextHolder.getContext().setAuthentication(auth);
-                auditService.setAuditContext(username, getClientIp(request));
-            } else {
-                auditService.setAuditContext("anonymous", getClientIp(request));
             }
-
-            filterChain.doFilter(request, response);
         } catch (Exception e) {
-            log.error("No se pudo establecer la autenticación en el contexto de seguridad", e);
+            log.warn("No se pudo resolver autenticación JWT para la request actual", e);
+        }
+
+        try {
+            auditService.setAuditContext(username, getClientIp(request));
             filterChain.doFilter(request, response);
         } finally {
             auditService.clearAuditContext();
         }
-        
     }
 
     private String resolveToken(HttpServletRequest request) {

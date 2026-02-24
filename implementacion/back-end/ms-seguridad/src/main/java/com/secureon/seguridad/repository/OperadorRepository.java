@@ -11,9 +11,9 @@ import com.secureon.seguridad.model.entity.Operador;
 @Repository
 public interface OperadorRepository extends JpaRepository<Operador, UUID> {
     Optional<Operador> findByEmail(String email);
-    Optional<Operador> findByUsuario(String usuario);
+    Optional<Operador> findByTelefono(String telefono);
     Optional<Operador> findByLegajo(Integer legajo);
     boolean existsByEmail(String email);
-    boolean existsByUsuario(String usuario);
+    boolean existsByTelefono(String telefono);
     boolean existsByLegajo(Integer legajo);
 }

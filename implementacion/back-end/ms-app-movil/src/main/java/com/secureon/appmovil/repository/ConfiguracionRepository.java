@@ -15,5 +15,6 @@ import java.util.Optional;
 @Repository
 public interface ConfiguracionRepository extends JpaRepository<ConfiguracionUsuario, UUID> {
     Optional<ConfiguracionUsuario> findByUsuarioAndDispositivo(Usuario usuario, Dispositivo dispositivo);
+    Optional<ConfiguracionUsuario> findByUsuarioIdAndDispositivoId(UUID usuarioId, UUID dispositivoId);
 
 }

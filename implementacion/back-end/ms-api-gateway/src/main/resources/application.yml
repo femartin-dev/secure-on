@@ -29,17 +29,17 @@ app:
 api-gateway:
     security:
         estrategy: none
-        paths-habilitados: /ws/internal/**,/ws/secure-on/**,/api/secure-on/**,/auth/**
+        paths-habilitados: /ws/internal/**,/ws/secure-on/**,/api/secure-on/seguridad/v1/**,/api/secure-on/seguridad/v1/**,/api/secure-on/servicios-moviles/v1/**,/api/secure-on/centro-de-monitoreo/v1/**       
     config:
         gateway-paths:
             app-movil: /servicios-moviles
             cmd-control: /centro-de-monitoreo
             seguridad: /seguridad
         services-paths:
-            app-movil: /api/app-movil/v1
-            cmd-control: /api/cdm-control/v1
-            seguridad: /api/seguridad/v1
-        services-url:
+            app-movil: /api/app-movil
+            cmd-control: /api/cdm-control
+            seguridad: /api/seguridad
+        services-urls:
             app-movil: http://localhost:8091
             cmd-control: http://localhost:8092
             seguridad: http://localhost:8093

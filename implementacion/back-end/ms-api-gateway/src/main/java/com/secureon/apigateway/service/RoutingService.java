@@ -11,10 +11,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.secureon.apigateway.exception.DownstreamHttpException;
 import com.secureon.apigateway.property.ApiGatewayConfigProperty;
 import com.secureon.apigateway.property.ApiGatewayKeyEnum;
 
@@ -31,14 +32,16 @@ public class RoutingService {
 
     private String getTargetUrl(String path) {
         Optional<ApiGatewayKeyEnum> apiKey = Arrays.asList(ApiGatewayKeyEnum.values()).stream()
-                                        .map(apiProperties::getGatewayPathsKeyValue)
-                                        .filter(gwp -> path.startsWith(gwp))
-                                        .map(apiProperties::getApiKeyOfValue)
+                                        .filter(key -> {
+                                            String gatewayPath = apiProperties.getGatewayPathsKeyValue(key);
+                                            return gatewayPath != null && path.startsWith(gatewayPath);
+                                        })
                                         .findFirst();
         if (apiKey.isPresent()) {
+            String gatewayPath = apiProperties.getGatewayPathsKeyValue(apiKey.get());
             return apiProperties.getServicesUrlsKeyValue(apiKey.get()) + 
                     apiProperties.getServicesPathsKeyValue(apiKey.get()) + 
-                    path.replaceFirst(apiProperties.getGatewayPathsKeyValue(apiKey.get()), "");
+                    path.replaceFirst(gatewayPath, "");
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ruta no encontrada");
     }
@@ -59,8 +62,8 @@ public class RoutingService {
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.valueOf(method), entity, String.class);
             return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(response.getBody());
-        } catch (HttpClientErrorException e) {
-            throw new ResponseStatusException(e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (HttpStatusCodeException e) {
+            throw new DownstreamHttpException(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());
         }
     }
 }

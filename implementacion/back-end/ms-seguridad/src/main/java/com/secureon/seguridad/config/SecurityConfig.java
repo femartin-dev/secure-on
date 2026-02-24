@@ -31,8 +31,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/seguridad/v1/app/**", "/api/seguridad/v1/cdm/**").permitAll()
-                .anyRequest().authenticated()
+                //.requestMatchers("/api/seguridad/v1/app/**", "/api/seguridad/v1/cdm/**").permitAll()
+                .anyRequest()//.authenticated()
+                .permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

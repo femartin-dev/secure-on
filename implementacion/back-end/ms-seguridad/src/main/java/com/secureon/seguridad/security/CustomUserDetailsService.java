@@ -35,6 +35,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // normalize/sanitize input same way as authentication service
+        if (username != null) {
+            username = username.trim();
+            username = java.text.Normalizer.normalize(username, java.text.Normalizer.Form.NFC);
+        }
+
         // Primero intentamos como usuario móvil
         Usuario usuario = usuarioRepository.findByEmail(username).orElse(null);
         if (usuario != null) {

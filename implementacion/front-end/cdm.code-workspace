@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "front-cdm-management"
+		},
+		{
+			"path": "uxui-secure-on"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "uxui-secure-on"
+	},
+	"extensions": {
+		"recommendations": [
+			"angular.ng-template",
+			"esbenp.prettier-vscode",
+			"dbaeumer.vscode-eslint",
+			"bradlc.vscode-tailwindcss"
+		]
+	}
+}

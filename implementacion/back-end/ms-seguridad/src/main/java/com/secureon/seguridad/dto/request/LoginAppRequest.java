@@ -25,7 +25,7 @@ public class LoginAppRequest {
     @JsonIgnore
     @Pattern(regexp = "\\+?[0-9]{10,15}")
     private String telefono;
-    @JsonIgnore
+
     private UUID dispositivoAppId;
     
     @NotBlank

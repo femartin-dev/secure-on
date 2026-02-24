@@ -1,0 +1,1350 @@
+================================================================================
+INFORME COMPLETO DE PAYLOADS - SECUREON
+================================================================================
+Fecha: 15 de Enero de 2024
+Versión: 1.0
+================================================================================
+
+TABLA DE CONTENIDOS
+================================================================================
+1. MS-SEGURIDAD (Port: 8093)
+   1.1 AppController
+   1.2 CdmController
+2. MS-APP-MOVIL (Port: 8091)
+   2.1 CatalogoController
+   2.2 AlarmaController
+   2.3 ContactoController
+   2.4 ConfiguracionController
+3. MS-CDM-CONTROL (Port: 8092)
+   3.1 AlarmaController
+   3.2 WebSocket STOMP Subscriptions
+4. MS-API-GATEWAY (Port: 8090)
+   4.1 ProxyController
+   4.2 InternalController
+
+================================================================================
+1. MS-SEGURIDAD (Port: 8093)
+================================================================================
+
+1.1 AppController
+================================================================================
+
+1.1.1 POST /api/seguridad/v1/app/usuario/registrar
+------
+Autenticación: NO REQUERIDA
+Descripción: Registra un nuevo usuario en la aplicación móvil
+
+REQUEST:
+{
+  "email": "usuario@example.com",
+  "password": "MiContraseña123!",
+  "nombre": "Juan",
+  "apellido": "Pérez"
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "usuario@example.com",
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "fechaRegistro": "2024-01-15T10:30:00Z"
+}
+
+================================================================================
+
+1.1.2 POST /api/seguridad/v1/app/auth/login
+------
+Autenticación: NO REQUERIDA
+Descripción: Inicia sesión con credenciales de usuario móvil
+
+REQUEST:
+{
+  "email": "usuario@example.com",
+  "password": "MiContraseña123!",
+  "dispositivoAppId": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+RESPONSE (200 OK):
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJpYXQiOjE2MDI2MjUwMjR9.eFQfHMCr8bCSaKZmxwfKhZjVaJRb5DmGXyOdVi5V0U",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "usuario@example.com",
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "dispositivoId": "550e8400-e29b-41d4-a716-446655440001",
+  "expiracion": "2024-01-15T18:30:00Z"
+}
+
+================================================================================
+
+1.1.3 POST /api/seguridad/v1/app/auth/logout
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Cierra la sesión del usuario móvil
+
+REQUEST:
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Query Parameters:
+  dispositivoAppId: 550e8400-e29b-41d4-a716-446655440001
+
+RESPONSE (200 OK):
+{
+  "mensaje": "Sesión cerrada correctamente"
+}
+
+================================================================================
+
+1.1.4 GET /api/seguridad/v1/app/usuario/mis-datos
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Obtiene los datos del usuario autenticado
+
+REQUEST:
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+RESPONSE (200 OK):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "usuario@example.com",
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "fechaRegistro": "2024-01-15T10:30:00Z",
+  "dispositivosRegistrados": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "modelo": "iPhone 14",
+      "activo": true
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "modelo": "Samsung Galaxy S24",
+      "activo": true
+    }
+  ]
+}
+
+================================================================================
+
+1.1.5 POST /api/seguridad/v1/app/dispositivo/registrar
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Registra un nuevo dispositivo para el usuario
+
+REQUEST:
+{
+  "modelo": "Samsung Galaxy S24",
+  "numeroSerie": "RF8R91N5RZH",
+  "versionSO": "14.0",
+  "tipoDispositivo": "SMARTPHONE"
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440002",
+  "modelo": "Samsung Galaxy S24",
+  "numeroSerie": "RF8R91N5RZH",
+  "versionSO": "14.0",
+  "tipoDispositivo": "SMARTPHONE",
+  "fechaRegistro": "2024-01-15T10:35:00Z",
+  "activo": true
+}
+
+================================================================================
+
+1.2 CdmController
+================================================================================
+
+1.2.1 POST /api/seguridad/v1/cdm/operador/registrar
+------
+Autenticación: REQUERIDA (Bearer Token - Solo Administrador)
+Descripción: Registra un nuevo operador en el centro de monitoreo
+
+REQUEST:
+{
+  "nombre": "Carlos",
+  "apellido": "García",
+  "email": "carlos.garcia@cdm.com",
+  "contraseña": "OperadorSeguro2024!",
+  "numeroPersonal": "OP-001",
+  "rol": "OPERADOR"
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440003",
+  "nombre": "Carlos",
+  "apellido": "García",
+  "email": "carlos.garcia@cdm.com",
+  "numeroPersonal": "OP-001",
+  "rol": "OPERADOR",
+  "fechaRegistro": "2024-01-15T10:40:00Z",
+  "activo": true
+}
+
+================================================================================
+
+1.2.2 POST /api/seguridad/v1/cdm/administrador/registrar
+------
+Autenticación: REQUERIDA (Bearer Token - Solo Administrador)
+Descripción: Registra un nuevo administrador en el centro de monitoreo
+
+REQUEST:
+{
+  "nombre": "María",
+  "apellido": "López",
+  "email": "maria.lopez@cdm.com",
+  "contraseña": "AdminSeguro2024!",
+  "numeroPersonal": "AD-001",
+  "rol": "ADMINISTRADOR"
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440004",
+  "nombre": "María",
+  "apellido": "López",
+  "email": "maria.lopez@cdm.com",
+  "numeroPersonal": "AD-001",
+  "rol": "ADMINISTRADOR",
+  "fechaRegistro": "2024-01-15T10:45:00Z",
+  "activo": true
+}
+
+================================================================================
+
+1.2.3 POST /api/seguridad/v1/cdm/auth/login
+------
+Autenticación: NO REQUERIDA
+Descripción: Inicia sesión con credenciales de operador/administrador
+
+REQUEST:
+{
+  "email": "carlos.garcia@cdm.com",
+  "password": "OperadorSeguro2024!"
+}
+
+RESPONSE (200 OK):
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAzIn0...",
+  "id": "550e8400-e29b-41d4-a716-446655440003",
+  "email": "carlos.garcia@cdm.com",
+  "nombre": "Carlos",
+  "apellido": "García",
+  "rol": "OPERADOR",
+  "expiracion": "2024-01-15T18:45:00Z"
+}
+
+================================================================================
+
+1.2.4 POST /api/seguridad/v1/cdm/auth/logout
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Cierra la sesión del operador/administrador
+
+REQUEST:
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+RESPONSE (200 OK):
+{
+  "mensaje": "Sesión de operador cerrada correctamente"
+}
+
+================================================================================
+
+1.2.5 GET /api/seguridad/v1/cdm/operador/mis-datos
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Obtiene los datos del operador/administrador autenticado
+
+REQUEST:
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+RESPONSE (200 OK):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440003",
+  "nombre": "Carlos",
+  "apellido": "García",
+  "email": "carlos.garcia@cdm.com",
+  "numeroPersonal": "OP-001",
+  "rol": "OPERADOR",
+  "fechaRegistro": "2024-01-15T10:40:00Z",
+  "activo": true,
+  "turnos": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440010",
+      "fechaInicio": "2024-01-15T08:00:00Z",
+      "fechaFin": "2024-01-15T16:00:00Z",
+      "estado": "ACTIVO"
+    }
+  ]
+}
+
+================================================================================
+2. MS-APP-MOVIL (Port: 8091)
+================================================================================
+
+2.1 CatalogoController
+================================================================================
+
+2.1.1 GET /api/app-movil/v1/catalogo/estados-alarma
+------
+Autenticación: NO REQUERIDA
+Descripción: Obtiene el catálogo de estados de alarma disponibles
+
+REQUEST:
+Query Parameters (opcionales):
+  page: 0
+  size: 20
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": 1,
+      "descripcion": "ACTIVA",
+      "color": "#FF0000",
+      "icono": "alert_circle"
+    },
+    {
+      "id": 2,
+      "descripcion": "INACTIVA",
+      "color": "#00FF00",
+      "icono": "check_circle"
+    },
+    {
+      "id": 3,
+      "descripcion": "PENDIENTE",
+      "color": "#FFFF00",
+      "icono": "clock"
+    }
+  ],
+  "totalElementos": 3,
+  "numeroPagina": 0,
+  "tamanioPagina": 20,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+2.1.2 GET /api/app-movil/v1/catalogo/canales-notificacion
+------
+Autenticación: NO REQUERIDA
+Descripción: Obtiene el catálogo de canales de notificación disponibles
+
+REQUEST:
+Query Parameters (opcionales):
+  page: 0
+  size: 20
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": 1,
+      "nombre": "SMS",
+      "descripcion": "Notificación por mensaje de texto",
+      "activo": true
+    },
+    {
+      "id": 2,
+      "nombre": "EMAIL",
+      "descripcion": "Notificación por correo electrónico",
+      "activo": true
+    },
+    {
+      "id": 3,
+      "nombre": "PUSH",
+      "descripcion": "Notificación push en la aplicación",
+      "activo": true
+    }
+  ],
+  "totalElementos": 3,
+  "numeroPagina": 0,
+  "tamanioPagina": 20,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+2.1.3 GET /api/app-movil/v1/catalogo/estados-envio
+------
+Autenticación: NO REQUERIDA
+Descripción: Obtiene el catálogo de estados de envío de notificaciones
+
+REQUEST:
+Query Parameters (opcionales):
+  page: 0
+  size: 20
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": 1,
+      "nombre": "PENDIENTE",
+      "descripcion": "Notificación pendiente de envío"
+    },
+    {
+      "id": 2,
+      "nombre": "ENVIADA",
+      "descripcion": "Notificación enviada exitosamente"
+    },
+    {
+      "id": 3,
+      "nombre": "ENTREGADA",
+      "descripcion": "Notificación entregada al dispositivo"
+    },
+    {
+      "id": 4,
+      "nombre": "FALLIDA",
+      "descripcion": "Fallo en el envío de la notificación"
+    }
+  ],
+  "totalElementos": 4,
+  "numeroPagina": 0,
+  "tamanioPagina": 20,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+2.1.4 GET /api/app-movil/v1/catalogo/idiomas
+------
+Autenticación: NO REQUERIDA
+Descripción: Obtiene el catálogo de idiomas disponibles
+
+REQUEST:
+Query Parameters (opcionales):
+  page: 0
+  size: 20
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": 1,
+      "codigo": "es",
+      "nombre": "Español",
+      "activo": true
+    },
+    {
+      "id": 2,
+      "codigo": "en",
+      "nombre": "Inglés",
+      "activo": true
+    },
+    {
+      "id": 3,
+      "codigo": "pt",
+      "nombre": "Portugués",
+      "activo": true
+    }
+  ],
+  "totalElementos": 3,
+  "numeroPagina": 0,
+  "tamanioPagina": 20,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+2.1.5 GET /api/app-movil/v1/catalogo/metodos-activacion
+------
+Autenticación: NO REQUERIDA
+Descripción: Obtiene el catálogo de métodos de activación de alarma
+
+REQUEST:
+Query Parameters (opcionales):
+  page: 0
+  size: 20
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": 1,
+      "nombre": "BOTÓN DE PÁNICO",
+      "descripcion": "Activación manual presionando botón",
+      "icono": "panic_button"
+    },
+    {
+      "id": 2,
+      "nombre": "MICRÓFONO",
+      "descripcion": "Activación por comando de voz",
+      "icono": "microphone"
+    },
+    {
+      "id": 3,
+      "nombre": "DETECCIÓN CAÍDA",
+      "descripcion": "Activación automática al detectar caída",
+      "icono": "alert"
+    }
+  ],
+  "totalElementos": 3,
+  "numeroPagina": 0,
+  "tamanioPagina": 20,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+2.1.6 GET /api/app-movil/v1/catalogo/metodos-ubicacion
+------
+Autenticación: NO REQUERIDA
+Descripción: Obtiene el catálogo de métodos de ubicación disponibles
+
+REQUEST:
+Query Parameters (opcionales):
+  page: 0
+  size: 20
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": 1,
+      "nombre": "GPS",
+      "descripcion": "Ubicación por satélite GPS",
+      "precision": 5
+    },
+    {
+      "id": 2,
+      "nombre": "WIFI",
+      "descripcion": "Ubicación por red WiFi",
+      "precision": 20
+    },
+    {
+      "id": 3,
+      "nombre": "CELL ID",
+      "descripcion": "Ubicación por torre celular",
+      "precision": 100
+    }
+  ],
+  "totalElementos": 3,
+  "numeroPagina": 0,
+  "tamanioPagina": 20,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+2.1.7 GET /api/app-movil/v1/catalogo/prioridades-alarma
+------
+Autenticación: NO REQUERIDA
+Descripción: Obtiene el catálogo de prioridades de alarma
+
+REQUEST:
+Query Parameters (opcionales):
+  page: 0
+  size: 20
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": 1,
+      "nombre": "CRÍTICA",
+      "descripcion": "Situación crítica que requiere atención inmediata",
+      "nivel": 3,
+      "color": "#FF0000"
+    },
+    {
+      "id": 2,
+      "nombre": "ALTA",
+      "descripcion": "Situación grave que requiere atención urgente",
+      "nivel": 2,
+      "color": "#FF6600"
+    },
+    {
+      "id": 3,
+      "nombre": "MEDIA",
+      "descripcion": "Situación moderada que requiere atención",
+      "nivel": 1,
+      "color": "#FFFF00"
+    },
+    {
+      "id": 4,
+      "nombre": "BAJA",
+      "descripcion": "Situación de baja prioridad",
+      "nivel": 0,
+      "color": "#00FF00"
+    }
+  ],
+  "totalElementos": 4,
+  "numeroPagina": 0,
+  "tamanioPagina": 20,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+2.2 AlarmaController
+================================================================================
+
+2.2.1 POST /api/app-movil/v1/alarma/nueva
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Crea una nueva alarma en el sistema
+
+REQUEST:
+{
+  "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+  "metodosActivacion": [1, 2],
+  "metodoUbicacion": 1,
+  "prioridad": 2,
+  "ubicacion": {
+    "latitud": -34.6037,
+    "longitud": -58.3816,
+    "altura": 25.5
+  }
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440020",
+  "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+  "estado": "ACTIVA",
+  "prioridad": 2,
+  "fechaCreacion": "2024-01-15T14:30:00Z",
+  "ubicacion": {
+    "latitud": -34.6037,
+    "longitud": -58.3816,
+    "altura": 25.5
+  },
+  "metodosActivacion": [1, 2],
+  "distanciaDesdeOperador": 1.5
+}
+
+================================================================================
+
+2.2.2 POST /api/app-movil/v1/alarma/{alarmaId}/ubicacion
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Actualiza la ubicación de una alarma activa
+
+REQUEST:
+Path Parameter:
+  alarmaId: 550e8400-e29b-41d4-a716-446655440020
+
+Body:
+{
+  "latitud": -34.6050,
+  "longitud": -58.3825,
+  "altura": 26.0,
+  "precision": 4
+}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+================================================================================
+
+2.2.3 PUT /api/app-movil/v1/alarma/{alarmaId}/finalizar
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Finaliza una alarma activa
+
+REQUEST:
+Path Parameter:
+  alarmaId: 550e8400-e29b-41d4-a716-446655440020
+
+Body:
+{
+  "motivo": "Falsa alarma",
+  "detalles": "Se activó accidentalmente"
+}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+================================================================================
+
+2.2.4 POST /api/app-movil/v1/alarma/{alarmaId}/reactivar
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Reactiva una alarma previamente finalizada
+
+REQUEST:
+Path Parameters:
+  alarmaId: 550e8400-e29b-41d4-a716-446655440020
+
+Query Parameters:
+  dispositivoId: 550e8400-e29b-41d4-a716-446655440001
+
+Body:
+{}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+================================================================================
+
+2.3 ContactoController
+================================================================================
+
+2.3.1 POST /api/app-movil/v1/contacto/nuevo
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Crea un nuevo contacto de emergencia
+
+REQUEST:
+{
+  "nombre": "Pedro",
+  "apellido": "Martínez",
+  "relacion": "Hijo",
+  "telefonos": ["1123456789", "1234567890"],
+  "emails": ["pedro.martinez@email.com"],
+  "prioridad": 1
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440030",
+  "nombre": "Pedro",
+  "apellido": "Martínez",
+  "relacion": "Hijo",
+  "telefonos": ["1123456789", "1234567890"],
+  "emails": ["pedro.martinez@email.com"],
+  "prioridad": 1,
+  "fechaCreacion": "2024-01-15T14:35:00Z"
+}
+
+================================================================================
+
+2.3.2 POST /api/app-movil/v1/contacto/{contactoId}/editar
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Edita un contacto de emergencia existente
+
+REQUEST:
+Path Parameter:
+  contactoId: 550e8400-e29b-41d4-a716-446655440030
+
+Body:
+{
+  "nombre": "Pedro",
+  "apellido": "Martínez López",
+  "relacion": "Hijo",
+  "telefonos": ["1123456789", "1199887766"],
+  "emails": ["pedro.martinez@email.com", "p.martinez@work.com"],
+  "prioridad": 2
+}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+================================================================================
+
+2.3.3 PUT /api/app-movil/v1/contacto/{contactoId}/eliminar
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Elimina un contacto de emergencia
+
+REQUEST:
+Path Parameter:
+  contactoId: 550e8400-e29b-41d4-a716-446655440030
+
+Body:
+{}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+================================================================================
+
+2.4 ConfiguracionController
+================================================================================
+
+2.4.1 POST /api/app-movil/v1/config/nuevo
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Crea una nueva configuración personalizada del usuario
+
+REQUEST:
+{
+  "nombreConfiguracion": "Configuración Personal",
+  "idioma": 1,
+  "notificacionesActivas": true,
+  "canalNotificacion": 3,
+  "compartirUbicacion": true,
+  "frecuenciaLocationUpdate": 30,
+  "temaDiurno": true,
+  "sensibilidadGPS": "ALTA"
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440040",
+  "nombreConfiguracion": "Configuración Personal",
+  "idioma": 1,
+  "notificacionesActivas": true,
+  "canalNotificacion": 3,
+  "compartirUbicacion": true,
+  "frecuenciaLocationUpdate": 30,
+  "temaDiurno": true,
+  "sensibilidadGPS": "ALTA",
+  "fechaCreacion": "2024-01-15T14:40:00Z"
+}
+
+================================================================================
+
+2.4.2 POST /api/app-movil/v1/config/{configId}/editar
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Edita una configuración personalizada del usuario
+
+REQUEST:
+Path Parameter:
+  configId: 550e8400-e29b-41d4-a716-446655440040
+
+Body:
+{
+  "nombreConfiguracion": "Configuración Viajes",
+  "idioma": 2,
+  "notificacionesActivas": true,
+  "canalNotificacion": 2,
+  "compartirUbicacion": true,
+  "frecuenciaLocationUpdate": 20,
+  "temaDiurno": false,
+  "sensibilidadGPS": "MEDIA"
+}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+================================================================================
+3. MS-CDM-CONTROL (Port: 8092)
+================================================================================
+
+3.1 AlarmaController
+================================================================================
+
+3.1.1 GET /api/cdm-control/v1/dashboard/filtrar-alarmas
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Obtiene lista paginada de alarmas con filtros avanzados
+
+REQUEST:
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Query Parameters (todos opcionales):
+  estadoId: 1
+  prioridad: 2
+  fechaDesde: 2024-01-01T00:00:00Z
+  fechaHasta: 2024-01-31T23:59:59Z
+  operadorId: 550e8400-e29b-41d4-a716-446655440003
+  asignacionId: 550e8400-e29b-41d4-a716-446655440050
+  page: 0
+  size: 10
+
+Ejemplo URL completa:
+/api/cdm-control/v1/dashboard/filtrar-alarmas?estadoId=1&prioridad=2&fechaDesde=2024-01-01T00:00:00Z&fechaHasta=2024-01-31T23:59:59Z&operadorId=550e8400-e29b-41d4-a716-446655440003&page=0&size=10
+
+RESPONSE (200 OK):
+{
+  "contenido": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440020",
+      "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+      "estado": "ACTIVA",
+      "prioridad": 2,
+      "fechaCreacion": "2024-01-15T14:30:00Z",
+      "ubicacionActual": {
+        "latitud": -34.6037,
+        "longitud": -58.3816,
+        "altura": 25.5
+      },
+      "asignadoA": {
+        "id": "550e8400-e29b-41d4-a716-446655440003",
+        "nombre": "Carlos García"
+      },
+      "metodosActivacion": [1, 2]
+    }
+  ],
+  "totalElementos": 1,
+  "numeroPagina": 0,
+  "tamanioPagina": 10,
+  "totalPaginas": 1,
+  "primeraPagina": true,
+  "ultimaPagina": true
+}
+
+================================================================================
+
+3.1.2 GET /api/cdm-control/v1/dashboard/alerta/{id}
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Obtiene los detalles completos de una alarma específica
+
+REQUEST:
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Path Parameter:
+  id: 550e8400-e29b-41d4-a716-446655440020
+
+RESPONSE (200 OK):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440020",
+  "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+  "estado": "ACTIVA",
+  "prioridad": 2,
+  "fechaCreacion": "2024-01-15T14:30:00Z",
+  "ubicacionActual": {
+    "latitud": -34.6037,
+    "longitud": -58.3816,
+    "altura": 25.5,
+    "precision": 5
+  },
+  "asignadoA": {
+    "id": "550e8400-e29b-41d4-a716-446655440003",
+    "nombre": "Carlos",
+    "apellido": "García"
+  },
+  "metodosActivacion": [1, 2],
+  "detalles": "Alarma de seguridad activada manualmente"
+}
+
+================================================================================
+
+3.1.3 GET /api/cdm-control/v1/dashboard/alerta/{id}/ubicaciones
+------
+Autenticación: REQUERIDA (Bearer Token)
+Descripción: Obtiene el historial de ubicaciones de una alarma
+
+REQUEST:
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Path Parameter:
+  id: 550e8400-e29b-41d4-a716-446655440020
+
+RESPONSE (200 OK):
+{
+  "ubicaciones": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440050",
+      "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+      "latitud": -34.6037,
+      "longitud": -58.3816,
+      "altura": 25.5,
+      "precision": 5,
+      "timestamp": "2024-01-15T14:30:00Z",
+      "secuencia": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440051",
+      "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+      "latitud": -34.6040,
+      "longitud": -58.3820,
+      "altura": 25.8,
+      "precision": 4,
+      "timestamp": "2024-01-15T14:31:00Z",
+      "secuencia": 2
+    }
+  ]
+}
+
+================================================================================
+
+3.1.4 WS /ws/secure-on
+------
+Tipo: WebSocket
+Autenticación: REQUERIDA (Token en header)
+Descripción: Conexión WebSocket para comunicación en tiempo real
+
+HANDSHAKE REQUEST:
+GET /ws/secure-on HTTP/1.1
+Host: localhost:8092
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+X-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+HANDSHAKE RESPONSE (101 Switching Protocols):
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+
+Estado: Listo para enviar/recibir mensajes STOMP
+
+================================================================================
+
+3.2 WebSocket STOMP Subscriptions
+================================================================================
+
+3.2.1 SUBSCRIBE /app/topic/alarma/nueva
+------
+Descripción: Se suscribe a nuevas alarmas creadas en el sistema
+
+SUBSCRIBE MESSAGE:
+SUBSCRIBE
+id: sub-1
+destination: /app/topic/alarma/nueva
+
+INCOMING MESSAGE (cuando se crea una nueva alarma):
+{
+  "tipo": "ALARMA_NUEVA",
+  "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+  "timestamp": "2024-01-15T14:30:00Z",
+  "datos": {
+    "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+    "prioridad": 2,
+    "ubicacion": {
+      "latitud": -34.6037,
+      "longitud": -58.3816
+    },
+    "metodosActivacion": [1, 2]
+  }
+}
+
+================================================================================
+
+3.2.2 SUBSCRIBE /app/topic/alarma/actualizada
+------
+Descripción: Se suscribe a cambios de estado de alarmas
+
+SUBSCRIBE MESSAGE:
+SUBSCRIBE
+id: sub-2
+destination: /app/topic/alarma/actualizada
+
+INCOMING MESSAGE (cuando cambia el estado de una alarma):
+{
+  "tipo": "ALARMA_ACTUALIZADA",
+  "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+  "timestamp": "2024-01-15T14:35:00Z",
+  "datos": {
+    "estado": "INACTIVA",
+    "motivoFinalizacion": "Falsa alarma",
+    "operadorAsignado": "550e8400-e29b-41d4-a716-446655440003"
+  }
+}
+
+================================================================================
+
+3.2.3 SUBSCRIBE /app/topic/ubicacion/actualizada
+------
+Descripción: Se suscribe a cambios de ubicación de alarmas activas
+
+SUBSCRIBE MESSAGE:
+SUBSCRIBE
+id: sub-3
+destination: /app/topic/ubicacion/actualizada
+
+INCOMING MESSAGE (cuando se actualiza la ubicación):
+{
+  "tipo": "UBICACION_ACTUALIZADA",
+  "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+  "timestamp": "2024-01-15T14:31:00Z",
+  "datos": {
+    "latitud": -34.6040,
+    "longitud": -58.3820,
+    "altura": 25.8,
+    "precision": 4
+  }
+}
+
+================================================================================
+
+3.2.4 SUBSCRIBE /app/topic/operador/conectado
+------
+Descripción: Se suscribe a eventos cuando operadores se conectan
+
+SUBSCRIBE MESSAGE:
+SUBSCRIBE
+id: sub-4
+destination: /app/topic/operador/conectado
+
+INCOMING MESSAGE (cuando se conecta un operador):
+{
+  "tipo": "OPERADOR_CONECTADO",
+  "operadorId": "550e8400-e29b-41d4-a716-446655440003",
+  "timestamp": "2024-01-15T15:00:00Z",
+  "datos": {
+    "nombre": "Carlos",
+    "apellido": "García",
+    "estado": "DISPONIBLE"
+  }
+}
+
+================================================================================
+
+3.2.5 SUBSCRIBE /app/topic/operador/desconectado
+------
+Descripción: Se suscribe a eventos cuando operadores se desconectan
+
+SUBSCRIBE MESSAGE:
+SUBSCRIBE
+id: sub-5
+destination: /app/topic/operador/desconectado
+
+INCOMING MESSAGE (cuando se desconecta un operador):
+{
+  "tipo": "OPERADOR_DESCONECTADO",
+  "operadorId": "550e8400-e29b-41d4-a716-446655440003",
+  "timestamp": "2024-01-15T15:30:00Z",
+  "datos": {
+    "nombre": "Carlos",
+    "apellido": "García",
+    "motivoDesconexion": "Fin de turno"
+  }
+}
+
+================================================================================
+
+3.2.6 SUBSCRIBE /app/queue/notificaciones
+------
+Descripción: Se suscribe a notificaciones específicas para el usuario
+
+SUBSCRIBE MESSAGE:
+SUBSCRIBE
+id: sub-6
+destination: /app/queue/notificaciones
+
+INCOMING MESSAGE (notificación recibida):
+{
+  "tipo": "NOTIFICACION",
+  "contenido": {
+    "titulo": "Nueva alarma asignada",
+    "descripcion": "Se ha asignado una alarma de prioridad ALTA",
+    "alarmaId": "550e8400-e29b-41d4-a716-446655440020"
+  },
+  "urgencia": "ALTA",
+  "timestamp": "2024-01-15T14:30:00Z"
+}
+
+================================================================================
+
+3.2.7 SUBSCRIBE /app/queue/asignaciones
+------
+Descripción: Se suscribe a nuevas asignaciones de alarmas
+
+SUBSCRIBE MESSAGE:
+SUBSCRIBE
+id: sub-7
+destination: /app/queue/asignaciones
+
+INCOMING MESSAGE (nueva asignación):
+{
+  "tipo": "ASIGNACION_NUEVA",
+  "contenido": {
+    "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+    "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+    "descripcion": "Solicitud de emergencia en Av. 9 de Julio",
+    "prioridad": "ALTA",
+    "ubicacion": {
+      "latitud": -34.6037,
+      "longitud": -58.3816
+    }
+  },
+  "urgencia": "ALTA",
+  "timestamp": "2024-01-15T14:30:00Z"
+}
+
+================================================================================
+4. MS-API-GATEWAY (Port: 8090)
+================================================================================
+
+4.1 ProxyController
+================================================================================
+
+4.1.1 ANY /api/secure-on/**
+------
+Autenticación: VARIABLE (depende del destino)
+Descripción: Proxy dinámico que enruta todas las solicitudes a los microservicios correspondientes
+
+RUTAS INTERNAS:
+/api/secure-on/seguridad/**          -> ms-seguridad:8093/api/seguridad/v1/**
+/api/secure-on/servicios-moviles/**  -> ms-app-movil:8091/api/app-movil/v1/**
+/api/secure-on/centro-de-monitoreo/** -> ms-cdm-control:8092/api/cdm-control/v1/**
+
+EJEMPLO 1 - Solicitud a ms-seguridad:
+REQUEST:
+POST /api/secure-on/seguridad/v1/app/auth/login HTTP/1.1
+Host: localhost:8090
+Content-Type: application/json
+
+{
+  "email": "usuario@example.com",
+  "password": "MiContraseña123!",
+  "dispositivoAppId": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+RESPONSE (200 OK):
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "usuario@example.com",
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "dispositivoId": "550e8400-e29b-41d4-a716-446655440001",
+  "expiracion": "2024-01-15T18:30:00Z"
+}
+
+EJEMPLO 2 - Solicitud a ms-app-movil:
+REQUEST:
+POST /api/secure-on/servicios-moviles/v1/alarma/nueva HTTP/1.1
+Host: localhost:8090
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+{
+  "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+  "metodosActivacion": [1, 2],
+  "metodoUbicacion": 1,
+  "prioridad": 2,
+  "ubicacion": {
+    "latitud": -34.6037,
+    "longitud": -58.3816,
+    "altura": 25.5
+  }
+}
+
+RESPONSE (201 Created):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440020",
+  "usuarioId": "550e8400-e29b-41d4-a716-446655440000",
+  "estado": "ACTIVA",
+  "prioridad": 2,
+  "fechaCreacion": "2024-01-15T14:30:00Z",
+  "ubicacion": {
+    "latitud": -34.6037,
+    "longitud": -58.3816,
+    "altura": 25.5
+  },
+  "metodosActivacion": [1, 2],
+  "distanciaDesdeOperador": 1.5
+}
+
+================================================================================
+
+4.2 InternalController
+================================================================================
+
+4.2.1 POST /ws/internal/enviar
+------
+Autenticación: NO REQUERIDA
+Descripción: Envía un evento a todos los usuarios suscritos a un tópico STOMP
+
+REQUEST:
+{
+  "destination": "/topic/alarma/nueva",
+  "payload": {
+    "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+    "estado": "ACTIVA",
+    "prioridad": 2,
+    "usuarioId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "timestamp": "2024-01-15T14:30:00Z"
+}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+Aclaración: Este endpoint es para uso interno entre microservicios.
+
+================================================================================
+
+4.2.2 POST /ws/internal/enviar/{user}
+------
+Autenticación: NO REQUERIDA
+Descripción: Envía un evento a un usuario específico (a través de su queue privada)
+
+REQUEST:
+Path Parameter:
+  user: 550e8400-e29b-41d4-a716-446655440003
+
+Body:
+{
+  "destination": "/app/queue/asignaciones",
+  "payload": {
+    "alarmaId": "550e8400-e29b-41d4-a716-446655440020",
+    "descripcion": "Nueva alarma destinada a ti",
+    "prioridad": "ALTA",
+    "ubicacion": {
+      "latitud": -34.6037,
+      "longitud": -58.3816
+    }
+  },
+  "timestamp": "2024-01-15T14:30:00Z"
+}
+
+RESPONSE (204 No Content):
+(Sin contenido)
+
+Aclaración: Este endpoint es para uso interno entre microservicios. El parámetro 'user' 
+debe ser el ID del usuario destino.
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+1. AUTENTICACIÓN:
+   - Los tokens son JWT (JSON Web Tokens)
+   - Todos los endpoints que requieren autenticación esperan: Authorization: Bearer <token>
+   - Los tokens expiran en el tiempo indicado en "expiracion"
+   - Para WebSocket, el token se envía en el header X-Authorization
+
+2. CÓDIGOS DE RESPUESTA HTTP:
+   - 200 OK: Solicitud exitosa con contenido
+   - 201 Created: Un recurso fue creado exitosamente
+   - 204 No Content: Solicitud exitosa sin contenido
+   - 400 Bad Request: Parámetros inválidos
+   - 401 Unauthorized: Token faltante o inválido
+   - 403 Forbidden: Acceso denegado
+   - 404 Not Found: Recurso no encontrado
+   - 500 Internal Server Error: Error en el servidor
+
+3. PAGINACIÓN:
+   - Los endpoints que devuelven listas implementan paginación
+   - Parámetros: page (número de página, comienza en 0), size (elementos por página)
+   - Respuesta incluye: totalElementos, numeroPagina, tamanioPagina, totalPaginas, primeraPagina, ultimaPagina
+
+4. TIMESTAMPS:
+   - Todos los timestamps están en formato ISO 8601: YYYY-MM-DDTHH:mm:ssZ
+   - Zona horaria: UTC (Z indica UTC)
+
+5. COORDENADAS GEOGRÁFICAS:
+   - Latitud: rango -90 a 90 (decimal)
+   - Longitud: rango -180 a 180 (decimal)
+   - Altura: metros sobre el nivel del mar (decimal)
+   - Precisión: metros (numérico)
+
+6. RATE LIMITING:
+   - Considerar implementar límite de requests por usuario
+   - API Gateway es el punto de entrada para aplicar políticas globales
+
+7. SEGURIDAD:
+   - Todas las contraseñas deben cumplir requisitos mínimos (mayús, minús, números, caracteres especiales)
+   - No se devuelven contraseñas en respuestas
+   - Los tokens no pueden ser revocados retroactivamente (considerar whitelist para logout real)
+
+================================================================================
+FIN DEL INFORME
+================================================================================
+Generado: 15 de Enero de 2024
+Versión de API: v1.0

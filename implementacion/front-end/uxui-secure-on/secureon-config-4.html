@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configuración de Rendimiento</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111521",
+                        "silver-panel": "#e2e8f0",
+                        "silver-light": "#f8fafc",
+                        "silver-dark": "#94a3b8",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .silver-gradient {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+        }
+        .panel-inset {
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+        .inverted-slider-track {
+            background: linear-gradient(to right, #000000 0%, #ef4444 20%, #eab308 50%, #22c55e 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-[#f1f3f6] min-h-screen flex flex-col font-['Public_Sans',_sans-serif]">
+<!-- Header Navigation -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<div class="flex items-center justify-between px-4 h-14 max-w-md mx-auto">
+<button class="p-2 text-gray-800">
+<span class="material-symbols-outlined text-xl font-bold">chevron_left</span>
+</button>
+<h1 class="text-[#1a1a1a] text-lg font-bold">Configuración de Rendimiento</h1>
+<button class="p-2 text-gray-800">
+<span class="material-symbols-outlined text-xl font-bold">chevron_right</span>
+</button>
+</div>
+</header>
+<!-- Main Content Panel -->
+<main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
+<!-- Battery Management Section -->
+<section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+<div class="p-4 flex items-center justify-between border-b border-gray-50">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined text-lg">battery_charging_full</span>
+</div>
+<span class="font-medium text-gray-700">Gestión batería</span>
+</div>
+</div>
+<div class="p-4">
+<div class="bg-gray-100 p-1 rounded-lg flex gap-1">
+<label class="flex-1">
+<input class="hidden peer" name="battery-mode" type="radio" value="max"/>
+<div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white peer-checked:text-blue-900 text-gray-500 cursor-pointer uppercase">
+                    Máximo
+                </div>
+</label>
+<label class="flex-1">
+<input checked="" class="hidden peer" name="battery-mode" type="radio" value="balanced"/>
+<div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white peer-checked:text-blue-900 text-gray-500 cursor-pointer uppercase">
+                    Equilibrado
+                </div>
+</label>
+<label class="flex-1">
+<input class="hidden peer" name="battery-mode" type="radio" value="min"/>
+<div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white peer-checked:text-blue-900 text-gray-500 cursor-pointer uppercase">
+                    Mínimo
+                </div>
+</label>
+</div>
+</div>
+</section>
+<!-- Numeric Inputs Section -->
+<section class="space-y-4">
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+<label class="text-xs font-bold text-gray-500 uppercase mb-2 block px-1">Umbral máximo (%)</label>
+<input class="w-full h-11 bg-gray-50 border border-gray-200 rounded-lg px-4 text-gray-900 focus:ring-0 focus:border-blue-900" type="number" value="90"/>
+</div>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+<label class="text-xs font-bold text-gray-500 uppercase mb-2 block px-1">Umbral equilibrado (%)</label>
+<input class="w-full h-11 bg-gray-50 border border-gray-200 rounded-lg px-4 text-gray-900 focus:ring-0 focus:border-blue-900" type="number" value="50"/>
+</div>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+<label class="text-xs font-bold text-gray-500 uppercase mb-2 block px-1">Umbral mínimo (%)</label>
+<input class="w-full h-11 bg-gray-50 border border-gray-200 rounded-lg px-4 text-gray-900 focus:ring-0 focus:border-blue-900" type="number" value="15"/>
+</div>
+</section>
+<!-- Inverted Thresholds Slider Section -->
+<section class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+<div class="flex justify-between items-center mb-6 px-1">
+<h2 class="text-sm font-bold text-gray-700 uppercase tracking-tight">Visualización Umbrales</h2>
+<span class="text-[10px] font-bold text-gray-400 uppercase">Estado de Carga</span>
+</div>
+<div class="relative pt-6 pb-2">
+<div class="absolute top-0 left-0 w-full flex justify-between text-[10px] font-bold text-gray-400 uppercase px-1">
+<span>0%</span>
+<span>Crítico</span>
+<span>Bajo</span>
+<span>Regular</span>
+<span>100%</span>
+</div>
+<div class="h-4 w-full inverted-slider-track rounded-full shadow-inner relative overflow-hidden">
+</div>
+<div class="absolute -bottom-1 left-[75%] -translate-x-1/2 flex flex-col items-center">
+<div class="w-0.5 h-6 bg-gray-800"></div>
+<div class="mt-1 bg-gray-800 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">75%</div>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-4 gap-1">
+<div class="flex items-center gap-1">
+<div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+<span class="text-[9px] font-bold text-gray-500 uppercase">Máx</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+<span class="text-[9px] font-bold text-gray-500 uppercase">Med</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+<span class="text-[9px] font-bold text-gray-500 uppercase">Bajo</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="w-2.5 h-2.5 rounded-full bg-black"></div>
+<span class="text-[9px] font-bold text-gray-500 uppercase">Crít</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Actions -->
+<footer class="bg-white border-t border-gray-200 p-4 sticky bottom-0 z-50">
+<div class="max-w-md mx-auto grid grid-cols-3 gap-3">
+<button class="h-12 border border-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors hover:bg-gray-50">
+            Cancelar
+        </button>
+<button class="h-12 border border-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors hover:bg-gray-50">
+            Restablecer
+        </button>
+<button class="h-12 bg-[#1d3583] text-white font-bold rounded-xl text-sm shadow-md">
+            Guardar
+        </button>
+</div>
+</footer>
+<!-- Navigation Mockup Bottom (to match previous screen style) -->
+
+</body></html>

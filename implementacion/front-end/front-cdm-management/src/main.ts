@@ -1,6 +1,6 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app/app.component';
@@ -10,7 +10,7 @@ import { AuthInterceptor } from './app/interceptors/auth.interceptor';
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(withInterceptorsFromDi()),
     importProvidersFrom(BrowserAnimationsModule),
     {
       provide: HTTP_INTERCEPTORS,

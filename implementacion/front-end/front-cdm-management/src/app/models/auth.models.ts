@@ -16,18 +16,28 @@ export interface AuthResponse {
   user: User;
 }
 
+
 export interface LoginRequest {
   username: string;
   password: string;
+  appId?: string; // Opcional: para identificar dispositivo o mock en web
 }
 
 export interface RegisterRequest {
-  username: string;
   email: string;
   firstName: string;
   lastName: string;
   phone: string;
   address: string;
   password: string;
-  confirmPassword: string;
+  confirmPassword?: string;
+  legajo?: number;
+  supervisorId?: string;
+}
+
+export interface Supervisor {
+  id: string;
+  nombre: string;
+  apellido: string;
+  legajo: number;
 }

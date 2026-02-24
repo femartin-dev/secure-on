@@ -1,0 +1,19 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.bg-background-dark {
+  background-color: #111521;
+}
+
+/* Pulse animation for glow */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

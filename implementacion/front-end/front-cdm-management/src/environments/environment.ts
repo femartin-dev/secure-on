@@ -3,7 +3,8 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000/api',
-  socketUrl: 'http://localhost:3000',
-  googleMapsApiKey: 'YOUR_GOOGLE_MAPS_API_KEY_HERE'
+  logSensitiveData: true,
+  apiUrl: 'http://localhost:8090/api/secure-on',
+  socketUrl: 'ws://localhost:8090/ws/secure-on',
+  googleMapsApiKey: 'AIzaSyAlTK4mI1tcPSl_aOwuB8NupV2NHE7aEwg'
 };

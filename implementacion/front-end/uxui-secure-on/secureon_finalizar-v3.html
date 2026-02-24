@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Autenticación por Patrón</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3661e2",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111521",
+                        "surface-dark": "#1a1f2e",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="relative flex h-full min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden font-display">
+<!-- TopAppBar -->
+<div class="flex items-center bg-transparent p-4 pb-2 justify-between pt-10 sm:pt-4">
+<div class="text-white/80 flex size-12 shrink-0 items-center justify-center cursor-pointer hover:bg-white/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Seguridad</h2>
+<div class="text-white/80 flex size-12 shrink-0 items-center justify-center cursor-pointer hover:bg-white/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col justify-center items-center w-full max-w-md mx-auto">
+<!-- HeadlineText -->
+<div class="w-full">
+<h3 class="text-white tracking-light text-2xl font-bold leading-tight px-4 text-center pb-2 pt-5">
+                Dibuje su patrón para desactivar la alarma
+            </h3>
+</div>
+<!-- Pattern Grid (Adapted from ImageGrid to be a 3x3 Dot Grid) -->
+<div class="relative w-full flex justify-center py-12">
+<!-- Container for the 3x3 grid -->
+<div class="grid grid-cols-3 gap-10 p-6">
+<!-- Dot 1 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 2 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 3 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 4 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 5 (Center) -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 6 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 7 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 8 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+<!-- Dot 9 -->
+<div class="flex items-center justify-center size-12 rounded-full cursor-pointer group">
+<div class="size-4 bg-slate-400/50 rounded-full group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(54,97,226,0.6)] transition-all duration-300"></div>
+</div>
+</div>
+<!-- Simulated interaction trace (Ghost lines for visual cue) -->
+<svg class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] h-[240px] pointer-events-none opacity-0 md:opacity-0" style="z-index: 0;">
+<path d="M 40 40 L 120 120" stroke="#3661e2" stroke-width="2"></path>
+</svg>
+</div>
+<!-- BodyText -->
+<p class="text-slate-400 text-sm font-normal leading-normal pb-8 pt-1 px-8 text-center">
+            Dibuja la línea para conectar al menos 4 puntos
+        </p>
+</div>
+<!-- Footer Area -->
+<div class="pb-10 pt-4 bg-gradient-to-t from-background-dark via-background-dark to-transparent">
+<!-- SingleButton -->
+<div class="flex flex-col gap-4 px-4 justify-center items-center">
+<button class="flex w-full max-w-[320px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-6 bg-primary hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 text-white text-base font-bold leading-normal tracking-[0.015em]">
+<span class="material-symbols-outlined mr-2 text-[20px]">dialpad</span>
+<span class="truncate">Usar código PIN en su lugar</span>
+</button>
+<button class="text-primary/80 hover:text-white text-sm font-medium transition-colors py-2">
+                ¿Olvidaste tu patrón?
+            </button>
+</div>
+</div>
+<!-- Bottom safe area spacer -->
+<div class="h-2 bg-background-dark w-full"></div>
+</body></html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configuración de Activación</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "primary-dark": "#102a7a",
+                        "background-light": "#f3f4f6", // Soft Silver Gray
+                        "background-dark": "#111521",
+                        "success": "#10B981", // Green for Save
+                        "danger": "#EF4444", // Red for Cancel
+                        "info": "#3B82F6", // Blue for Reset
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 20px;
+        }input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #1e3a8a;
+            margin-top: -8px; 
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e5e7eb;
+            border-radius: 2px;
+        }
+        .dark input[type=range]::-webkit-slider-runnable-track {
+            background: #4b5563;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden h-screen w-full flex flex-col text-[#111317] dark:text-white">
+<header class="shrink-0 bg-background-light dark:bg-background-dark text-[#111317] dark:text-white shadow-md z-10 pt-safe-top">
+<div class="flex items-center justify-between p-4 h-16">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-2xl">chevron_left</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] text-center truncate px-2 flex-1">Configuración de Seguridad</h2>
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-2xl">chevron_right</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto relative flex flex-col p-4 w-full max-w-md mx-auto justify-start pt-6 gap-5"><!-- Desbloqueo por huella -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+<div class="p-4 flex items-center justify-between h-16">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#1e3a8a] dark:text-blue-400">
+<span class="material-symbols-outlined text-xl">fingerprint</span>
+</div>
+<span class="text-base font-medium text-gray-900 dark:text-white">Desbloqueo por huella</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#1e3a8a]"></div>
+</label>
+</div>
+<div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+<button class="flex w-full cursor-pointer items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold transition-colors shadow-sm">
+            DEFINIR HUELLA
+        </button>
+</div>
+</div>
+<!-- Patrón de desbloqueo -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+<div class="p-4 flex items-center justify-between h-16">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined text-xl">gesture</span>
+</div>
+<span class="text-base font-medium text-gray-900 dark:text-white">Patrón de desbloqueo</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#1e3a8a]"></div>
+</label>
+</div>
+<div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+<button class="flex w-full cursor-pointer items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold transition-colors shadow-sm">
+            DEFINIR PATRÓN
+        </button>
+</div>
+</div>
+<!-- PIN numérico -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+<div class="p-4 flex items-center justify-between h-16">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined text-xl">dialpad</span>
+</div>
+<span class="text-base font-medium text-gray-900 dark:text-white">PIN numérico</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#1e3a8a]"></div>
+</label>
+</div>
+<div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+<input class="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-[#1e3a8a] focus:border-[#1e3a8a] dark:text-white" placeholder="INGRESAR PIN (4-6 DÍGITOS)" type="password"/>
+</div>
+</div>
+<!-- Contraseña -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+<div class="p-4 flex items-center justify-between h-16">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400">
+<span class="material-symbols-outlined text-xl">lock</span>
+</div>
+<span class="text-base font-medium text-gray-900 dark:text-white">Contraseña</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#1e3a8a]"></div>
+</label>
+</div>
+<div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+<input class="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-[#1e3a8a] focus:border-[#1e3a8a] dark:text-white" placeholder="INGRESAR CONTRASEÑA" type="password"/>
+</div>
+</div>
+<!-- Número máximo intentos -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+<div class="p-4 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined text-xl">report</span>
+</div>
+<span class="text-base font-medium text-gray-900 dark:text-white">Número máximo intentos</span>
+</div>
+<div class="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
+<button class="flex-1 py-1.5 text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">3</button>
+<button class="flex-1 py-1.5 text-sm font-bold rounded-md bg-white dark:bg-gray-600 text-[#1e3a8a] dark:text-white shadow-sm transition-all">5</button>
+<button class="flex-1 py-1.5 text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">10</button>
+</div>
+</div>
+</div></main>
+<footer class="shrink-0 bg-background-light dark:bg-background-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] pb-safe-bottom z-10">
+<div class="flex flex-col gap-3 px-4 py-4 w-full max-w-md mx-auto">
+<div class="grid grid-cols-3 gap-3"><button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-gray-100 dark:active:bg-gray-600">
+<span class="truncate">Cancelar</span>
+</button>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-gray-100 dark:active:bg-gray-600">
+<span class="truncate">Restablecer</span>
+</button>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-[#1e3a8a] border border-transparent hover:bg-[#172554] text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-[#0f172a]">
+<span class="truncate">Guardar</span>
+</button></div>
+<div class="h-1"></div>
+</div>
+</footer>
+<style>
+    @supports (padding-top: env(safe-area-inset-top)) {
+        .pt-safe-top {
+            padding-top: env(safe-area-inset-top);
+        }
+        .pb-safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
+    @media screen and (min-width: 0px) { 
+        .pb-safe-bottom { padding-bottom: 1rem; }
+    }
+</style>
+</body></html>

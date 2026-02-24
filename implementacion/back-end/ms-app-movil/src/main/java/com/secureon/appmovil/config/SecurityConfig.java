@@ -26,8 +26,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/ws/**", "/api/app-movil/v1/catalogo/**").permitAll()  // WebSocket handshake permitido
-                .anyRequest().authenticated()
+                //.requestMatchers("/api/app-movil/v1/catalogo/**").permitAll() 
+                .anyRequest()//.authenticated()
+                .permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

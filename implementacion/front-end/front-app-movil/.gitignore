@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Production build
+dist/
+out-tsc/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.DS_Store
+
+# Angular
+.angular/
+.ng/
+*.orig
+
+# Capacitor
+android/
+ios/
+*.log
+capacitor.lock.json
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+karma.log
+
+# Misc
+.cache/
+temp/
+tmp/

@@ -14,13 +14,13 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class AlarmaResponse {
-    private UUID alertaId;
+    private UUID alarmaId;
     private OffsetDateTime fechaActivacion;
     private EstadoAlarma estadoAlarma;
 
     public static AlarmaResponse fromEntity(Alarma alarma) {
         return AlarmaResponse.builder()
-                            .alertaId(alarma.getId())
+                            .alarmaId(alarma.getId())
                             .fechaActivacion(alarma.getFechaActivacion())
                             .estadoAlarma(alarma.getEstadoAlarma())
                             .build();

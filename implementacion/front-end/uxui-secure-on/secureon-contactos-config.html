@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Contactos - Seguridad</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111521",
+                        "silver-soft": "#e2e4e9",
+                        "silver-metal": "#d1d5db"
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        .metal-gradient {
+            background: linear-gradient(180deg, #f0f1f3 0%, #e2e4e9 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 font-display min-h-screen flex flex-col bg-[#f6f6f8]">
+<!-- Header Navigation -->
+<header class="bg-[#f6f6f8] border-b border-silver-metal sticky top-0 z-50">
+<div class="flex items-center justify-between px-4 h-16 max-w-5xl mx-auto">
+<button class="flex items-center text-slate-800">
+<span class="material-symbols-outlined text-2xl">chevron_left</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight text-slate-900">Contactos</h1>
+<button class="flex items-center text-slate-800">
+<span class="material-symbols-outlined text-2xl">chevron_right</span>
+</button>
+</div>
+</header>
+<main class="flex-1 max-w-5xl w-full mx-auto p-4 space-y-6">
+<!-- Main Panel: List Section -->
+<section class="bg-white rounded-xl shadow-sm border border-silver-metal overflow-hidden">
+<div class="metal-gradient px-4 py-3 flex justify-between items-center border-b border-silver-metal">
+<h2 class="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wider">
+<span class="material-symbols-outlined text-primary">list_alt</span>
+                    Lista de Contactos
+                </h2>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-800 transition-all shadow-md active:scale-95">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Nuevo +
+                </button>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm border-collapse">
+<thead>
+<tr class="bg-slate-50 text-slate-500 font-semibold border-b border-silver-metal">
+<th class="px-4 py-3">Tipo</th>
+<th class="px-4 py-3">Teléfono</th>
+<th class="px-4 py-3">Nombre</th>
+<th class="px-4 py-3 text-center">Principal</th>
+<th class="px-4 py-3 text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Contact Row 1 -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-4 py-3">
+<div class="flex gap-1 text-slate-400">
+<span class="material-symbols-outlined text-[20px] text-green-600" title="WhatsApp">chat</span>
+<span class="material-symbols-outlined text-[20px] text-blue-500" title="Telegram">send</span>
+</div>
+</td>
+<td class="px-4 py-3 font-medium">+34 612 345 678</td>
+<td class="px-4 py-3">Juan García</td>
+<td class="px-4 py-3 text-center">
+<span class="material-symbols-outlined text-primary filled-icon">star</span>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="p-1 text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-red-600 transition-colors"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+<!-- Contact Row 2 -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-4 py-3">
+<div class="flex gap-1 text-slate-400">
+<span class="material-symbols-outlined text-[20px] text-orange-500" title="SMS">sms</span>
+<span class="material-symbols-outlined text-[20px] text-slate-500" title="Mail">mail</span>
+</div>
+</td>
+<td class="px-4 py-3 font-medium">+34 699 000 111</td>
+<td class="px-4 py-3">María López</td>
+<td class="px-4 py-3 text-center">
+<span class="material-symbols-outlined text-slate-300">star</span>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="p-1 text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-red-600 transition-colors"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Bottom Panel: Form Section -->
+<section class="bg-white rounded-xl shadow-sm border border-silver-metal overflow-hidden">
+<div class="metal-gradient px-4 py-3 border-b border-silver-metal">
+<h2 class="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wider">
+<span class="material-symbols-outlined text-primary">person_add</span>
+                    Detalle del Contacto
+                </h2>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Left Column Fields -->
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre</label>
+<input class="w-full border-silver-metal rounded-lg focus:ring-primary focus:border-primary text-sm bg-slate-50" placeholder="Ej: Juan" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase mb-1">Apellido</label>
+<input class="w-full border-silver-metal rounded-lg focus:ring-primary focus:border-primary text-sm bg-slate-50" placeholder="Ej: Pérez" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase mb-1">Teléfono</label>
+<input class="w-full border-silver-metal rounded-lg focus:ring-primary focus:border-primary text-sm bg-slate-50" placeholder="+34 000 000 000" type="tel"/>
+</div>
+</div>
+<!-- Right Column Fields -->
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+<input class="w-full border-silver-metal rounded-lg focus:ring-primary focus:border-primary text-sm bg-slate-50" placeholder="ejemplo@seguridad.com" type="email"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase mb-1">Relación</label>
+<select class="w-full border-silver-metal rounded-lg focus:ring-primary focus:border-primary text-sm bg-slate-50">
+<option>Padre</option>
+<option>Madre</option>
+<option selected="">Amigo</option>
+<option>Pareja</option>
+<option>Hermano/a</option>
+<option>Otro</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tipo de Notificación</label>
+<div class="flex items-center gap-2">
+<button class="flex-1 flex flex-col items-center p-2 rounded-lg border-2 border-primary bg-primary/5 text-primary">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-[10px] font-bold mt-1">WA</span>
+</button>
+<button class="flex-1 flex flex-col items-center p-2 rounded-lg border border-silver-metal bg-slate-50 text-slate-400 hover:border-primary/50">
+<span class="material-symbols-outlined">send</span>
+<span class="text-[10px] font-bold mt-1">TG</span>
+</button>
+<button class="flex-1 flex flex-col items-center p-2 rounded-lg border border-silver-metal bg-slate-50 text-slate-400 hover:border-primary/50">
+<span class="material-symbols-outlined">sms</span>
+<span class="text-[10px] font-bold mt-1">SMS</span>
+</button>
+<button class="flex-1 flex flex-col items-center p-2 rounded-lg border border-silver-metal bg-slate-50 text-slate-400 hover:border-primary/50">
+<span class="material-symbols-outlined">mail</span>
+<span class="text-[10px] font-bold mt-1">Mail</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Footer Option: Principal Checkbox -->
+<div class="md:col-span-2 pt-2 flex items-center gap-3 bg-primary/5 p-4 rounded-lg border border-primary/20">
+<input class="w-5 h-5 text-primary rounded border-silver-metal focus:ring-primary" id="check-principal" type="checkbox"/>
+<label class="text-sm font-semibold text-primary flex items-center gap-2 cursor-pointer" for="check-principal">
+<span class="material-symbols-outlined">star</span>
+                        Marcar como contacto de emergencia principal
+                    </label>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Actions -->
+<footer class="bg-[#f6f6f8] border-t border-silver-metal p-6 mt-auto">
+<div class="max-w-5xl mx-auto flex gap-4 justify-center md:justify-end">
+<button class="flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 shadow-sm">
+                Cancelar
+            </button>
+<button class="flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 shadow-sm">
+                Restablecer
+            </button>
+<button class="flex-1 md:flex-none px-10 py-3 rounded-xl text-sm font-bold bg-[#1d3583] text-white hover:bg-[#152760] shadow-md">
+                Guardar
+            </button>
+</div>
+</footer>
+<!-- Tab Bar (Simulated Bottom Navigation) -->
+
+</body></html>

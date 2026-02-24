@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 
 import com.secureon.cdmcontrol.model.entity.EstadoAlarma;
 import com.secureon.cdmcontrol.model.entity.EstadoAsignacion;
+import com.secureon.cdmcontrol.model.entity.TipoAutoridad;
 import com.secureon.cdmcontrol.repository.EstadoAlarmaRepository;
 import com.secureon.cdmcontrol.repository.EstadoAsignacionRepository;
+import com.secureon.cdmcontrol.repository.TipoAutoridadRepository;
 import com.secureon.cdmcontrol.util.MessageService;
 
 @Service
@@ -22,6 +24,9 @@ public class CatalogoService {
 
     @Autowired
     private EstadoAlarmaRepository estadoAlarmaRepository;
+
+    @Autowired
+    private TipoAutoridadRepository tipoAutoridadRepository;
 
     public EstadoAsignacion getEstadoAsignacion(Integer id) {
         return estadoAsignacionRepository.findById(id)
@@ -40,6 +45,15 @@ public class CatalogoService {
 
     public List<EstadoAlarma> getEstadosAlarma() {
         return estadoAlarmaRepository.findByHabilitadaTrue();
+    }
+
+    public TipoAutoridad getTipoAutoridad(Integer id) {
+        return tipoAutoridadRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Tipo de autoridad no encontrado"));
+    }
+
+    public List<TipoAutoridad> getTiposAutoridad() {
+        return tipoAutoridadRepository.findByHabilitadaTrue();
     }
 
 }

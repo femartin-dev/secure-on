@@ -24,18 +24,25 @@ public class ConfiguracionController {
 
     private final ConfiguracionService configuracionService;
 
-    @PostMapping("/nuevo")
-    public ResponseEntity<ConfiguracionResponse> crearContacto(@RequestBody ConfiguracionRequest request) {
+    @PostMapping("/nueva")
+    public ResponseEntity<ConfiguracionResponse> crearConfiguracion(@RequestBody ConfiguracionRequest request) {
         ConfiguracionUsuario config = configuracionService.guardarConfiguracion(null, request);
         ConfiguracionResponse response = ConfiguracionResponse.fromEntity(config);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/{configId}/editar")
-    public ResponseEntity<Void> actualizarContacto(@PathVariable UUID configId,
+    @PostMapping("/{configId}/guardar")
+    public ResponseEntity<Void> actualizarConfiguracion(@PathVariable UUID configId,
                                                     @RequestBody ConfiguracionRequest request) {
         configuracionService.guardarConfiguracion(configId, request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/obtener")
+    public ResponseEntity<ConfiguracionResponse> obtenerConfiguracion(@RequestBody ConfiguracionRequest request) {
+        ConfiguracionUsuario config = configuracionService.getConfiguracionUsuario(request.getUsuarioId(), request.getDispositivoId());
+        ConfiguracionResponse response = ConfiguracionResponse.fromEntity(config);
+        return ResponseEntity.ok(response);
     }
 
 }

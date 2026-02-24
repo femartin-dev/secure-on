@@ -37,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String clientIp = getClientIp(request);
         try {
             String jwt = resolveToken(request);
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
@@ -46,17 +47,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                auditService.setAuditContext(username, getClientIp(request));
+                try {
+                    auditService.setAuditContext(username, clientIp);
+                } catch (Exception e) {
+                    logger.warn("No se pudo establecer contexto de auditoría para usuario autenticado", e);
+                }
             } else {
-                auditService.setAuditContext("anonymous", getClientIp(request));
+                try {
+                    auditService.setAuditContext("anonymous", clientIp);
+                } catch (Exception e) {
+                    logger.warn("No se pudo establecer contexto de auditoría para usuario anónimo", e);
+                }
             }
-
-            filterChain.doFilter(request, response);
         } catch (Exception e) {
             logger.error("No se pudo establecer la autenticación en el contexto de seguridad", e);
+        }
+
+        try {
             filterChain.doFilter(request, response);
         } finally {
-            auditService.clearAuditContext();
+            try {
+                auditService.clearAuditContext();
+            } catch (Exception e) {
+                logger.warn("No se pudo limpiar contexto de auditoría", e);
+            }
         }
         
     }

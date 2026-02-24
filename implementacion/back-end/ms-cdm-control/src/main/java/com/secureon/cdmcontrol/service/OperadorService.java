@@ -24,6 +24,10 @@ public class OperadorService {
                 .orElseThrow(()-> new RuntimeException(""));
     }
 
+    public List<Operador> listarSupervisoresActivos() {
+        return operadorRepository.findSupervisoresActivos();
+    }
+
     public List<Operador>  listarPorSupervisor(Operador supervisor) {
         if (supervisor == null || !supervisor.getEsAdministrador())
             throw new RuntimeException("El operador tiene que ser supervisor administrador");

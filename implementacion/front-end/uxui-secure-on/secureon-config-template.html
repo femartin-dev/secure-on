@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Panel Genérico</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "primary-dark": "#102a7a",
+                        "background-light": "#f3f4f6", // Soft Silver Gray
+                        "background-dark": "#111521",
+                        "success": "#10B981", // Green for Save
+                        "danger": "#EF4444", // Red for Cancel
+                        "info": "#3B82F6", // Blue for Reset
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 20px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden h-screen w-full flex flex-col text-[#111317] dark:text-white">
+<header class="shrink-0 bg-background-light dark:bg-background-dark text-[#111317] dark:text-white shadow-md z-10 pt-safe-top">
+<div class="flex items-center justify-between p-4 h-16">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-2xl">chevron_left</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] text-center truncate px-2 flex-1">
+                {nombrePanel}
+            </h2>
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-2xl">chevron_right</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto relative flex flex-col p-4 w-full max-w-md mx-auto items-center justify-center">
+<div class="w-full h-full flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#dcdee5] dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 p-6 min-h-[300px]">
+<div class="flex flex-col items-center gap-4 text-center">
+<div class="size-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-gray-400 dark:text-gray-500 text-3xl">extension</span>
+</div>
+<div class="flex flex-col gap-1">
+<p class="text-gray-900 dark:text-white text-lg font-bold leading-tight">Contenido Embebido</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal max-w-[280px]">
+                        Esta área está reservada para mostrar contenido dinámico del panel de seguridad.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<footer class="shrink-0 bg-background-light dark:bg-background-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] pb-safe-bottom z-10">
+<div class="flex flex-col gap-3 px-4 py-4 w-full max-w-md mx-auto">
+<div class="grid grid-cols-3 gap-3">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-gray-100 dark:active:bg-gray-600">
+<span class="truncate">Cancelar</span>
+</button>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-gray-100 dark:active:bg-gray-600">
+<span class="truncate">Restablecer</span>
+</button>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-[#1e3a8a] border border-transparent hover:bg-[#172554] text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-[#0f172a]">
+<span class="truncate">Guardar</span>
+</button>
+</div>
+<div class="h-1"></div>
+</div>
+</footer>
+<style>
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .pt-safe-top {
+                padding-top: env(safe-area-inset-top);
+            }
+            .pb-safe-bottom {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }@media screen and (min-width: 0px) { 
+            .pb-safe-bottom { padding-bottom: 1rem; }
+        }
+    </style>
+
+</body></html>

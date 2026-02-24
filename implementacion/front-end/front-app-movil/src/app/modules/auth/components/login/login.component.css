@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+.form-input {
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+}
+
+.form-input::placeholder {
+  opacity: 0.5;
+}
+
+/* Material Icons */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Responsive: remove card styling on very small screens */
+@media (max-width: 500px) {
+  .login-card {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 1rem !important;
+    border-radius: 50px !important;
+  }
+}

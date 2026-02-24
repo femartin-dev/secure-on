@@ -1,0 +1,237 @@
+<!-- Main Container -->
+<div class="relative flex h-screen w-full flex-col overflow-hidden bg-background-dark">
+
+  <!-- ===== VIEW 1: CIRCLE COUNTDOWN (pre-alarm default) ===== -->
+  <div *ngIf="!showCredentials && !isDeactivation"
+       class="absolute inset-0 z-50 flex items-center justify-center bg-[#0f121b]/95 backdrop-blur-md p-6">
+    <div class="w-full max-w-sm flex flex-col items-center">
+
+      <!-- Countdown Circle -->
+      <div class="relative mb-10 group cursor-default">
+        <div class="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse"></div>
+        <div class="relative w-64 h-64">
+          <svg class="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+            <!-- Track -->
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#1e2536" stroke-width="4"></circle>
+            <!-- Progress -->
+            <circle
+              class="drop-shadow-[0_0_8px_rgba(239,68,68,0.6)] transition-all duration-1000 ease-linear"
+              cx="50" cy="50" r="45" fill="none" stroke="#ef4444"
+              [attr.stroke-dasharray]="circumference"
+              [attr.stroke-dashoffset]="strokeDashoffset"
+              stroke-linecap="round" stroke-width="4"
+            ></circle>
+          </svg>
+          <!-- Timer text -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-7xl font-bold text-white tabular-nums tracking-tighter leading-none">{{ formattedTime }}</span>
+            <span class="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mt-3 animate-pulse">Activando</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title & Description -->
+      <div class="text-center mb-10 space-y-3">
+        <h2 class="text-2xl font-bold text-white tracking-tight">Cancelar Alarma</h2>
+        <p class="text-slate-400 text-sm leading-relaxed max-w-[280px] mx-auto">
+          Si el tiempo finaliza, la alarma se activará. Pulse 'Cancelar Alarma' para detener el proceso.
+        </p>
+      </div>
+
+      <!-- Cancel Button -->
+      <button
+        (click)="openCredentials()"
+        class="w-full h-14 bg-white hover:bg-slate-100 text-[#111521] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-xl shadow-white/5 transition-all transform active:scale-95"
+      >
+        <span class="material-symbols-outlined font-semibold text-2xl">close</span>
+        Cancelar Alarma
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ===== VIEW 2: CREDENTIALS (embedded) ===== -->
+  <div *ngIf="showCredentials || isDeactivation"
+       class="relative flex h-full w-full flex-col bg-gradient-to-b from-[#111521] to-[#0d1b3e] overflow-y-auto">
+
+    <!-- Top Bar -->
+    <div class="flex items-center p-5 justify-between z-10 shrink-0">
+      <button (click)="goBack()" class="flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full p-2 hover:bg-white/10">
+        <span class="material-symbols-outlined text-[28px]">{{ isDeactivation ? 'close' : 'arrow_back' }}</span>
+      </button>
+      <!-- Countdown badge (pre-alarm only) -->
+      <div *ngIf="!isDeactivation" class="flex items-center gap-2 bg-red-900/30 border border-red-700/40 rounded-full px-4 py-2">
+        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+        <span class="text-red-400 text-sm font-bold tabular-nums">{{ formattedCountdown }}</span>
+      </div>
+      <!-- Logo (deactivation only) -->
+      <div *ngIf="isDeactivation" class="flex flex-col justify-center h-16 rounded-3xl bg-white/5 border border-white/10 shadow-inner backdrop-blur-md w-32">
+        <img alt="Securion Logo" class="h-auto object-contain w-64" src="assets/secureon-logo.png" />
+      </div>
+      <div class="w-12"></div>
+    </div>
+
+    <!-- ======== PASSWORD VIEW ======== -->
+    <div *ngIf="cancelMethod === 'password'" class="flex-1 flex flex-col items-center justify-start px-6 z-10 w-full max-w-md mx-auto">
+
+      <!-- Alarm Status Icon -->
+      <div class="flex justify-center pb-5">
+        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+          <span class="material-symbols-outlined text-3xl text-red-500">notifications_active</span>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="flex flex-col gap-2 text-center mb-6">
+        <h1 class="text-white text-2xl font-bold leading-tight tracking-tight">
+          {{ isDeactivation ? 'Desactivar Alarma' : 'Cancelar Alarma' }}
+        </h1>
+        <p class="text-[#9da4b9] text-sm font-normal leading-normal px-4">
+          {{ isDeactivation
+            ? 'Ingrese su contraseña para desactivar la alarma.'
+            : 'Ingrese su contraseña para cancelar antes de que se active.' }}
+        </p>
+      </div>
+
+      <!-- Password Input -->
+      <div class="w-full mb-5">
+        <label class="flex flex-col w-full">
+          <div class="relative flex w-full items-center rounded-xl bg-[#1c1e27] border border-[#3b4154] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200">
+            <input
+              [(ngModel)]="password"
+              [type]="showPassword ? 'text' : 'password'"
+              placeholder="Contraseña"
+              [disabled]="loading"
+              (keydown.enter)="cancelWithPassword()"
+              class="flex w-full min-w-0 flex-1 bg-transparent text-white placeholder:text-[#9da4b9] h-14 pl-4 pr-12 text-lg font-normal leading-normal border-none focus:ring-0 rounded-xl"
+            />
+            <button type="button" (click)="togglePasswordVisibility()"
+              class="absolute right-0 flex h-full w-12 items-center justify-center text-[#9da4b9] hover:text-white transition-colors">
+              <span class="material-symbols-outlined text-2xl">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+          </div>
+        </label>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm mb-4 animate-shake">
+        {{ error }}
+      </div>
+
+      <!-- Confirm Button -->
+      <button
+        (click)="cancelWithPassword()"
+        [disabled]="loading || !password"
+        class="w-full flex cursor-pointer items-center justify-center rounded-xl h-14 bg-primary hover:bg-blue-600 disabled:bg-primary/40 transition-colors text-white text-lg font-bold shadow-lg shadow-blue-900/20 mb-4">
+        <span *ngIf="!loading" class="truncate">CONFIRMAR</span>
+        <span *ngIf="loading" class="flex items-center gap-2">
+          <span class="animate-spin material-symbols-outlined">sync</span> Verificando...
+        </span>
+      </button>
+
+      <!-- Switch to PIN -->
+      <button (click)="switchMethod()" class="text-primary/80 hover:text-white text-sm font-semibold transition-colors py-2">
+        Usar código PIN en su lugar
+      </button>
+
+      <!-- Forgot password link -->
+      <button class="text-[#9da4b9] text-sm font-medium leading-normal text-center hover:text-white transition-colors py-2 mt-2">
+        ¿Olvidaste tu contraseña?
+      </button>
+
+      <!-- Attempts -->
+      <div *ngIf="attempts > 0" class="flex items-center gap-2 mt-4">
+        <span class="text-xs text-slate-400">Intentos restantes:</span>
+        <div class="flex gap-1">
+          <div *ngFor="let i of [0,1,2]"
+            [ngClass]="i < getRemainingAttempts() ? 'bg-green-500' : 'bg-red-500/50'"
+            class="w-2 h-2 rounded-full"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== PIN VIEW ======== -->
+    <div *ngIf="cancelMethod === 'pin'" class="flex-1 flex flex-col items-center justify-start pt-2 pb-4 px-6 z-10 w-full max-w-md mx-auto">
+
+      <!-- Headline -->
+      <div class="text-center mb-6 space-y-2">
+        <h2 class="text-2xl font-bold leading-tight text-white">
+          {{ isDeactivation ? 'Ingrese su PIN' : 'Cancelar Alarma' }}
+        </h2>
+        <p class="text-white/60 text-base font-medium">
+          {{ isDeactivation ? 'para desactivar la alarma' : 'ingrese su PIN para cancelar' }}
+        </p>
+      </div>
+
+      <!-- PIN Indicators -->
+      <div class="mb-6 w-full flex justify-center">
+        <div class="flex gap-6">
+          <div *ngFor="let i of [0,1,2,3]"
+            [ngClass]="i < pin.length ? 'bg-primary shadow-[0_0_10px_rgba(24,61,170,0.6)]' : 'border-2 border-white/20 bg-transparent'"
+            class="w-4 h-4 rounded-full transition-all duration-200">
+          </div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm mb-4 animate-shake">
+        {{ error }}
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="flex items-center gap-2 text-white mb-4">
+        <span class="animate-spin material-symbols-outlined">sync</span> Verificando...
+      </div>
+
+      <!-- Custom Numeric Keypad -->
+      <div class="w-full max-w-[280px] mx-auto mt-2">
+        <div class="grid grid-cols-3 gap-y-4 gap-x-6">
+          <!-- Digits 1-9 -->
+          <button *ngFor="let digit of ['1','2','3','4','5','6','7','8','9']"
+            (click)="addPinDigit(digit)"
+            [disabled]="loading || pin.length >= 4"
+            class="group flex items-center justify-center aspect-square rounded-full bg-white/5 hover:bg-white/10 active:bg-primary/40 transition-all duration-150 backdrop-blur-sm border border-white/5 shadow-lg active:scale-95 disabled:opacity-30">
+            <span class="text-2xl font-medium text-white">{{ digit }}</span>
+          </button>
+          <!-- Bottom row: switch method, 0, backspace -->
+          <div class="flex items-center justify-center aspect-square">
+            <button (click)="switchMethod()" class="text-primary hover:text-white active:scale-90 transition-all p-3 rounded-full hover:bg-white/5">
+              <span class="material-symbols-outlined text-[28px]">password</span>
+            </button>
+          </div>
+          <button (click)="addPinDigit('0')" [disabled]="loading || pin.length >= 4"
+            class="group flex items-center justify-center aspect-square rounded-full bg-white/5 hover:bg-white/10 active:bg-primary/40 transition-all duration-150 backdrop-blur-sm border border-white/5 shadow-lg active:scale-95 disabled:opacity-30">
+            <span class="text-2xl font-medium text-white">0</span>
+          </button>
+          <div class="flex items-center justify-center aspect-square">
+            <button (click)="removePinDigit()" [disabled]="loading || pin.length === 0"
+              class="text-white/60 hover:text-white active:scale-90 transition-all p-3 rounded-full hover:bg-white/5 disabled:opacity-30">
+              <span class="material-symbols-outlined text-[28px]">backspace</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attempts -->
+      <div *ngIf="attempts > 0" class="flex items-center gap-2 mt-6">
+        <span class="text-xs text-slate-400">Intentos restantes:</span>
+        <div class="flex gap-1">
+          <div *ngFor="let i of [0,1,2]"
+            [ngClass]="i < getRemainingAttempts() ? 'bg-green-500' : 'bg-red-500/50'"
+            class="w-2 h-2 rounded-full"></div>
+        </div>
+      </div>
+
+      <!-- Forgot PIN -->
+      <div class="mt-4">
+        <button class="text-sm font-semibold text-white/50 hover:text-primary transition-colors py-2 px-4 rounded-lg">
+          ¿Olvidaste tu PIN?
+        </button>
+      </div>
+    </div>
+
+    <!-- Background Glow Elements -->
+    <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[120px] rounded-full pointer-events-none z-0"></div>
+    <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[100px] rounded-full pointer-events-none z-0"></div>
+  </div>
+</div>

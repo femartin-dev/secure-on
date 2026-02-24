@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configuración General</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#183daa",
+                        "primary-dark": "#102a7a",
+                        "background-light": "#f3f4f6", // Soft Silver Gray
+                        "background-dark": "#111521",
+                        "success": "#10B981", // Green for Save
+                        "danger": "#EF4444", // Red for Cancel
+                        "info": "#3B82F6", // Blue for Reset
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 20px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased overflow-hidden h-screen w-full flex flex-col text-[#111317] dark:text-white">
+<header class="shrink-0 bg-background-light dark:bg-background-dark text-[#111317] dark:text-white shadow-md z-10 pt-safe-top">
+<div class="flex items-center justify-between p-4 h-16">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-2xl">chevron_left</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] text-center truncate px-2 flex-1">
+                Configuración General
+            </h2>
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-2xl">chevron_right</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto relative flex flex-col p-4 w-full max-w-md mx-auto justify-start pt-6 gap-6">
+<div class="flex flex-col gap-2">
+<label class="ml-1 text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" for="language-select">
+            Idioma
+        </label>
+<div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+<select class="block w-full h-14 pl-4 pr-10 py-3 text-base border-none rounded-xl bg-transparent text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] sm:text-sm" id="language-select">
+<option value="es">Español (Esp)</option>
+<option value="en">Inglés (Eng)</option>
+<option value="fr">Francés (Fra)</option>
+<option value="pt">Portugués (Por)</option>
+<option value="it">Italiano (Ita)</option>
+</select>
+</div>
+<p class="ml-1 text-xs text-gray-500 dark:text-gray-400">Seleccione el idioma preferido para la aplicación.</p>
+</div>
+<div class="flex flex-col gap-2">
+<span class="ml-1 text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Apariencia
+        </span>
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between h-16">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined text-xl">dark_mode</span>
+</div>
+<span class="text-base font-medium text-gray-900 dark:text-white">Modo Dark</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#1e3a8a]"></div>
+</label>
+</div>
+</div>
+</main>
+<footer class="shrink-0 bg-background-light dark:bg-background-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] pb-safe-bottom z-10">
+<div class="flex flex-col gap-3 px-4 py-4 w-full max-w-md mx-auto">
+<div class="grid grid-cols-3 gap-3">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-gray-100 dark:active:bg-gray-600">
+<span class="truncate">Cancelar</span>
+</button>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-gray-100 dark:active:bg-gray-600">
+<span class="truncate">Restablecer</span>
+</button>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-[#1e3a8a] border border-transparent hover:bg-[#172554] text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:bg-[#0f172a]">
+<span class="truncate">Guardar</span>
+</button>
+</div>
+<div class="h-1"></div>
+</div>
+</footer>
+<style>
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .pt-safe-top {
+                padding-top: env(safe-area-inset-top);
+            }
+            .pb-safe-bottom {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }@media screen and (min-width: 0px) { 
+            .pb-safe-bottom { padding-bottom: 1rem; }
+        }
+    </style>
+</body></html>

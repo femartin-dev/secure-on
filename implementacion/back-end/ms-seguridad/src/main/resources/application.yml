@@ -15,14 +15,31 @@ spring:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
                 default_schema: secure_on_movil
                 jdbc:
-                lob:
-                    non_contextual_creation: true
+                    lob:
+                        non_contextual_creation: true
         open-in-view: false
+    mail:
+        host: smtp.ethereal.email
+        port: 587
+        username: wendell.wolff@ethereal.email
+        password: w4k2eUSgNmWXdQMGrk
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
+                        required: true
+                    connectiontimeout: 5000
+                    timeout: 5000
+                    writetimeout: 5000
 
 server:
     port: 8093
 
 app:
+    audit:
+        enabled: true
     jwt:
         secret: "rN3tF0nX5kK7d8JmP4z6Ww2Xb3L0E9A5R8Q1sHjDkC7ZP2M4J9F6LQYtE8gVwUSecret34frt34EMUIrsCore45"
         expiration: 86400000     # 24 horas en milisegundos

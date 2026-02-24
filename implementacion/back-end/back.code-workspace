@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "path": "ms-api-gateway"
+    },
+    {
+      "path": "ms-app-movil"
+    },
+	{
+      "path": "ms-cdm-control"
+    },
+    {
+      "path": "ms-seguridad"
+    }
+  ],
+  "settings": {}
+}

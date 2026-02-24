@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Validar Código - Secureon</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'secureon-dark': '#0f172a',
+            'secureon-blue': '#1e40af',
+            'secureon-accent': '#2563eb',
+            'input-bg': '#1e293b',
+          },
+          borderRadius: {
+            '25p': '25%',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-layouts">
+    /* Video-like background overlay using provided image aesthetics */
+    .bg-video-overlay {
+      background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), url('{{DATA:IMAGE:IMAGE_12}}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Security texture effect for the container */
+    .security-texture {
+      background-image: radial-gradient(#ffffff05 1px, transparent 0);
+      background-size: 20px 20px;
+    }
+
+    /* Glassmorphism effect similar to screen 73 */
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Hide container box on extra small screens as per instructions */
+    @media (max-width: 400px) {
+      .responsive-container {
+        border: none !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        box-shadow: none !important;
+      }
+    }
+
+    /* Input focus and state styles */
+    .otp-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    }
+    
+    /* Success state class */
+    .input-success {
+      border-color: #22c55e !important;
+    }
+
+    /* Error state class */
+    .input-error {
+      border-color: #ef4444 !important;
+    }
+  </style>
+</head>
+<body class="bg-secureon-dark text-white font-sans min-h-screen flex flex-col items-center justify-center p-4 bg-video-overlay">
+<!-- BEGIN: MainContainer -->
+<main class="w-full max-w-md flex flex-col items-center" data-purpose="validation-screen">
+<!-- BEGIN: ValidationBox -->
+<section class="responsive-container glass-panel security-texture w-full p-8 md:p-12 rounded-[60px] flex flex-col items-center shadow-2xl" data-purpose="otp-card">
+<!-- Logo and Header -->
+<div class="mb-8 flex flex-col items-center" data-purpose="header-section">
+<div class="bg-secureon-dark/50 p-4 rounded-2xl mb-6 border border-white/10 shadow-lg">
+<img alt="Secureon Logo" class="h-10 w-auto object-contain" src=""/>
+</div>
+<h1 class="text-3xl font-bold tracking-tight text-center">Validar Código</h1>
+<p class="text-slate-400 text-sm mt-4 text-center leading-relaxed">
+          Ingrese el código de 6 dígitos enviado a su email.
+        </p>
+</div>
+<!-- OTP Inputs Container -->
+<form action="#" class="w-full space-y-8" data-purpose="otp-form">
+<div class="flex justify-between gap-2" data-purpose="otp-inputs">
+<!-- 6 Square inputs for the code -->
+<input aria-label="Digit 1" class="otp-input w-10 h-12 md:w-12 md:h-14 text-center text-xl font-bold bg-input-bg border-slate-700 rounded-lg transition-all" maxlength="1" type="text"/>
+<input aria-label="Digit 2" class="otp-input w-10 h-12 md:w-12 md:h-14 text-center text-xl font-bold bg-input-bg border-slate-700 rounded-lg transition-all" maxlength="1" type="text"/>
+<input aria-label="Digit 3" class="otp-input w-10 h-12 md:w-12 md:h-14 text-center text-xl font-bold bg-input-bg border-slate-700 rounded-lg transition-all" maxlength="1" type="text"/>
+<input aria-label="Digit 4" class="otp-input w-10 h-12 md:w-12 md:h-14 text-center text-xl font-bold bg-input-bg border-slate-700 rounded-lg transition-all" maxlength="1" type="text"/>
+<input aria-label="Digit 5" class="otp-input w-10 h-12 md:w-12 md:h-14 text-center text-xl font-bold bg-input-bg border-slate-700 rounded-lg transition-all" maxlength="1" type="text"/>
+<input aria-label="Digit 6" class="otp-input w-10 h-12 md:w-12 md:h-14 text-center text-xl font-bold bg-input-bg border-slate-700 rounded-lg transition-all" maxlength="1" type="text"/>
+</div>
+<!-- Action Buttons -->
+<div class="space-y-4 pt-2">
+<button class="w-full bg-secureon-blue hover:bg-secureon-accent text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-[0.98]" type="submit">
+            Confirmar
+            <svg class="h-5 w-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" fill-rule="evenodd"></path>
+</svg>
+</button>
+<div class="text-center">
+<button class="text-secureon-accent hover:text-blue-400 text-sm font-medium transition-colors" type="button">
+              Reenviar código
+            </button>
+</div>
+</div>
+</form>
+</section>
+<!-- END: ValidationBox -->
+<!-- BEGIN: Footer -->
+<footer class="mt-12 flex flex-col items-center space-y-4" data-purpose="page-footer">
+<div class="flex items-center gap-2 opacity-80 scale-75">
+<img alt="Securitas Logo" class="h-6 w-auto grayscale brightness-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2W66z7uKfVAz3DT-UZ02HbHNkId8ZRxTfu5OZ1en9sUhejo6YrGG_b8wgOBq-fcjkPQJlvG-IlqDDenIR-AgGx_tx8A3owprpnyp5997AoYuhkgMconFzT7kTS2LnvXfqnlBA3EcYMyOWf6ZNP7z8gcKWOx5uOf-oFNLVqKdVH-aUR-PNkTiaujaypZbpO0KAVikRHXrxJySMzfnvgmZL1h38jOthX0oNHFCLtnos0U-Ogx9e89R2j566n27BF3bnIZe2hHbOvjQ"/>
+<span class="text-xs font-medium tracking-widest uppercase border-l border-slate-600 pl-2">Certified Partner</span>
+</div>
+<div class="text-center">
+<p class="text-[10px] text-slate-500 uppercase tracking-widest">
+          © 2024 SECURITAS. TODOS LOS DERECHOS RESERVADOS.
+        </p>
+<p class="text-[10px] text-slate-600 mt-1">v1.0.2</p>
+</div>
+</footer>
+<!-- END: Footer -->
+</main>
+<!-- END: MainContainer -->
+<script data-purpose="otp-interactivity">
+    // Simple script to handle auto-focus to next input
+    const inputs = document.querySelectorAll('.otp-input');
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value.length === 1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+  </script>
+</body></html>

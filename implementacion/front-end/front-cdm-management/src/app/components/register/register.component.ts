@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { RegisterRequest, Supervisor } from '../../models/auth.models';
 
 @Component({
   selector: 'app-register',
@@ -11,13 +12,18 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent implements OnInit {
+export class RegisterComponent implements OnInit, OnDestroy {
+  @ViewChild('errorAlert') private errorAlert?: ElementRef<HTMLElement>;
+
   form!: FormGroup;
   loading = false;
   submitted = false;
   error = '';
   showPassword = false;
   showConfirmPassword = false;
+  supervisors: Supervisor[] = [];
+
+  private hideErrorTimeoutId: number | undefined;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -26,18 +32,12 @@ export class RegisterComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Redirect if not logged in or not admin
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser || !this.authService.isAdmin()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
     this.form = this.formBuilder.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
+      legajo: ['', Validators.pattern('^[0-9]+$')],
+      supervisorId: [''],
       email: ['', [Validators.required, Validators.email]],
-      username: ['', Validators.required],
       phone: ['', Validators.required],
       address: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(8)]],
@@ -45,6 +45,23 @@ export class RegisterComponent implements OnInit {
     }, {
       validators: this.passwordMatchValidator.bind(this)
     });
+
+    this.loadSupervisors();
+  }
+
+  private loadSupervisors(): void {
+    this.authService.getSupervisors().subscribe({
+      next: (supervisors) => {
+        this.supervisors = supervisors;
+      },
+      error: (err) => {
+        console.error('Error al cargar supervisores', err);
+      }
+    });
+  }
+
+  getSupervisorDisplayName(supervisor: Supervisor): string {
+    return `${supervisor.apellido}, ${supervisor.nombre} (${supervisor.legajo})`;
   }
 
   get f() {
@@ -59,25 +76,69 @@ export class RegisterComponent implements OnInit {
 
   onSubmit(): void {
     this.submitted = true;
-    this.error = '';
+    this.clearError();
 
     if (this.form.invalid) {
       return;
     }
 
     this.loading = true;
-    const formData = this.form.value;
-    delete formData.confirmPassword;
+    const raw = this.form.getRawValue();
+    const supervisorId = `${raw.supervisorId ?? ''}`.trim();
+    const legajoRaw = raw.legajo;
+    const legajo = `${legajoRaw ?? ''}`.trim().length > 0 ? Number(legajoRaw) : undefined;
 
-    this.authService.register(formData).subscribe({
-      next: (response) => {
-        this.router.navigate(['/dashboard']);
+    const request: RegisterRequest = {
+      firstName: raw.firstName,
+      lastName: raw.lastName,
+      email: raw.email,
+      phone: raw.phone,
+      address: raw.address,
+      password: raw.password,
+      legajo: legajo !== undefined && Number.isFinite(legajo) ? legajo : undefined,
+      supervisorId: supervisorId.length > 0 ? supervisorId : undefined
+    };
+
+
+
+
+    this.authService.register(request).subscribe({
+      next: () => {
+        this.clearError();
+        this.router.navigate(['/login']);
       },
       error: (error) => {
-        this.error = error?.error?.message || 'Error al registrar usuario';
         this.loading = false;
+        const message = error?.error?.message || 'Error al registrar usuario';
+        this.showServerError(message);
       }
     });
+  }
+
+  private showServerError(message: string): void {
+    this.error = message;
+
+    if (this.hideErrorTimeoutId !== undefined) {
+      window.clearTimeout(this.hideErrorTimeoutId);
+    }
+
+    // Wait for the *ngIf to render the alert before focusing.
+    window.setTimeout(() => {
+      this.errorAlert?.nativeElement.focus();
+    }, 0);
+
+    this.hideErrorTimeoutId = window.setTimeout(() => {
+      this.error = '';
+      this.hideErrorTimeoutId = undefined;
+    }, 5000);
+  }
+
+  private clearError(): void {
+    this.error = '';
+    if (this.hideErrorTimeoutId !== undefined) {
+      window.clearTimeout(this.hideErrorTimeoutId);
+      this.hideErrorTimeoutId = undefined;
+    }
   }
 
   togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
@@ -89,6 +150,10 @@ export class RegisterComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/login']);
+  }
+
+  ngOnDestroy(): void {
+    this.clearError();
   }
 }

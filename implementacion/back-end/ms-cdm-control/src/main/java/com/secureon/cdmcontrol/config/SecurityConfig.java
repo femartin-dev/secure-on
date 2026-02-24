@@ -26,8 +26,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/cdm-control/v1/dashboard/**").permitAll()  // WebSocket handshake permitido
-                .anyRequest().authenticated()
+                //.requestMatchers("/api/cdm-control/v1/dashboard/**").permitAll()  // WebSocket handshake permitido
+                .anyRequest()//.authenticated()
+                .permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

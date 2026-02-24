@@ -16,9 +16,10 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService, private router: Router) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    const isAuthEndpoint = this.isAuthEndpoint(request.url);
     const token = this.authService.getToken();
 
-    if (token) {
+    if (token && !isAuthEndpoint) {
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
@@ -28,12 +29,20 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
+        if (error.status === 401 && !isAuthEndpoint) {
           this.authService.logout();
           this.router.navigate(['/login']);
         }
         return throwError(() => error);
       })
+    );
+  }
+
+  private isAuthEndpoint(url: string): boolean {
+    return (
+      url.includes('/seguridad/v1/cdm/auth/login') ||
+      url.includes('/seguridad/v1/cdm/operador/registrar') ||
+      url.includes('/seguridad/v1/cdm/administrador/registrar')
     );
   }
 }

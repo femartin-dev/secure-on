@@ -1,6 +1,9 @@
 package com.secureon.appmovil.controller;
 
+import java.util.List;
 import java.util.UUID;
+
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,8 @@ import com.secureon.appmovil.model.entity.Contacto;
 import com.secureon.appmovil.service.ContactoService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 @RestController
 @RequestMapping("/api/app-movil/v1/contacto")
@@ -26,7 +31,7 @@ public class ContactoController {
     private final ContactoService contactoService;
 
     @PostMapping("/nuevo")
-    public ResponseEntity<ContactoResponse> crearContacto(@RequestBody ContactoRequest request) {
+    public ResponseEntity<ContactoResponse> crearContacto(@Valid @RequestBody ContactoRequest request) {
         Contacto contacto = contactoService.crearContacto(request);
         ContactoResponse response = ContactoResponse.fromEntity(contacto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -34,7 +39,7 @@ public class ContactoController {
 
     @PostMapping("/{contactoId}/editar")
     public ResponseEntity<Void> actualizarContacto(@PathVariable UUID contactoId,
-                                                    @RequestBody ContactoRequest request) {
+                                                    @Valid @RequestBody ContactoRequest request) {
         contactoService.editarContacto(contactoId, request);
         return ResponseEntity.ok().build();
     }
@@ -43,5 +48,14 @@ public class ContactoController {
     public ResponseEntity<Void> eliminarContacto(@PathVariable UUID contactoId) {
         contactoService.eliminarContacto(contactoId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{usuarioId}/listar")
+    public ResponseEntity<List<ContactoResponse>> listarContactosUsuario(@PathVariable UUID usuarioId) {
+        List<Contacto> contactos = contactoService.getContactosUsuario(usuarioId);
+        List<ContactoResponse> response = contactos.stream()
+                                                    .map(ContactoResponse::fromEntity)
+                                                    .toList();
+        return ResponseEntity.ok(response);
     }
 }

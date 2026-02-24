@@ -1,9 +1,12 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from '../../services/alert.service';
 import { Alert, Location } from '../../models/alert.models';
+import { ALERT_PRIORITY_LABELS, ALERT_STATUS_LABELS } from '../../shared/alert-ui.config';
+import { GoogleMapsService } from '../../services/google-maps.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-alert-detail',
@@ -12,14 +15,19 @@ import { Alert, Location } from '../../models/alert.models';
   templateUrl: './alert-detail.component.html',
   styleUrls: ['./alert-detail.component.css']
 })
-export class AlertDetailComponent implements OnInit {
+export class AlertDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('map') mapElement!: ElementRef;
 
   alert: Alert | null = null;
   mode: 'view' | 'edit' | 'verify' | 'notify' = 'view';
   isLoading = true;
   mapReady = false;
-  map: any;
+  map: google.maps.Map | null = null;
+  private routePolyline: google.maps.Polyline | null = null;
+  private routeMarkers: google.maps.Marker[] = [];
+  private subscriptions = new Subscription();
+  readonly statusLabels = ALERT_STATUS_LABELS;
+  readonly priorityLabels = ALERT_PRIORITY_LABELS;
 
   // Field disable states based on mode
   fieldsDisabled = {
@@ -30,6 +38,8 @@ export class AlertDetailComponent implements OnInit {
 
   constructor(
     private alertService: AlertService,
+    private googleMapsService: GoogleMapsService,
+    private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -44,6 +54,15 @@ export class AlertDetailComponent implements OnInit {
     }
 
     this.setFieldsDisabledState();
+  }
+
+  ngAfterViewInit(): void {
+    this.initializeMap();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+    this.clearRouteOverlays();
   }
 
   private setFieldsDisabledState(): void {
@@ -64,37 +83,124 @@ export class AlertDetailComponent implements OnInit {
   }
 
   private loadAlert(id: string): void {
-    this.alertService.getAlertById(id).subscribe({
+    this.subscriptions.add(this.alertService.getAlertById(id).subscribe({
       next: (alert) => {
         this.alert = alert;
         this.isLoading = false;
-        setTimeout(() => this.initializeMap(), 100);
+        this.cdr.detectChanges();
+        this.initializeMap();
       },
       error: (error) => {
         console.error('Error loading alert:', error);
         this.isLoading = false;
       }
-    });
+    }));
   }
 
-  private initializeMap(): void {
-    if (this.mapReady || !this.alert) return;
-    
-    // Map initialization will be done using Google Maps API
-    console.log('Map initialized for alert:', this.alert.id);
-    this.mapReady = true;
+  private async initializeMap(): Promise<void> {
+    if (!this.alert || !this.mapElement?.nativeElement) {
+      return;
+    }
+
+    if (!this.mapReady) {
+      try {
+        this.map = await this.googleMapsService.createMap(this.mapElement.nativeElement, {
+          center: {
+            lat: this.alert.location.latitude,
+            lng: this.alert.location.longitude
+          },
+          zoom: 15,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false
+        });
+        this.mapReady = true;
+      } catch (error) {
+        console.error('No se pudo inicializar Google Maps:', error);
+        return;
+      }
+    }
+
     this.drawRoute();
   }
 
   private drawRoute(): void {
-    // Draw the route using the location history to show the trajectory
-    if (this.alert?.locationHistory && this.alert.locationHistory.length > 0) {
-      const locations = this.alert.locationHistory.map(loc => ({
-        lat: loc.latitude,
-        lng: loc.longitude
-      }));
-      console.log('Drawing route with locations:', locations);
+    if (!this.map || !this.alert) {
+      return;
     }
+
+    this.clearRouteOverlays();
+
+    const sortedHistory = [...(this.alert.locationHistory || [])].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    if (sortedHistory.length === 0) {
+      const marker = new google.maps.Marker({
+        map: this.map,
+        position: { lat: this.alert.location.latitude, lng: this.alert.location.longitude },
+        title: `Alerta ${this.alert.id}`
+      });
+      this.routeMarkers.push(marker);
+      return;
+    }
+
+    const routePath = sortedHistory.map((loc) => ({ lat: loc.latitude, lng: loc.longitude }));
+    const bounds = new google.maps.LatLngBounds();
+    routePath.forEach((point) => bounds.extend(point));
+
+    this.routePolyline = new google.maps.Polyline({
+      path: routePath,
+      geodesic: true,
+      strokeColor: '#3b82f6',
+      strokeOpacity: 0.9,
+      strokeWeight: 4,
+      map: this.map
+    });
+
+    const start = routePath[0];
+    const end = routePath[routePath.length - 1];
+
+    const startMarker = new google.maps.Marker({
+      map: this.map,
+      position: start,
+      title: 'Inicio de la alerta',
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: '#22c55e',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 1.5,
+        scale: 7
+      }
+    });
+
+    const endMarker = new google.maps.Marker({
+      map: this.map,
+      position: end,
+      title: this.alert.status === 'resolved' ? 'Alerta finalizada/cancelada' : 'Última ubicación',
+      icon: {
+        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+        fillColor: this.alert.status === 'resolved' ? '#ef4444' : '#f59e0b',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 1,
+        scale: 6
+      }
+    });
+
+    this.routeMarkers.push(startMarker, endMarker);
+    this.map.fitBounds(bounds, 50);
+  }
+
+  private clearRouteOverlays(): void {
+    if (this.routePolyline) {
+      this.routePolyline.setMap(null);
+      this.routePolyline = null;
+    }
+
+    this.routeMarkers.forEach((marker) => marker.setMap(null));
+    this.routeMarkers = [];
   }
 
   getStatusColor(): string {
@@ -185,5 +291,13 @@ export class AlertDetailComponent implements OnInit {
 
   getNearbyAuthorities() {
     return this.alert?.nearbyAuthorities || [];
+  }
+
+  getStatusLabel(status: Alert['status']): string {
+    return this.statusLabels[status];
+  }
+
+  getPriorityLabel(priority: Alert['priority']): string {
+    return this.priorityLabels[priority];
   }
 }

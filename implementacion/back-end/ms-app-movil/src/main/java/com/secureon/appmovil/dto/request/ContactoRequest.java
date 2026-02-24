@@ -35,4 +35,6 @@ public class ContactoRequest {
     private Integer canalId;
     private Boolean esPrincipal = false;
 
+    
+
 }

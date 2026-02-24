@@ -108,6 +108,10 @@ public class NotificacionService {
         return ubicacionStr;
     }
 
+    public void enviarCodigoActivacionDispositivo() {
+
+    }
+
     @Async("taskExecutor")
     private void enviarMensaje(String mensaje, Contacto contacto, Alarma alarma) {
         boolean esSMS = false;
@@ -118,13 +122,7 @@ public class NotificacionService {
             if (!esSMS || !esWhatsapp) {
                 throw new RuntimeException("Servicio no implementado");
             } 
-            String twilioPhone = esSMS ? twilioConfig.getFromNumber() : twilioConfig.getWhatsappFromNumber();
-            Message message = Message.creator(
-                    new PhoneNumber(contacto.getTelefono()),
-                    new PhoneNumber(twilioPhone),
-                    mensaje
-            ).create();
-            log.info("SMS enviado a {}: SID {}", contacto.getTelefono(), message.getSid());
+            this.enviarMensaje(mensaje, contacto.getTelefono(), esSMS);
             alarmaContactoService.enviarAlarmaContacto(alarma, contacto, contacto.getCanalNotificacion(), 
                     catalogoService.getEstadoEnvio(1) , mensaje);
         } catch (Exception e) {
@@ -135,6 +133,16 @@ public class NotificacionService {
             alarmaContactoService.enviarAlarmaContacto(alarma, contacto, contacto.getCanalNotificacion(), 
                     catalogoService.getEstadoEnvio(3) , msjErr);
         }
+    }
+
+    private void enviarMensaje(String mensaje, String telefono, boolean esSMS ) throws Exception {
+            String twilioPhone = esSMS ? twilioConfig.getFromNumber() : twilioConfig.getWhatsappFromNumber();
+            Message message = Message.creator(
+                    new PhoneNumber(telefono),
+                    new PhoneNumber(twilioPhone),
+                    mensaje
+            ).create(); 
+            log.info("Mensaje enviado a {}: SID {}", telefono, message.getSid());
     }
  
 }

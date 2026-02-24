@@ -55,21 +55,21 @@ public class AlarmaController {
         return ResponseEntity.ok(dtoPage);
     }
 
-    @GetMapping("/alerta/{id}")
+    @GetMapping("/alarma/{id}")
     public ResponseEntity<AlarmaResponse> obtenerAlarma(@PathVariable UUID id) {
         return alarmaService.obtenerAlarma(id)
                 .map(alarma -> ResponseEntity.ok(AlarmaResponse.fromEntity(alarma)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/alerta/{id}/ubicaciones")
+    @GetMapping("/alarma/{id}/ubicaciones")
     public ResponseEntity<List<UbicacionResponse>> obtenerUbicaciones(@PathVariable UUID id) {
         List<Ubicacion> ubicaciones = alarmaService.obtenerUbicaciones(id);
         List<UbicacionResponse> dtoList = ubicaciones.stream().map(UbicacionResponse::fromEntity).collect(Collectors.toList());
         return ResponseEntity.ok(dtoList);
     }
 
-    @PutMapping("/alerta/{id}/prioridad")
+    @PutMapping("/alarma/{id}/prioridad")
     public ResponseEntity<AlarmaResponse> actualizarPrioridad(@PathVariable UUID id, @RequestBody AlarmaRequest dto) {
         Alarma alarma = alarmaService.actualizarPrioridad(id, dto.getPrioridadId());
         return ResponseEntity.ok(AlarmaResponse.fromEntity(alarma));

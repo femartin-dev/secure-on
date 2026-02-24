@@ -1,0 +1,31 @@
+<div class="bg-background-light dark:bg-background-dark font-display antialiased h-screen w-full flex flex-col text-[#111317] dark:text-white">
+
+  <!-- Header -->
+  <header class="shrink-0 bg-background-light dark:bg-background-dark shadow-md z-10">
+    <div class="flex items-center justify-between p-4 h-16">
+      <button (click)="goBack()"
+        class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-2xl">arrow_back</span>
+      </button>
+      <h2 class="text-lg font-bold leading-tight tracking-[-0.015em] text-center truncate px-2 flex-1">
+        {{ currentPage.label }}
+      </h2>
+      <div class="flex gap-1">
+        <button (click)="goPrev()" [disabled]="!canGoPrev"
+          class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default">
+          <span class="material-symbols-outlined text-2xl">chevron_left</span>
+        </button>
+        <button (click)="goNext()" [disabled]="!canGoNext"
+          class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default">
+          <span class="material-symbols-outlined text-2xl">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Child content -->
+  <main class="flex-1 overflow-y-auto relative flex flex-col w-full">
+    <router-outlet></router-outlet>
+  </main>
+
+</div>

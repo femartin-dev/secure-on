@@ -1,0 +1,50 @@
+<!-- Full-screen cancel overlay -->
+<div class="relative flex h-screen w-full flex-col overflow-y-auto bg-background-dark">
+  <div class="absolute inset-0 z-50 flex items-center justify-center bg-[#0f121b]/95 backdrop-blur-md p-6">
+    <div class="w-full max-w-sm flex flex-col items-center">
+
+      <!-- Countdown Circle -->
+      <div class="relative mb-10 group cursor-default">
+        <div class="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse"></div>
+        <div class="relative w-64 h-64">
+          <svg class="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+            <!-- Track -->
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#1e2536" stroke-width="4"></circle>
+            <!-- Progress -->
+            <circle
+              class="drop-shadow-[0_0_8px_rgba(239,68,68,0.6)] transition-all duration-1000 ease-linear"
+              cx="50" cy="50" r="45" fill="none" stroke="#ef4444"
+              [attr.stroke-dasharray]="circumference"
+              [attr.stroke-dashoffset]="strokeDashoffset"
+              stroke-linecap="round" stroke-width="4"
+            ></circle>
+          </svg>
+          <!-- Timer text -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-7xl font-bold text-white tabular-nums tracking-tighter leading-none">{{ formattedTime }}</span>
+            <span class="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mt-3 animate-pulse">Cancelando</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title & Description -->
+      <div class="text-center mb-10 space-y-3">
+        <h2 class="text-2xl font-bold text-white tracking-tight">Cancelar Alarma</h2>
+        <p class="text-slate-400 text-sm leading-relaxed max-w-[280px] mx-auto">
+          Si el tiempo finaliza, la alarma se activará. Pulse 'Cancelar Alarma' para detener el proceso.
+        </p>
+      </div>
+
+      <!-- Cancel Button -->
+      <button
+        (click)="cancelAlarm()"
+        [disabled]="cancelled"
+        class="w-full h-14 bg-white hover:bg-slate-100 text-[#111521] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-xl shadow-white/5 transition-all transform active:scale-95 disabled:opacity-50"
+      >
+        <span class="material-symbols-outlined font-semibold text-2xl">close</span>
+        Cancelar Alarma
+      </button>
+
+    </div>
+  </div>
+</div>

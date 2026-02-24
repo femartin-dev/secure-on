@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AlertService } from '../../services/alert.service';
@@ -6,6 +6,15 @@ import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import { Alert, PaginatedAlerts } from '../../models/alert.models';
 import { User } from '../../models/auth.models';
+import { Subscription } from 'rxjs';
+import {
+  ALERT_PRIORITY_CLASSES,
+  ALERT_PRIORITY_LABELS,
+  ALERT_TYPE_COLORS,
+  ALERT_TYPE_ICONS,
+  getAlertTypeBorderClass
+} from '../../shared/alert-ui.config';
+import { GoogleMapsService } from '../../services/google-maps.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,37 +36,20 @@ export class DashboardComponent implements OnInit {
   totalPages = 1;
   socketConnected = false;
   mapReady = false;
-  map: any;
+  map: google.maps.Map | null = null;
+  private alertMarkers: google.maps.Marker[] = [];
+  private subscriptions = new Subscription();
 
-  alertTypeIcons: { [key: string]: string } = {
-    'panic': 'warning',
-    'intrusion': 'motion_sensor_active',
-    'medical': 'medical_services',
-    'supervision': 'visibility',
-    'system': 'router',
-    'device': 'signal_disconnected'
-  };
-
-  alertTypeColors: { [key: string]: { bg: string; text: string; border: string } } = {
-    'panic': { bg: 'bg-red-500/10', text: 'text-red-500', border: 'border-red-500' },
-    'intrusion': { bg: 'bg-orange-500/10', text: 'text-orange-500', border: 'border-orange-500' },
-    'medical': { bg: 'bg-blue-400/10', text: 'text-blue-400', border: 'border-blue-400' },
-    'supervision': { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500' },
-    'system': { bg: 'bg-green-500/10', text: 'text-green-500', border: 'border-green-500' },
-    'device': { bg: 'bg-yellow-500/10', text: 'text-yellow-500', border: 'border-yellow-500' }
-  };
-
-  priorityColors: { [key: string]: string } = {
-    'critical': 'bg-red-500/20 text-red-500 border-red-500/20',
-    'high': 'bg-orange-500/20 text-orange-500 border-orange-500/20',
-    'medium': 'bg-yellow-500/20 text-yellow-500 border-yellow-500/20',
-    'low': 'bg-green-500/20 text-green-500 border-green-500/20'
-  };
+  alertTypeIcons = ALERT_TYPE_ICONS;
+  alertTypeColors = ALERT_TYPE_COLORS;
+  priorityColors = ALERT_PRIORITY_CLASSES;
+  priorityLabels = ALERT_PRIORITY_LABELS;
 
   constructor(
     private alertService: AlertService,
     private authService: AuthService,
     private socketService: SocketService,
+    private googleMapsService: GoogleMapsService,
     private router: Router
   ) {}
 
@@ -70,6 +62,15 @@ export class DashboardComponent implements OnInit {
 
     this.loadAlerts();
     this.setupSocketListeners();
+  }
+
+  ngAfterViewInit(): void {
+    this.initializeMap();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+    this.clearMarkers();
   }
 
   private loadAlerts(): void {
@@ -90,7 +91,7 @@ export class DashboardComponent implements OnInit {
         this.alerts = response.alerts;
         this.totalPages = response.totalPages;
         this.isLoading = false;
-        this.initializeMap();
+        this.renderAlertMarkers();
       },
       error: (error) => {
         console.error('Error loading alerts:', error);
@@ -107,55 +108,78 @@ export class DashboardComponent implements OnInit {
     }
 
     // Listen for new alerts
-    this.socketService.alertCreated$.subscribe(alert => {
+    this.subscriptions.add(this.socketService.alertCreated$.subscribe(alert => {
       if (alert) {
         this.alertService.addOrUpdateAlert(alert);
         this.alerts = [alert, ...this.alerts].slice(0, this.pageSize);
+        this.renderAlertMarkers();
       }
-    });
+    }));
 
     // Listen for alert updates
-    this.socketService.alertUpdated$.subscribe(alert => {
+    this.subscriptions.add(this.socketService.alertUpdated$.subscribe(alert => {
       if (alert) {
         this.alertService.addOrUpdateAlert(alert);
         const index = this.alerts.findIndex(a => a.id === alert.id);
         if (index >= 0) {
           this.alerts[index] = alert;
           this.alerts = [...this.alerts];
+          this.renderAlertMarkers();
         }
       }
-    });
+    }));
 
     // Listen for location updates
-    this.socketService.locationUpdated$.subscribe(data => {
+    this.subscriptions.add(this.socketService.locationUpdated$.subscribe(data => {
       if (data && this.selectedAlert?.id === data.alertId) {
         if (!this.selectedAlert.locationHistory) {
           this.selectedAlert.locationHistory = [];
         }
         this.selectedAlert.locationHistory.push(data.location);
         this.updateMapRoute();
+        this.renderAlertMarkers(false);
       }
-    });
+    }));
 
     // Listen for connection status
-    this.socketService.isConnected$.subscribe(connected => {
+    this.subscriptions.add(this.socketService.isConnected$.subscribe(connected => {
       this.socketConnected = connected;
-    });
+    }));
   }
 
-  private initializeMap(): void {
-    if (this.mapReady) return;
-    
-    // Map initialization will be handled in the template using Google Maps API
-    // We'll pass the alerts data to render markers
-    this.mapReady = true;
+  private async initializeMap(): Promise<void> {
+    if (this.mapReady || !this.mapElement?.nativeElement) {
+      return;
+    }
+
+    try {
+      this.map = await this.googleMapsService.createMap(this.mapElement.nativeElement, {
+        center: { lat: -31.38755, lng: -64.1799254 },
+        zoom: 13,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        styles: [
+          { elementType: 'geometry', stylers: [{ color: '#1d2c4d' }] },
+          { elementType: 'labels.text.fill', stylers: [{ color: '#8ec3b9' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#1a3646' }] },
+          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#304a7d' }] },
+          { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] }
+        ]
+      });
+      this.mapReady = true;
+      this.renderAlertMarkers();
+    } catch (error) {
+      console.error('No se pudo inicializar Google Maps:', error);
+    }
   }
 
   private updateMapRoute(): void {
-    // This will update the polyline showing the route based on location history
-    if (this.selectedAlert?.locationHistory) {
-      // Update map with new route
-      console.log('Updating map route with:', this.selectedAlert.locationHistory);
+    if (this.selectedAlert?.location && this.map) {
+      this.map.panTo({
+        lat: this.selectedAlert.location.latitude,
+        lng: this.selectedAlert.location.longitude
+      });
     }
   }
 
@@ -166,26 +190,100 @@ export class DashboardComponent implements OnInit {
   selectAlert(alert: Alert): void {
     this.selectedAlert = alert;
     this.alertService.setSelectedAlert(alert);
+    if (this.map) {
+      this.map.panTo({ lat: alert.location.latitude, lng: alert.location.longitude });
+      this.map.setZoom(15);
+    }
   }
 
-  viewAlertDetail(alert: Alert): void {
+  viewAlertDetail(alert: Alert, event?: MouseEvent): void {
+    event?.stopPropagation();
     this.selectAlert(alert);
     this.router.navigate(['/alert-detail', alert.id], { state: { mode: 'view' } });
   }
 
-  editAlert(alert: Alert): void {
+  editAlert(alert: Alert, event?: MouseEvent): void {
+    event?.stopPropagation();
     this.selectAlert(alert);
     this.router.navigate(['/alert-detail', alert.id], { state: { mode: 'edit' } });
   }
 
-  verifyAlert(alert: Alert): void {
+  verifyAlert(alert: Alert, event?: MouseEvent): void {
+    event?.stopPropagation();
     this.selectAlert(alert);
     this.router.navigate(['/alert-detail', alert.id], { state: { mode: 'verify' } });
   }
 
-  notifyAuthorities(alert: Alert): void {
+  notifyAuthorities(alert: Alert, event?: MouseEvent): void {
+    event?.stopPropagation();
     this.selectAlert(alert);
     this.router.navigate(['/alert-detail', alert.id], { state: { mode: 'notify' } });
+  }
+
+  getBorderClass(type: Alert['type']): string {
+    return getAlertTypeBorderClass(type);
+  }
+
+  trackByAlertId(_: number, alert: Alert): string {
+    return alert.id;
+  }
+
+  private renderAlertMarkers(fitBounds: boolean = true): void {
+    if (!this.mapReady || !this.map) {
+      return;
+    }
+
+    this.clearMarkers();
+
+    if (this.alerts.length === 0) {
+      return;
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+
+    this.alertMarkers = this.alerts.map((alert) => {
+      const marker = new google.maps.Marker({
+        position: { lat: alert.location.latitude, lng: alert.location.longitude },
+        map: this.map,
+        title: `${alert.userName} - ${alert.title}`,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: this.getMarkerColor(alert.priority),
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 1.5,
+          scale: 8
+        }
+      });
+
+      marker.addListener('click', () => this.selectAlert(alert));
+      bounds.extend(marker.getPosition() as google.maps.LatLng);
+      return marker;
+    });
+
+    if (fitBounds && !bounds.isEmpty()) {
+      this.map.fitBounds(bounds, 50);
+    }
+  }
+
+  private clearMarkers(): void {
+    this.alertMarkers.forEach((marker) => marker.setMap(null));
+    this.alertMarkers = [];
+  }
+
+  private getMarkerColor(priority: Alert['priority']): string {
+    switch (priority) {
+      case 'critical':
+        return '#ef4444';
+      case 'high':
+        return '#f97316';
+      case 'medium':
+        return '#eab308';
+      case 'low':
+        return '#22c55e';
+      default:
+        return '#3b82f6';
+    }
   }
 
   goToPreviousPage(): void {

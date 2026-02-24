@@ -1,0 +1,236 @@
+<!-- Background Video -->
+<div class="fixed inset-0 -z-10 overflow-hidden">
+  <video #bgVideo autoplay loop muted playsinline class="absolute min-w-full min-h-full object-cover">
+    <source src="assets/securion-bg-video.mp4" type="video/mp4" />
+  </video>
+  <div class="absolute inset-0 bg-background-dark/80 backdrop-blur-[2px]"></div>
+</div>
+
+<!-- Main Container -->
+<div class="relative flex min-h-screen w-full items-center flex-col overflow-x-hidden mx-auto bg-transparent">
+
+  <!-- Top App Bar -->
+  <header class="flex w-full items-center px-4 py-3 justify-between sticky top-0 z-50 bg-background-dark/95 backdrop-blur-md border-b border-border-dark/30 max-w-[800px]">
+    <button type="button" (click)="goToLogin()" class="text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+      <span class="material-symbols-outlined">arrow_back_ios_new</span>
+    </button>
+    <h1 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10 text-white">Registro de Usuario</h1>
+  </header>
+
+  <!-- Content Area -->
+  <main class="flex-1 flex flex-col pb-6 w-full max-w-[800px]">
+
+    <!-- Hero / Context Image -->
+    <div class="px-4 py-4 sm:px-6">
+      <div class="w-full h-[140px] rounded-xl bg-cover bg-center relative overflow-hidden shadow-lg border border-border-dark/50"
+           style="background-image: url('assets/secureon-register-hero.jpg');">
+        <div class="absolute inset-0 bg-gradient-to-r from-primary/80 to-background-dark/80 mix-blend-multiply"></div>
+        <div class="absolute inset-0 flex flex-col justify-end p-4">
+          <div class="flex items-center gap-2 text-white/90 mb-1">
+            <img alt="Secureon Logo" class="white-logo h-5 w-4 brightness-0 invert" src="assets/secureon-iso-logo.png" />
+            <span class="text-xs font-bold uppercase tracking-wider text-white/70">Secure ON</span>
+          </div>
+          <h2 class="text-white text-xl font-bold leading-tight">Creación de Usuario</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intro Text -->
+    <div class="px-4 pb-2 sm:px-6">
+      <p class="text-text-muted text-sm font-normal leading-normal text-center">
+        Ingrese sus datos para darle de alta en el sistema.
+      </p>
+    </div>
+
+    <!-- Registration Form -->
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()"
+          class="w-full px-4 py-4 sm:px-6 grid grid-cols-1 min-[500px]:grid-cols-2 gap-5 max-w-[800px]">
+
+      <!-- Nombre -->
+      <div class="flex flex-col w-full sm:col-span-1">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-white">Nombre</label>
+        <input formControlName="nombre" type="text" placeholder="Juan"
+               class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 px-4 placeholder:text-text-muted text-base transition-all shadow-sm"
+               [class.border-red-500]="submitted && f['nombre'].invalid" />
+        <div *ngIf="submitted && f['nombre'].invalid" class="text-xs text-red-400 mt-1 ml-1">
+          <span *ngIf="f['nombre'].errors?.['required']">Nombre requerido</span>
+          <span *ngIf="f['nombre'].errors?.['minlength']">Mínimo 2 caracteres</span>
+        </div>
+      </div>
+
+      <!-- Apellido -->
+      <div class="flex flex-col w-full sm:col-span-1">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-white">Apellido</label>
+        <input formControlName="apellido" type="text" placeholder="Pérez"
+               class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 px-4 placeholder:text-text-muted text-base transition-all shadow-sm"
+               [class.border-red-500]="submitted && f['apellido'].invalid" />
+        <div *ngIf="submitted && f['apellido'].invalid" class="text-xs text-red-400 mt-1 ml-1">
+          <span *ngIf="f['apellido'].errors?.['required']">Apellido requerido</span>
+          <span *ngIf="f['apellido'].errors?.['minlength']">Mínimo 2 caracteres</span>
+        </div>
+      </div>
+
+      <!-- Teléfono -->
+      <div class="flex flex-col w-full min-[500px]:col-span-2 sm:col-span-1">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-white">Teléfono</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined" style="font-size: 20px;">call</span>
+          <input formControlName="telefono" type="tel" placeholder="+54 11 1234 5678"
+                 class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-4 placeholder:text-text-muted text-base transition-all shadow-sm"
+                 [class.border-red-500]="submitted && f['telefono'].invalid" />
+        </div>
+        <div *ngIf="submitted && f['telefono'].invalid" class="text-xs text-red-400 mt-1 ml-1">
+          <span *ngIf="f['telefono'].errors?.['pattern']">Formato de teléfono inválido</span>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="flex flex-col w-full min-[500px]:col-span-2 sm:col-span-1">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-white">Email</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined" style="font-size: 20px;">mail</span>
+          <input formControlName="email" type="email" placeholder="ejemplo@secureon.com"
+                 class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-4 placeholder:text-text-muted text-base transition-all shadow-sm"
+                 [class.border-red-500]="submitted && f['email'].invalid" />
+        </div>
+        <div *ngIf="submitted && f['email'].invalid" class="text-xs text-red-400 mt-1 ml-1">
+          <span *ngIf="f['email'].errors?.['required']">Correo requerido</span>
+          <span *ngIf="f['email'].errors?.['email']">Debe ser un correo válido</span>
+        </div>
+      </div>
+
+      <!-- Dirección -->
+      <div class="flex flex-col w-full min-[500px]:col-span-2">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-white">Dirección</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined" style="font-size: 20px;">location_on</span>
+          <input formControlName="direccion" type="text" placeholder="Calle Falsa 123, Ciudad"
+                 class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-4 placeholder:text-text-muted text-base transition-all shadow-sm" />
+        </div>
+      </div>
+
+      <!-- Contraseña -->
+      <div class="flex flex-col w-full min-[500px]:col-span-2 sm:col-span-1">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-white">Contraseña</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined" style="font-size: 20px;">lock</span>
+          <input formControlName="password"
+                 [type]="passwordVisible ? 'text' : 'password'"
+                 placeholder="••••••••"
+                 class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-11 placeholder:text-text-muted text-base transition-all shadow-sm"
+                 [class.border-red-500]="submitted && f['password'].invalid" />
+          <button type="button" (click)="togglePasswordVisibility()"
+                  class="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-text-muted hover:text-white transition-colors focus:outline-none">
+            <span class="material-symbols-outlined" style="font-size: 20px;">{{ passwordVisible ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        <div *ngIf="submitted && f['password'].invalid" class="text-xs text-red-400 mt-1 ml-1">
+          <span *ngIf="f['password'].errors?.['required']">Contraseña requerida</span>
+          <span *ngIf="f['password'].errors?.['minlength']">Mínimo 8 caracteres</span>
+        </div>
+      </div>
+
+      <!-- Confirmar Contraseña -->
+      <div class="flex flex-col w-full min-[500px]:col-span-2 sm:col-span-1">
+        <label class="text-sm font-medium leading-normal pb-2 ml-1 text-white">Confirmar Contraseña</label>
+        <div class="relative group">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined" style="font-size: 20px;">encrypted</span>
+          <input formControlName="confirmPassword"
+                 [type]="confirmPasswordVisible ? 'text' : 'password'"
+                 placeholder="••••••••"
+                 class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-11 placeholder:text-text-muted text-base transition-all shadow-sm"
+                 [class.border-red-500]="submitted && (f['confirmPassword'].invalid || registerForm.errors?.['passwordMismatch'])" />
+          <button type="button" (click)="toggleConfirmPasswordVisibility()"
+                  class="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-text-muted hover:text-white transition-colors focus:outline-none">
+            <span class="material-symbols-outlined" style="font-size: 20px;">{{ confirmPasswordVisible ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        <div *ngIf="submitted && (f['confirmPassword'].invalid || registerForm.errors?.['passwordMismatch'])" class="text-xs text-red-400 mt-1 ml-1">
+          <span *ngIf="registerForm.errors?.['passwordMismatch']">Las contraseñas no coinciden</span>
+          <span *ngIf="f['confirmPassword'].errors?.['required']">Confirma tu contraseña</span>
+        </div>
+      </div>
+
+      <!-- Device Info Section (hidden – data captured silently) -->
+      <div class="min-[500px]:col-span-2 mt-2 hidden">
+        <div class="rounded-lg border border-border-dark bg-surface-dark/50 p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-primary" style="font-size: 20px;">smartphone</span>
+            <span class="text-sm font-bold text-white">Información del Dispositivo</span>
+            <span *ngIf="deviceInfoLoaded" class="ml-auto flex items-center gap-1 text-xs text-green-400">
+              <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
+              Detectado
+            </span>
+            <span *ngIf="!deviceInfoLoaded" class="ml-auto flex items-center gap-1 text-xs text-text-muted">
+              <span class="material-symbols-outlined animate-spin" style="font-size: 14px;">sync</span>
+              Detectando...
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <div class="flex flex-col">
+              <span class="text-text-muted">ID Dispositivo</span>
+              <span class="text-white font-mono truncate">{{ deviceInfo?.dispositivoAppId || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Modelo</span>
+              <span class="text-white">{{ deviceInfo?.modelo || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Plataforma</span>
+              <span class="text-white">{{ deviceInfo?.plataforma || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Versión SO</span>
+              <span class="text-white">{{ deviceInfo?.versionSO || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Fabricante</span>
+              <span class="text-white">{{ deviceInfo?.fabricante || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Tipo</span>
+              <span class="text-white">{{ deviceInfo?.tipoDispositivo || '—' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terms Checkbox -->
+      <div class="min-[500px]:col-span-2 flex items-start gap-3 py-1">
+        <input formControlName="aceptarTerminos" type="checkbox" id="terms"
+               class="w-5 h-5 rounded border-border-dark bg-surface-dark text-primary focus:ring-2 focus:ring-primary/50 cursor-pointer mt-0.5"
+               [class.border-red-500]="submitted && f['aceptarTerminos'].invalid" />
+        <label for="terms" class="text-sm text-text-muted cursor-pointer flex-1">
+          Acepto los
+          <a href="#" class="text-primary hover:text-blue-400 font-medium">términos y condiciones</a>
+          y la
+          <a href="#" class="text-primary hover:text-blue-400 font-medium">política de privacidad</a>
+        </label>
+      </div>
+    </form>
+
+    <!-- Server Error Message -->
+    <div *ngIf="errorMessage" class="mx-4 sm:mx-6 mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex w-full mt-4 px-4 sm:px-6 pb-8 flex-col gap-3 sm:flex-row sm:gap-4 justify-center mx-auto max-w-[800px]">
+      <button type="button" (click)="onSubmit()" [disabled]="loading"
+              class="flex w-full items-center justify-center rounded-lg bg-primary hover:bg-blue-800 h-12 px-5 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark shadow-lg shadow-primary/20 active:scale-[0.98] disabled:opacity-50">
+        <span *ngIf="!loading" class="text-white text-base font-bold tracking-wide">Aceptar</span>
+        <span *ngIf="loading" class="flex items-center gap-2 text-white text-base font-bold">
+          <span class="animate-spin material-symbols-outlined">sync</span>
+          Registrando...
+        </span>
+      </button>
+      <button type="button" (click)="goToLogin()"
+              class="flex w-full items-center justify-center rounded-lg border border-transparent hover:bg-white/5 h-12 px-5 transition-colors text-gray-400 hover:text-white focus:outline-none">
+        <span class="text-base font-medium">Cancelar</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Bottom safe area spacer -->
+  <div class="h-4 w-full bg-transparent"></div>
+</div>

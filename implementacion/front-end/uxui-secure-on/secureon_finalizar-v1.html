@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Autenticación por Contraseña</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1349ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101522",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+<!-- Main Container -->
+<div class="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden p-4">
+<!-- Content Wrapper for Phone Form Factor -->
+<div class="flex w-full max-w-[480px] flex-col gap-6">
+
+<div class="flex items-center p-6 justify-between z-10">
+<!-- Left Icon: Cancel/Close -->
+<button class="flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full p-2 hover:bg-white/10">
+<span class="material-symbols-outlined text-[28px]">close</span>
+</button>
+<!-- Center: Lock Status -->
+<!--
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-primary mb-1 text-[32px]">lock</span>
+<span class="text-xs uppercase tracking-widest font-semibold text-primary/80">Seguro</span>
+</div>
+-->
+<div class="flex flex-col justify-center h-32 rounded-3xl bg-white/5 border border-white/10 shadow-inner backdrop-blur-md w-48">
+<img alt="Securion Logo" class="h-auto object-contain w-80" src="file://C:\Users\Strix\Downloads\secureon-logo.png"/>
+</div>
+
+<!-- Right Icon: Help/Menu -->
+<button class="flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full p-2 hover:bg-white/10">
+<span class="material-symbols-outlined text-[28px]">help</span>
+</button>
+</div>
+<!-- Alarm Status Icon -->
+<div class="flex justify-center pb-4">
+<div class="flex h-24 w-24 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+<span class="material-symbols-outlined text-5xl text-red-500">notifications_active</span>
+</div>
+</div>
+<!-- Header Section -->
+<div class="flex flex-col gap-2 text-center">
+<h1 class="text-white text-3xl font-bold leading-tight tracking-tight">Desactivar Alarma</h1>
+<p class="text-[#9da4b9] text-base font-normal leading-normal px-4">
+                    Ingrese su contraseña para desactivar la alarma y verificar su identidad.
+                </p>
+</div>
+<!-- Input Section -->
+<div class="flex flex-col gap-4">
+<div class="w-full">
+<label class="flex flex-col w-full">
+<div class="relative flex w-full items-center rounded-xl bg-[#1c1e27] border border-[#3b4154] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200">
+<input class="flex w-full min-w-0 flex-1 bg-transparent text-white placeholder:text-[#9da4b9] h-14 pl-4 pr-12 text-lg font-normal leading-normal border-none focus:ring-0 rounded-xl" placeholder="Contraseña" type="password" value=""/>
+<button class="absolute right-0 flex h-full w-12 items-center justify-center text-[#9da4b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-2xl">visibility_off</span>
+</button>
+</div>
+</label>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-4 pt-2">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 bg-primary hover:bg-blue-600 transition-colors text-white text-lg font-bold leading-normal tracking-[0.015em] shadow-lg shadow-blue-900/20">
+<span class="truncate">CONFIRMAR</span>
+</button>
+<button class="text-[#9da4b9] text-sm font-medium leading-normal text-center hover:text-white transition-colors py-2">
+                    ¿Olvidaste tu contraseña?
+                </button>
+</div>
+<!-- Numeric Keypad Placeholder / Visual Spacer -->
+<!-- In a real app, the OS keyboard appears. Here we leave space or show a subtle visual cue at the bottom -->
+<div class="mt-auto flex justify-center pt-8 opacity-20">
+<div class="h-1 w-1/3 rounded-full bg-white"></div>
+</div>
+</div>
+</div>
+</body></html>

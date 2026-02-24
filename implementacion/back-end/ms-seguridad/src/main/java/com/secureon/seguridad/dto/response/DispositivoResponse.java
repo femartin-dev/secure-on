@@ -4,7 +4,6 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.secureon.seguridad.model.entity.Dispositivo;
-import com.secureon.seguridad.model.entity.Usuario;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +16,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DispositivoResponse {
 
-    private Usuario usuario;
+    private UUID id;
+
+    private UUID usuarioId;
 
     private UUID dispositivoAppId; 
 
@@ -45,7 +46,8 @@ public class DispositivoResponse {
 
     public static DispositivoResponse fromEntity(Dispositivo dispositivo) {
         return DispositivoResponse.builder()
-                            .usuario(dispositivo.getUsuario())
+                            .id(dispositivo.getDispositivoId())
+                            .usuarioId(dispositivo.getUsuario().getUserId())
                             .dispositivoAppId(dispositivo.getDispositivoAppId())
                             .numero(dispositivo.getNumero()) 
                             .fabricante(dispositivo.getFabricante())

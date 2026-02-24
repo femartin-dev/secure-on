@@ -1,5 +1,6 @@
 package com.secureon.seguridad.service;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -61,6 +62,7 @@ public class DispositivoService {
             nuevo.setZonaHoraria(request.getZonaHoraria());
             nuevo.setIdiomaId(request.getIdiomaId());
             nuevo.setEsPrincipal(esPrincipal); // Se puede marcar como principal si es el primero
+            nuevo.setFechaCreacion(OffsetDateTime.now());
             return dispositivoRepository.save(nuevo);
         }
     }

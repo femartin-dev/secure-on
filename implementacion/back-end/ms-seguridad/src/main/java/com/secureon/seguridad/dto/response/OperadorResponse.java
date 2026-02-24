@@ -32,7 +32,7 @@ public class OperadorResponse {
                                 .apellido(operador.getApellido())
                                 .legajo(operador.getLegajo())
                                 .email(operador.getEmail())
-                                .usuario(operador.getUsuario())
+                                .usuario(operador.getTelefono())
                                 .esAdministrador(operador.getEsAdministrador())
                                 .supervisorId(operador.getSupervisor() != null ? operador.getSupervisor().getOperadorId() : null)
                                 .fechaRegistro(operador.getFechaRegistro())
