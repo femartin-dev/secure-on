@@ -3,7 +3,7 @@ package com.secureon.seguridad.dto.response;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import com.secureon.seguridad.model.entity.Operador;
+import com.secureon.common.model.entity.Operador;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,14 +27,14 @@ public class OperadorResponse {
 
     public static OperadorResponse fromEntity(Operador operador) {
         return OperadorResponse.builder()
-                                .operadorId(operador.getOperadorId())
+                                .operadorId(operador.getId())
                                 .nombre(operador.getNombre())
                                 .apellido(operador.getApellido())
                                 .legajo(operador.getLegajo())
                                 .email(operador.getEmail())
                                 .usuario(operador.getTelefono())
                                 .esAdministrador(operador.getEsAdministrador())
-                                .supervisorId(operador.getSupervisor() != null ? operador.getSupervisor().getOperadorId() : null)
+                                .supervisorId(operador.getSupervisor() != null ? operador.getSupervisor().getId() : null)
                                 .fechaRegistro(operador.getFechaRegistro())
                                 .build();
     }

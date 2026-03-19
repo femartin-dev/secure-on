@@ -7,13 +7,16 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.secureon.common.util.MessagesService;
+import com.secureon.common.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Idioma;
+import com.secureon.common.model.entity.Usuario;
+
 import com.secureon.seguridad.dto.request.RegistrarDispositivoRequest;
 import com.secureon.seguridad.exeptions.ResourceNotFoundException;
-import com.secureon.seguridad.model.entity.Dispositivo;
-import com.secureon.seguridad.model.entity.Usuario;
 import com.secureon.seguridad.repository.DispositivoRepository;
+import com.secureon.seguridad.repository.IdiomaRepository;
 import com.secureon.seguridad.repository.UsuarioRepository;
-import com.secureon.seguridad.util.MessagesService;
 
 import jakarta.transaction.Transactional;
 
@@ -24,6 +27,9 @@ public class DispositivoService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private IdiomaRepository idiomaRepository;
 
     @Autowired
     private MessagesService messageService;
@@ -42,9 +48,9 @@ public class DispositivoService {
             dispositivo.setModelo(request.getModelo());
             dispositivo.setPlataforma(request.getPlataforma());
             dispositivo.setSistemaOperativo(request.getSistemaOperativo());
-            dispositivo.setVersionDelSO(request.getVersionDelSO());
+            dispositivo.setVersionSO(request.getVersionDelSO());
             dispositivo.setZonaHoraria(request.getZonaHoraria());
-            dispositivo.setIdiomaId(request.getIdiomaId());
+            dispositivo.setIdioma(getIdiomaPorId(request.getIdiomaId()));
             dispositivo.setEsPrincipal(request.getEsPrincipal());
             dispositivo.setEstaActivo(true);
             return dispositivoRepository.save(dispositivo);
@@ -58,9 +64,9 @@ public class DispositivoService {
             nuevo.setModelo(request.getModelo());
             nuevo.setPlataforma(request.getPlataforma());
             nuevo.setSistemaOperativo(request.getSistemaOperativo());
-            nuevo.setVersionDelSO(request.getVersionDelSO());
+            nuevo.setVersionSO(request.getVersionDelSO());
             nuevo.setZonaHoraria(request.getZonaHoraria());
-            nuevo.setIdiomaId(request.getIdiomaId());
+            nuevo.setIdioma(getIdiomaPorId(request.getIdiomaId()));
             nuevo.setEsPrincipal(esPrincipal); // Se puede marcar como principal si es el primero
             nuevo.setFechaCreacion(OffsetDateTime.now());
             return dispositivoRepository.save(nuevo);
@@ -85,6 +91,11 @@ public class DispositivoService {
 
     private Usuario getUsuarioPorId(UUID usuarioId) {
         return usuarioRepository.findById(usuarioId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.user.not-found.id")));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.user.not-found.id")));
+    }
+
+    private Idioma getIdiomaPorId(String idiomaId) {
+        return idiomaRepository.findById(idiomaId)
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.language.not-found")));
     }
 }

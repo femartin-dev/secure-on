@@ -2,6 +2,7 @@ package com.secureon.appmovil.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,8 @@ public class CatalogoService {
     private final PrioridadRepository prioridadRepository;
     private final CanalNotificacionRepository canalRepository;
     private final EstadoEnvioRepository envioRepository;
+    @Value("${app.static-values.prioridad.normal}")
+    private Integer prioridadNueva;
 
     public MetodoUbicacion getMetodoUbicacion(Integer id) {
         return metodoUbicacionRepository.findById(id)
@@ -50,6 +53,10 @@ public class CatalogoService {
     public PrioridadAlarma getPrioridad(Integer id) {
         return prioridadRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Prioridad de alarma no encontrada"));
+    }
+
+    public PrioridadAlarma getPrioridadNueva() {
+        return getPrioridad(prioridadNueva);
     }
 
     public CanalNotificacion getCanalNotificacion(Integer id) {

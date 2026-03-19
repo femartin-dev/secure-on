@@ -8,9 +8,9 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
-@Configuration
+//@Configuration
 public class MessagesConfig {
-    @Bean
+    //@Bean
     public ResourceBundleMessageSource messageSource() {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
@@ -20,7 +20,7 @@ public class MessagesConfig {
         return messageSource;
     }
 
-    @Bean
+    //@Bean
     public LocaleResolver localeResolver() {
         AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
         resolver.setDefaultLocale(Locale.forLanguageTag("es"));

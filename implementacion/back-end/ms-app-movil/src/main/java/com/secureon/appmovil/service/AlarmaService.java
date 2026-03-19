@@ -53,6 +53,7 @@ public class AlarmaService {
         alarma.setUsuario(usuarioService.getUsuario(request.getUserId()));
         alarma.setFueReactivada(false);
         alarma.setCanceladaPorCdm(false);
+        alarma.setPrioridad(catalogoService.getPrioridadNueva());
 
         Alarma saved = alarmaRepository.save(alarma);
 

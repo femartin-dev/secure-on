@@ -1,0 +1,34 @@
+ws-gateway:
+    config:
+        server-url: http://localhost:8090
+        endpoint-ws: /ws/secure-on
+        enabled-brokers: /topic,/queue
+        app-destination: /app
+        user-destination: /user
+    routes:
+        topics:
+            alarma:
+                nueva: /topic/alarma/nueva
+                cambio-estado: /topic/alarma/cambio-estado
+                reactivacion: /topic/alarma/reactivacion
+                finalizacion: /topic/alarma/finalizacion
+                asignacion: /topic/alarma/asignacion
+            ubicacion:
+                realtime: /topic/ubicacion/realtime
+                historial: /topic/ubicacion/historial
+            operador:
+                estado: /topic/operador/estado
+                asignacion: /topic/operador/asignacion
+            sistema:
+                salud: /topic/sistema/salud
+                alertas: /topic/sistema/alertas
+        queues:
+            usuario:
+                notificaciones: /queue/usuario/notificaciones
+                alertas: /queue/usuario/alertas
+            operador:
+                tareas: /queue/operador/tareas
+                asignaciones: /queue/operador/asignaciones
+            cdm:
+                control: /queue/cdm/control
+                auditoria: /queue/cdm/auditoria

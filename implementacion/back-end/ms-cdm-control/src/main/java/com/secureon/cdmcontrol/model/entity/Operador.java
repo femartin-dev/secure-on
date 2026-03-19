@@ -23,6 +23,7 @@ public class Operador {
     @Column(nullable = false, length = 50)
     private String apellido;
 
+    @Column(nullable = false)
     private Integer legajo;
 
     @Column(nullable = false, unique = true, length = 255)

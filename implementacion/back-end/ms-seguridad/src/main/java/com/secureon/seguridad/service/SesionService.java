@@ -11,11 +11,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.secureon.seguridad.exeptions.ResourceNotFoundException;
-import com.secureon.seguridad.model.entity.Sesion;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.Sesion;
+import com.secureon.common.util.MessagesService;
+
 import com.secureon.seguridad.repository.SesionRepository;
 import com.secureon.seguridad.security.JwtTokenProvider;
-import com.secureon.seguridad.util.MessagesService;
 
 import jakarta.transaction.Transactional;
 
@@ -69,10 +70,14 @@ public class SesionService {
 
     @Transactional
     public void cerrarSesion(String token, SesionInterface callback) {
-        Optional<Sesion> sesionOpt = sesionRepository.findByTokenRestablecimiento(token);
-        sesionOpt.ifPresent(sesion ->  {
-                callback.cerrarSesion(sesion);
-                sesionRepository.delete(sesion); });
+        sesionRepository.findByTokenRestablecimiento(token)
+                        .ifPresentOrElse(sesion ->  {
+                                callback.cerrarSesion(sesion);
+                                sesionRepository.delete(sesion); 
+                                }, () -> {
+                                    throw new ResourceNotFoundException(messageService.getMessage("err.session.not-found.token"));
+                                });
+
     }
 
     public Sesion obtenerSesion(String token) {

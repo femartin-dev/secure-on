@@ -25,7 +25,7 @@ public class UbicacionService {
     public Ubicacion actualizarUbicacion(Alarma alarma, UbicacionRequest request) {
         Ubicacion ubicacion = new Ubicacion();
         ubicacion.setAlarma(alarma);
-        ubicacion.setPosicion(GeometryUtils.createPoint(request.getLng(), request.getLat()));
+        ubicacion.setPosicion(GeometryUtils.createPoint(request.getLongitud(), request.getLatitud()));
         ubicacion.setPrecision(request.getPrecision());
         ubicacion.setMetodoUbicacion(catalogoService.getMetodoUbicacion(request.getMetodo()));
         ubicacion.setBateriaNivel(request.getBateria());

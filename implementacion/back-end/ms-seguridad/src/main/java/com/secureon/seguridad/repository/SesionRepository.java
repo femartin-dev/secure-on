@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.seguridad.model.entity.Sesion;
+import com.secureon.common.model.entity.Sesion;
 
 @Repository
 public interface SesionRepository extends JpaRepository<Sesion, UUID> {

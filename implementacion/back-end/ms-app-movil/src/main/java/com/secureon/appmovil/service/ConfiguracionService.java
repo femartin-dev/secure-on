@@ -35,6 +35,8 @@ public class ConfiguracionService {
     public ConfiguracionUsuario guardarConfiguracion(UUID configuracionId, ConfiguracionRequest request) {
         ConfiguracionUsuario configuracion;
         if (configuracionId == null) {
+            configuracionRepository.findByUsuarioIdAndDispositivoId(request.getUsuarioId(), request.getDispositivoId())
+                .ifPresent(config -> { throw new RuntimeException("Configuracion de usuario ya existe para este dispositivo"); });
             configuracion = new ConfiguracionUsuario();
             configuracion.setUsuario(usuarioService.getUsuario(request.getUsuarioId()));
             configuracion.setDispositivo(dispositivoService.getDispositivo(request.getDispositivoId()));

@@ -12,7 +12,7 @@ import lombok.Setter;
 
 @Data
 @Entity
-@Table(name = "canal_notificacion", schema = "secure_on_utils")
+@Table(name = "canales_notificacion", schema = "secure_on_utils")
 @Getter
 @Setter
 public class CanalNotificacion {
@@ -22,7 +22,7 @@ public class CanalNotificacion {
     @Column(name = "canal_id")
     private Integer id;
 
-    @Column(length = 50)
+    @Column(length = 50, nullable = false, unique = true)
     private String descripcion;
 
     @Column(nullable = false)

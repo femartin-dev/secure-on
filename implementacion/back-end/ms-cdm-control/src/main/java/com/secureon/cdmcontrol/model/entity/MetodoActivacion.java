@@ -13,7 +13,7 @@ import lombok.Setter;
 
 @Data
 @Entity
-@Table(name = "metodo_activacion", schema = "secure_on_utils")
+@Table(name = "metodos_activacion", schema = "secure_on_utils")
 @Getter
 @Setter
 public class MetodoActivacion {
@@ -23,7 +23,7 @@ public class MetodoActivacion {
     @Column(name = "metodo_id")
     private Integer id;
 
-    @Column(length = 50)
+    @Column(length = 50, nullable = false, unique = true)
     private String descripcion;
 
     @Column(nullable = false)

@@ -3,12 +3,13 @@ package com.secureon.seguridad.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.secureon.seguridad.exeptions.ResourceNotFoundException;
-import com.secureon.seguridad.model.entity.Operador;
-import com.secureon.seguridad.model.entity.Sesion;
-import com.secureon.seguridad.model.entity.SesionCdm;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.Operador;
+import com.secureon.common.model.entity.Sesion;
+import com.secureon.common.model.entity.SesionCdm;
+import com.secureon.common.util.MessagesService;
+
 import com.secureon.seguridad.repository.SesionCdmRepository;
-import com.secureon.seguridad.util.MessagesService;
 
 import jakarta.transaction.Transactional;
 
@@ -39,7 +40,12 @@ public class SesionCdmService extends SesionService {
 
     @Transactional
     public void cerrarSesionCdm(Sesion sesion) {
-        sesionCdmRepository.deleteBySesion(sesion);
+        sesionCdmRepository.findBySesion(sesion)
+            .ifPresentOrElse(sesionCdm -> {
+                sesionCdmRepository.deleteBySesion(sesionCdm.getSesion());
+            }, () -> {
+                throw new ResourceNotFoundException(messageService.getMessage("err.user.session.inactive"));
+            });
     }
 
     public SesionCdm obtenerSesionCdmPorToken(String token) {

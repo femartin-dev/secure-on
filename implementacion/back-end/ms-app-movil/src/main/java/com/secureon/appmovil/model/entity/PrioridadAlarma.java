@@ -24,7 +24,7 @@ public class PrioridadAlarma {
     @Column(name = "prioridad_id")
     private Integer id;
 
-    @Column(length = 20)
+    @Column(length = 20, nullable = false, unique = true)
     private String descripcion;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

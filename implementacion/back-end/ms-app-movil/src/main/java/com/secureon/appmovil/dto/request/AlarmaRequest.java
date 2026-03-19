@@ -16,7 +16,8 @@ public class AlarmaRequest {
 
     @NotNull
     private UUID dispositivoId;
-
+    
+    @NotNull
     private Integer metodoActivacion; 
     private UbicacionRequest ubicacionInicial;
 }

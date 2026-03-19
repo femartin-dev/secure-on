@@ -18,7 +18,7 @@ public class TipoAutoridad {
     @Column(name = "tipo_id", nullable = false, updatable = false)
     private Integer id;
 
-    @Column(name = "descripcion", length = 50, nullable = false)
+    @Column(name = "descripcion", length = 50, nullable = false, unique = true)
     private String descripcion;
 
     @Column(name = "habilitada", nullable = false)

@@ -36,9 +36,14 @@ public class ContactoService {
         Contacto contacto;
         if (contactoId == null) {
             contacto = new Contacto();
+            Usuario user = usuarioService.getUsuario(request.getUserId());
+            contacto.setUsuario(user);
         } else {
             contacto = contactoRepository.findById(contactoId)
                 .orElseThrow(() -> new RuntimeException("Contacto no encontrado"));
+            if (contacto.getUsuario() == null || !contacto.getUsuario().getId().equals(request.getUserId())) {
+                throw new RuntimeException("Contacto no pertenece al usuario");
+            } 
         }
         Usuario user = usuarioService.getUsuario(request.getUserId());
         contacto.setUsuario(user);

@@ -7,16 +7,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.secureon.common.exception.BadRequestException;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.Operador;
+import com.secureon.common.model.entity.Sesion;
+import com.secureon.common.model.entity.SesionCdm;
+import com.secureon.common.util.MessagesService;
+
 import com.secureon.seguridad.dto.request.LoginCdmRequest;
 import com.secureon.seguridad.dto.request.RegistrarOperadorRequest;
 import com.secureon.seguridad.dto.response.LoginResponse;
-import com.secureon.seguridad.exeptions.BadRequestException;
-import com.secureon.seguridad.exeptions.ResourceNotFoundException;
-import com.secureon.seguridad.model.entity.Operador;
-import com.secureon.seguridad.model.entity.Sesion;
-import com.secureon.seguridad.model.entity.SesionCdm;
 import com.secureon.seguridad.repository.OperadorRepository;
-import com.secureon.seguridad.util.MessagesService;
+
 
 import jakarta.transaction.Transactional;
 
@@ -79,7 +81,7 @@ public class OperadorService {
 
         return LoginResponse.builder()
                 .token(sesion.getTokenRestablecimiento())
-                .id(operador.getOperadorId()) // No aplica para operadores
+                .id(operador.getId()) // No aplica para operadores
                 .email(operador.getEmail())
                 .nombre(operador.getNombre())
                 .apellido(operador.getApellido())

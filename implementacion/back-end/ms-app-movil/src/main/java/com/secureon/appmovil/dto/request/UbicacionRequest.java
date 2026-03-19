@@ -14,11 +14,11 @@ public class UbicacionRequest {
     @NotNull
     @DecimalMin(value = "-90.0", message = "{err.msg.lat.range}")
     @DecimalMax(value = "90.0", message = "{err.msg.lat.range}")
-    private Double lat;
+    private Double latitud;
     @NotNull
     @DecimalMin(value = "-180.0", message = "${err.msg.lng.range}")
     @DecimalMax(value = "180.0", message = "${err.msg.lng.range}")
-    private Double lng;
+    private Double longitud;
     private Integer precision;
     private Integer metodo; 
     private Integer bateria;

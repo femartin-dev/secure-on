@@ -24,7 +24,7 @@ public class EstadoEnvio {
     @Column(name = "estado_id")
     private Integer id;
 
-    @Column(length = 50)
+    @Column(length = 50, nullable = false, unique = true)
     private String descripcion;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

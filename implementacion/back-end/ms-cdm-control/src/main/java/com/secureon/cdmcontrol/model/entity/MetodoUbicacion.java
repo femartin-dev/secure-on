@@ -22,7 +22,7 @@ public class MetodoUbicacion {
     @Column(name = "metodo_id")
     private Integer id;
 
-    @Column(length = 50)
+    @Column(length = 50, nullable = false, unique = true)
     private String descripcion;
 
     @Column(nullable = false)

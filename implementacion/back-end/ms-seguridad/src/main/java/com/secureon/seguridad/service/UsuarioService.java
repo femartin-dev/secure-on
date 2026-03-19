@@ -1,22 +1,25 @@
 package com.secureon.seguridad.service;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.secureon.common.exception.BadRequestException;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Sesion;
+import com.secureon.common.model.entity.SesionApp;
+import com.secureon.common.model.entity.Usuario;
+import com.secureon.common.util.MessagesService;
+
 import com.secureon.seguridad.dto.request.LoginAppRequest;
 import com.secureon.seguridad.dto.request.RegistrarUsuarioRequest;
 import com.secureon.seguridad.dto.response.LoginResponse;
-import com.secureon.seguridad.exeptions.BadRequestException;
-import com.secureon.seguridad.model.entity.Dispositivo;
-import com.secureon.seguridad.model.entity.Sesion;
-import com.secureon.seguridad.model.entity.SesionApp;
-import com.secureon.seguridad.model.entity.Usuario;
 import com.secureon.seguridad.repository.UsuarioRepository;
-import com.secureon.seguridad.util.MessagesService;
 
 import jakarta.transaction.Transactional;
 
@@ -72,11 +75,11 @@ public class UsuarioService {
 
         return LoginResponse.builder()
                             .token(sesion.getTokenRestablecimiento())
-                            .id(usuario.getUserId())
+                            .id(usuario.getId())
                             .email(usuario.getEmail())
                             .nombre(usuario.getNombre())
                             .apellido(usuario.getApellido())
-                            .dispositivoId(dispositivo.getDispositivoId())
+                            .dispositivoId(dispositivo.getId())
                             .expiracion(sesion.getExpiracionToken())
                             .build();
     }
@@ -90,5 +93,10 @@ public class UsuarioService {
     public Usuario obtenerUsuarioPorToken(String token) {
         SesionApp sesionUsuario = sessionService.obtenerSesionUsuarioPorToken(token);
         return sesionUsuario.getUsuario();
+    }
+
+    protected Usuario getUsuarioPorId(UUID usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.user.not-found.id")));
     }
 }

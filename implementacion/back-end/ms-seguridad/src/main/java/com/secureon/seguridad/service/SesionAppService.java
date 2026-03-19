@@ -3,13 +3,14 @@ package com.secureon.seguridad.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.secureon.seguridad.exeptions.ResourceNotFoundException;
-import com.secureon.seguridad.model.entity.Dispositivo;
-import com.secureon.seguridad.model.entity.Sesion;
-import com.secureon.seguridad.model.entity.SesionApp;
-import com.secureon.seguridad.model.entity.Usuario;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Sesion;
+import com.secureon.common.model.entity.SesionApp;
+import com.secureon.common.model.entity.Usuario;
+import com.secureon.common.util.MessagesService;
+
 import com.secureon.seguridad.repository.SesionAppRepository;
-import com.secureon.seguridad.util.MessagesService;
 
 import jakarta.transaction.Transactional;
 
@@ -41,7 +42,12 @@ public class SesionAppService extends SesionService  {
 
     @Transactional
     public void cerrarSesionApp(Sesion sesion) {
-        sesionUsuarioRepository.deleteBySesion(sesion);
+        sesionUsuarioRepository.findBySesion(sesion)
+            .ifPresentOrElse(sesionApp -> {
+                sesionUsuarioRepository.deleteBySesion(sesionApp.getSesion());
+            }, () -> {
+                throw new ResourceNotFoundException(messageService.getMessage("err.user.session.inactive"));
+            });
     }
 
     public SesionApp obtenerSesionUsuarioPorToken(String token) {

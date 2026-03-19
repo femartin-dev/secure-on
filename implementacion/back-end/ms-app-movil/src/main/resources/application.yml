@@ -39,6 +39,10 @@ app:
             activa: 1
             cancelada: 2
             finalizada: 3
+        prioridad:
+            normal: 1
+            alta: 2
+            urgencia: 3
 
 ws-gateway:
     server-urls: 

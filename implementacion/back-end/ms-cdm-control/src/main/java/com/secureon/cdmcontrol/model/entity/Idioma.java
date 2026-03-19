@@ -19,7 +19,7 @@ public class Idioma {
     @Column(name = "idioma_id", length = 2)
     private String id;
 
-    @Column(length = 20)
+    @Column(length = 20, nullable = false, unique = true)
     private String descripcion;
 
     @Column(nullable = false)

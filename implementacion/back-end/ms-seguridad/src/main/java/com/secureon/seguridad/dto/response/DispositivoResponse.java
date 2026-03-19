@@ -3,7 +3,7 @@ package com.secureon.seguridad.dto.response;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import com.secureon.seguridad.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Dispositivo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,7 +32,7 @@ public class DispositivoResponse {
 
     private String sistemaOperativo;
 
-    private String versionDelSO;
+    private String versionSO;
 
     private String zonaHoraria;
 
@@ -46,17 +46,17 @@ public class DispositivoResponse {
 
     public static DispositivoResponse fromEntity(Dispositivo dispositivo) {
         return DispositivoResponse.builder()
-                            .id(dispositivo.getDispositivoId())
-                            .usuarioId(dispositivo.getUsuario().getUserId())
+                            .id(dispositivo.getId())
+                            .usuarioId(dispositivo.getUsuario().getId())
                             .dispositivoAppId(dispositivo.getDispositivoAppId())
                             .numero(dispositivo.getNumero()) 
                             .fabricante(dispositivo.getFabricante())
                             .modelo(dispositivo.getModelo())
                             .plataforma(dispositivo.getPlataforma())
                             .sistemaOperativo(dispositivo.getSistemaOperativo())
-                            .versionDelSO(dispositivo.getVersionDelSO())
+                            .versionSO(dispositivo.getVersionSO())
                             .zonaHoraria(dispositivo.getZonaHoraria())
-                            .idiomaId(dispositivo.getIdiomaId())
+                            .idiomaId(dispositivo.getIdioma().getId())
                             .esPrincipal(dispositivo.getEsPrincipal())
                             .estaActivo(dispositivo.getEstaActivo())
                             .fechaCreacion(dispositivo.getFechaCreacion())

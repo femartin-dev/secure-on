@@ -2,7 +2,6 @@ package com.secureon.cdmcontrol.listerner;
 
 import java.security.Principal;
 import java.util.Map;
-import java.util.UUID;
 
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -10,9 +9,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 import com.secureon.cdmcontrol.dto.messages.AlarmaDTO;
-import com.secureon.cdmcontrol.model.entity.Alarma;
-import com.secureon.cdmcontrol.service.AlarmaService;
-import com.secureon.cdmcontrol.service.AsignacionService;
+import com.secureon.cdmcontrol.service.AlarmaWsProcessor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,21 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class WebSocketMessageListener {
 
-    private final AlarmaService alarmaService;
-    private final AsignacionService asignacionService;
+    private final AlarmaWsProcessor alarmaWsProcessor;
 
     @MessageMapping("/topic/alarma/nueva")
     public void onAlarmaNueva(@Payload AlarmaDTO alarmaDTO, Principal principal) {
-        log.info("Alarma nueva recibida: alarmaId={}, de usuario: {}",
-                alarmaDTO.getAlarmaId(),
-                principal != null ? principal.getName() : "anónimo");
-
-        Alarma alarma = alarmaService.obtenerAlarma(alarmaDTO.getAlarmaId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Alarma no encontrada: " + alarmaDTO.getAlarmaId()));
-
-        asignacionService.asignarAlarma(alarma);
-        log.info("Alarma {} asignada correctamente", alarmaDTO.getAlarmaId());
+        alarmaWsProcessor.procesarNueva(
+                alarmaDTO,
+                principal != null ? principal.getName() : "anonimo");
     }
 
     @MessageMapping("/topic/{topico}")

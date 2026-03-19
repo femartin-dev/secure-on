@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 
-import com.secureon.seguridad.util.MessagesService;
+import com.secureon.common.util.MessagesService;
 
 import lombok.extern.slf4j.Slf4j;
 
-@ControllerAdvice
+//@ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 

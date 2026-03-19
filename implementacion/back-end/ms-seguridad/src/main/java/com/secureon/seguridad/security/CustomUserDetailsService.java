@@ -11,11 +11,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.secureon.seguridad.model.entity.Operador;
-import com.secureon.seguridad.model.entity.Usuario;
+import com.secureon.common.model.entity.Operador;
+import com.secureon.common.model.entity.Usuario;
+import com.secureon.common.util.MessagesService;
+
 import com.secureon.seguridad.repository.OperadorRepository;
 import com.secureon.seguridad.repository.UsuarioRepository;
-import com.secureon.seguridad.util.MessagesService;
 import com.secureon.seguridad.util.RolesProperties;
 
 @Service

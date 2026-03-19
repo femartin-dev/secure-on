@@ -11,12 +11,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.secureon.common.util.MessagesService;
+
 import com.secureon.seguridad.dto.request.LoginCdmRequest;
 import com.secureon.seguridad.dto.request.RegistrarOperadorRequest;
 import com.secureon.seguridad.dto.response.LoginResponse;
 import com.secureon.seguridad.dto.response.OperadorResponse;
 import com.secureon.seguridad.service.OperadorService;
-import com.secureon.seguridad.util.MessagesService;
 
 import jakarta.validation.Valid;
 
@@ -50,7 +51,7 @@ public class CdmController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/auth/logout")
+    @GetMapping("/auth/logout")
     public ResponseEntity<?> logoutOperator(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         operadorService.logout(token);

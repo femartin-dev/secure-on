@@ -1,6 +1,6 @@
 package com.secureon.seguridad.service;
 
-import com.secureon.seguridad.model.entity.Sesion;
+import com.secureon.common.model.entity.Sesion;
 
 @FunctionalInterface
 public interface SesionInterface {

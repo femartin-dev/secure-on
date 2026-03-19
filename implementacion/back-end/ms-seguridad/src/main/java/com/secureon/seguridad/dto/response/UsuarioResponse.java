@@ -3,7 +3,7 @@ package com.secureon.seguridad.dto.response;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import com.secureon.seguridad.model.entity.Usuario;
+import com.secureon.common.model.entity.Usuario;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +26,7 @@ public class UsuarioResponse {
 
     public static UsuarioResponse fromEntity(Usuario usuario) {
         return UsuarioResponse.builder()
-                            .userId(usuario.getUserId())
+                            .userId(usuario.getId())
                             .apellido(usuario.getApellido())
                             .nombre(usuario.getNombre())
                             .telefono(usuario.getTelefono())

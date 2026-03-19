@@ -35,7 +35,7 @@ public class AlarmaDTO  {
     }
 
     private static UbicacionDTO ultimaUbicaion(List<Ubicacion> u) { 
-        return u.stream()
+        return u == null ? null : u.stream()
                 .max(Comparator.comparing(Ubicacion::getFechaToma))
                 .map(UbicacionDTO::fromEntity)
                 .orElse(null);

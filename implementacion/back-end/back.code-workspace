@@ -6,12 +6,18 @@
     {
       "path": "ms-app-movil"
     },
-	{
+    {
       "path": "ms-cdm-control"
     },
     {
       "path": "ms-seguridad"
+    },
+    {
+      "path": "lib-common"
     }
   ],
-  "settings": {}
+  "settings": {
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "interactive"
+  }
 }
