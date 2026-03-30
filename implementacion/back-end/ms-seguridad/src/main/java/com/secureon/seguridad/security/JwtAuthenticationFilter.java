@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.secureon.seguridad.util.AuditService;
+import com.secureon.common.util.AuditService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

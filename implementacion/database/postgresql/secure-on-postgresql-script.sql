@@ -18,7 +18,7 @@ CREATE SCHEMA IF NOT EXISTS secure_on_utils;
 
 -- Asignar permisos
 GRANT CONNECT ON DATABASE secure_on_db TO secure_on_admin, secure_on_movil_admin, secure_on_cdmso_admin, secure_on_utils_admin;
-GRANT ALL PRIVILEGES ON DATABASE secure_on TO secure_on_admin;
+GRANT ALL PRIVILEGES ON DATABASE secure_on_db TO secure_on_admin;
 GRANT ALL ON SCHEMA secure_on_movil TO secure_on_movil_admin;
 GRANT ALL ON SCHEMA secure_on_movil TO secure_on_admin;
 GRANT ALL ON SCHEMA secure_on_cdmso TO secure_on_cdmso_admin;

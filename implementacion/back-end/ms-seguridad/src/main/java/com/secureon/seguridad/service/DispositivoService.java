@@ -7,13 +7,13 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.secureon.common.util.MessagesService;
+import com.secureon.common.exception.ResourceNotFoundException;
 import com.secureon.common.model.entity.Dispositivo;
 import com.secureon.common.model.entity.Idioma;
 import com.secureon.common.model.entity.Usuario;
+import com.secureon.common.util.MessagesService;
 
 import com.secureon.seguridad.dto.request.RegistrarDispositivoRequest;
-import com.secureon.seguridad.exeptions.ResourceNotFoundException;
 import com.secureon.seguridad.repository.DispositivoRepository;
 import com.secureon.seguridad.repository.IdiomaRepository;
 import com.secureon.seguridad.repository.UsuarioRepository;

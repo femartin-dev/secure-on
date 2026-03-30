@@ -8,9 +8,11 @@ import org.springframework.context.annotation.Import;
 import com.secureon.common.config.MessageConfig;
 import com.secureon.common.util.MessagesService;
 
-@SpringBootApplication
-@Import({ MessageConfig.class, MessagesService.class })
-@EntityScan(basePackages = "com.secureon.common.model.entity")
+//@SpringBootApplication
+//@Import({ MessageConfig.class, MessagesService.class })
+
+//@EntityScan(basePackages = "com.secureon.common.model.entity")
+@SpringBootApplication(scanBasePackages = {"com.secureon.seguridad", "com.secureon.common"})
 public class MsSeguridadApplication {
 
 	public static void main(String[] args) {

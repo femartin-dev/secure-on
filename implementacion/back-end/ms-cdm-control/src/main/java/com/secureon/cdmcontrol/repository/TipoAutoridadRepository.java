@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import com.secureon.cdmcontrol.model.entity.TipoAutoridad;
+import com.secureon.common.model.entity.TipoAutoridad;
 
 @Repository
 public interface TipoAutoridadRepository extends JpaRepository<TipoAutoridad, Integer>{

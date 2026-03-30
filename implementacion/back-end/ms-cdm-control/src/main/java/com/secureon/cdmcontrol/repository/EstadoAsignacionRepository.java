@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.cdmcontrol.model.entity.EstadoAsignacion;
+import com.secureon.common.model.entity.EstadoAsignacion;
 
 @Repository
 public interface EstadoAsignacionRepository extends JpaRepository<EstadoAsignacion, Integer>{

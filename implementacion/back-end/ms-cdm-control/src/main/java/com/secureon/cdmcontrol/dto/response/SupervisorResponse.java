@@ -2,7 +2,7 @@ package com.secureon.cdmcontrol.dto.response;
 
 import java.util.UUID;
 
-import com.secureon.cdmcontrol.model.entity.Operador;
+import com.secureon.common.model.entity.Operador;
 
 import lombok.Builder;
 import lombok.Data;

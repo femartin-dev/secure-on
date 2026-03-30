@@ -5,9 +5,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.secureon.cdmcontrol.model.entity.EstadoAlarma;
-import com.secureon.cdmcontrol.model.entity.EstadoAsignacion;
-import com.secureon.cdmcontrol.model.entity.TipoAutoridad;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.EstadoAsignacion;
+import com.secureon.common.model.entity.TipoAutoridad;
 import com.secureon.cdmcontrol.repository.EstadoAlarmaRepository;
 import com.secureon.cdmcontrol.repository.EstadoAsignacionRepository;
 import com.secureon.cdmcontrol.repository.TipoAutoridadRepository;

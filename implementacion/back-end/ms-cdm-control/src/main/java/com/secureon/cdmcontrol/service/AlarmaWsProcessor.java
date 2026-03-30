@@ -1,7 +1,7 @@
 package com.secureon.cdmcontrol.service;
 
 import com.secureon.cdmcontrol.dto.messages.AlarmaDTO;
-import com.secureon.cdmcontrol.model.entity.Alarma;
+import com.secureon.common.model.entity.Alarma;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

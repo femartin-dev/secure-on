@@ -7,12 +7,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.secureon.cdmcontrol.model.entity.Alarma;
-import com.secureon.cdmcontrol.model.entity.AlarmaOperador;
-import com.secureon.cdmcontrol.model.entity.EstadoAlarma;
-import com.secureon.cdmcontrol.model.entity.EstadoAsignacion;
-import com.secureon.cdmcontrol.model.entity.PrioridadAlarma;
-import com.secureon.cdmcontrol.model.entity.Ubicacion;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.AlarmaOperador;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.EstadoAsignacion;
+import com.secureon.common.model.entity.PrioridadAlarma;
+import com.secureon.common.model.entity.Ubicacion;
 
 import lombok.Builder;
 import lombok.Data;

@@ -3,8 +3,8 @@ package com.secureon.cdmcontrol.dto.response;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.secureon.cdmcontrol.model.entity.Operador;
-import com.secureon.cdmcontrol.model.entity.Usuario;
+import com.secureon.common.model.entity.Operador;
+import com.secureon.common.model.entity.Usuario;
 
 import lombok.Builder;
 import lombok.Data;

@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.secureon.cdmcontrol.model.entity.PrioridadAlarma;
+import com.secureon.common.model.entity.PrioridadAlarma;
 import com.secureon.cdmcontrol.repository.PrioridadRepository;
 import com.secureon.cdmcontrol.util.MessageService;
 

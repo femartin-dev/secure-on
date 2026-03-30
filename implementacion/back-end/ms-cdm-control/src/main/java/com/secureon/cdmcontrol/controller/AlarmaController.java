@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.secureon.cdmcontrol.dto.request.AlarmaRequest;
 import com.secureon.cdmcontrol.dto.response.AlarmaResponse;
 import com.secureon.cdmcontrol.dto.response.UbicacionResponse;
-import com.secureon.cdmcontrol.model.entity.Alarma;
-import com.secureon.cdmcontrol.model.entity.AlarmaOperador;
-import com.secureon.cdmcontrol.model.entity.Ubicacion;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.AlarmaOperador;
+import com.secureon.common.model.entity.Ubicacion;
 import com.secureon.cdmcontrol.service.AlarmaService;
 import com.secureon.cdmcontrol.service.AsignacionService;
 

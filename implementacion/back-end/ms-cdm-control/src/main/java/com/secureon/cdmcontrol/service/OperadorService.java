@@ -3,7 +3,7 @@ package com.secureon.cdmcontrol.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.secureon.cdmcontrol.model.entity.Operador;
+import com.secureon.common.model.entity.Operador;
 import com.secureon.cdmcontrol.repository.OperadorRepository;
 
 import java.util.List;

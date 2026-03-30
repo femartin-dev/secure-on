@@ -8,8 +8,8 @@ import org.locationtech.jts.geom.Point;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.secureon.cdmcontrol.model.entity.MetodoUbicacion;
-import com.secureon.cdmcontrol.model.entity.Ubicacion;
+import com.secureon.common.model.entity.MetodoUbicacion;
+import com.secureon.common.model.entity.Ubicacion;
 
 import lombok.Builder;
 import lombok.Data;

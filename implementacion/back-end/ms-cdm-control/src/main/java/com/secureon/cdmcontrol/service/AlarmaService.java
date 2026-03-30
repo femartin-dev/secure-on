@@ -7,10 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.secureon.cdmcontrol.model.entity.Alarma;
-import com.secureon.cdmcontrol.model.entity.EstadoAlarma;
-import com.secureon.cdmcontrol.model.entity.PrioridadAlarma;
-import com.secureon.cdmcontrol.model.entity.Ubicacion;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.PrioridadAlarma;
+import com.secureon.common.model.entity.Ubicacion;
 import com.secureon.cdmcontrol.repository.AlarmaRepository;
 import com.secureon.cdmcontrol.repository.UbicacionRepository;
 

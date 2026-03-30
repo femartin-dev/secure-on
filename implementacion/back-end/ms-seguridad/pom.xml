@@ -96,6 +96,7 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Lib common -->
 		<dependency>
 			<groupId>com.secureon</groupId>
 			<artifactId>lib-common</artifactId>

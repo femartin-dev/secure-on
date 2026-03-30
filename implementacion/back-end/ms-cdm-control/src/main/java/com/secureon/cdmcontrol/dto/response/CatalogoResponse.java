@@ -3,8 +3,8 @@ package com.secureon.cdmcontrol.dto.response;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.secureon.cdmcontrol.model.entity.EstadoAsignacion;
-import com.secureon.cdmcontrol.model.entity.TipoAutoridad;
+import com.secureon.common.model.entity.EstadoAsignacion;
+import com.secureon.common.model.entity.TipoAutoridad;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

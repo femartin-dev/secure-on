@@ -8,12 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.secureon.cdmcontrol.model.entity.Alarma;
-import com.secureon.cdmcontrol.model.entity.AlarmaOperador;
-import com.secureon.cdmcontrol.model.entity.EstadoAlarma;
-import com.secureon.cdmcontrol.model.entity.EstadoAsignacion;
-import com.secureon.cdmcontrol.model.entity.Operador;
-import com.secureon.cdmcontrol.model.entity.PrioridadAlarma;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.AlarmaOperador;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.EstadoAsignacion;
+import com.secureon.common.model.entity.Operador;
+import com.secureon.common.model.entity.PrioridadAlarma;
 import com.secureon.cdmcontrol.repository.AlarmaOperadorRepository;
 
 import java.time.OffsetDateTime;
