@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.secureon.appmovil.dto.request.ContactoRequest;
-import com.secureon.appmovil.model.entity.Contacto;
-import com.secureon.appmovil.model.entity.Usuario;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.Contacto;
+import com.secureon.common.model.entity.Usuario;
+import com.secureon.common.util.MessagesService;
 import com.secureon.appmovil.repository.ContactoRepository;
 
 @Service
@@ -22,9 +24,12 @@ public class ContactoService {
     @Autowired
     private CatalogoService catalogoService;
 
+    @Autowired
+    private MessagesService messagesService;
+
     public Contacto getContacto(UUID contactoId) {
         return contactoRepository.findById(contactoId)
-            .orElseThrow(() -> new RuntimeException("Contacto no encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.contacto.not-found")));
     }
 
     public List<Contacto> getContactosUsuario(UUID usuarioId) {
@@ -40,9 +45,9 @@ public class ContactoService {
             contacto.setUsuario(user);
         } else {
             contacto = contactoRepository.findById(contactoId)
-                .orElseThrow(() -> new RuntimeException("Contacto no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.contacto.not-found")));
             if (contacto.getUsuario() == null || !contacto.getUsuario().getId().equals(request.getUserId())) {
-                throw new RuntimeException("Contacto no pertenece al usuario");
+                throw new ResourceNotFoundException(messagesService.getMessage("error.contacto.not-found"));
             } 
         }
         Usuario user = usuarioService.getUsuario(request.getUserId());
@@ -65,7 +70,7 @@ public class ContactoService {
 
     public void eliminarContacto(UUID contactoId) {
         if (!contactoRepository.existsById(contactoId))
-            throw new RuntimeException("Contacto a eliminar no encontrado");
+            throw new ResourceNotFoundException(messagesService.getMessage("error.contacto.not-found"));
         contactoRepository.deleteById(contactoId);
     }
 

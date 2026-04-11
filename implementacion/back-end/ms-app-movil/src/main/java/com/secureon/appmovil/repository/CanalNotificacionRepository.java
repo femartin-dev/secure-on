@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.appmovil.model.entity.CanalNotificacion;
+import com.secureon.common.model.entity.CanalNotificacion;
 
 @Repository
 public interface CanalNotificacionRepository extends JpaRepository<CanalNotificacion, Integer> {

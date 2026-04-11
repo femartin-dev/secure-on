@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.secureon.appmovil.dto.request.UbicacionRequest;
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.Ubicacion;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.Ubicacion;
 import com.secureon.appmovil.repository.UbicacionRepository;
 import com.secureon.appmovil.util.GeometryUtils;
 

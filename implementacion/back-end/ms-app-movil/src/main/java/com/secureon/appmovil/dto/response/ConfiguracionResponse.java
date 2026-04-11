@@ -2,9 +2,9 @@ package com.secureon.appmovil.dto.response;
 
 import java.util.UUID;
 
-import com.secureon.appmovil.model.entity.ConfiguracionUsuario;
-import com.secureon.appmovil.model.entity.Idioma;
-import com.secureon.appmovil.model.entity.PatronDefinition;
+import com.secureon.common.model.entity.ConfiguracionUsuario;
+import com.secureon.common.model.entity.Idioma;
+import com.secureon.common.model.entity.PatronDefinition;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -46,8 +46,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex) {
-        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Error interno del servidor: " + ex.getMessage());
+        ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
@@ -102,6 +101,6 @@ public class GlobalExceptionHandler {
         if (fieldNode.isMissingNode() || fieldNode.isNull()) {
             return null;
         }
-        return fieldNode.asText();
+        return fieldNode.asString();
     }
 }

@@ -21,7 +21,7 @@ public class RegistrarUsuarioRequest {
     private String password;
     
     @NotBlank
-    @Pattern(regexp = "\\+?[0-9]{10,15}")
+    @Pattern(regexp = "\\+?[0-9]{10,15}", message = "{err.phone.not-valid}")
     private String telefono;
     
     @NotBlank

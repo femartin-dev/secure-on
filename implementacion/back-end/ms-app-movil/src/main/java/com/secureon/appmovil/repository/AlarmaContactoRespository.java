@@ -5,10 +5,10 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.AlarmaContacto;
-import com.secureon.appmovil.model.entity.CanalNotificacion;
-import com.secureon.appmovil.model.entity.Contacto;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.AlarmaContacto;
+import com.secureon.common.model.entity.CanalNotificacion;
+import com.secureon.common.model.entity.Contacto;
 
 import java.util.List;
 

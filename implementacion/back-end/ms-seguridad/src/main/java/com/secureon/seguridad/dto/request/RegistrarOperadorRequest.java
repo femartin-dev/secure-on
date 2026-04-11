@@ -31,8 +31,7 @@ public class RegistrarOperadorRequest {
     private String email;
     
     @NotBlank
-    @Size(max = 20)
-    @Pattern(regexp = "\\+?[0-9]{10,15}")
+    @Pattern(regexp = "\\+?[0-9]{10,15}", message = "{err.phone.not-valid}")
     private String telefono;
     
     @NotBlank

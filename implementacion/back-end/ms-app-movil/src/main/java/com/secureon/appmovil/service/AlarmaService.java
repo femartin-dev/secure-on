@@ -9,9 +9,12 @@ import org.springframework.stereotype.Service;
 import com.secureon.appmovil.dto.request.AlarmaRequest;
 import com.secureon.appmovil.dto.request.FinalizarRequest;
 import com.secureon.appmovil.dto.request.UbicacionRequest;
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.EstadoAlarma;
-import com.secureon.appmovil.model.entity.Ubicacion;
+import com.secureon.common.exception.BadRequestException;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.Ubicacion;
+import com.secureon.common.util.MessagesService;
 import com.secureon.appmovil.repository.AlarmaRepository;
 
 import jakarta.transaction.Transactional;
@@ -43,6 +46,9 @@ public class AlarmaService {
     @Autowired
     private UsuarioService usuarioService;
 
+    @Autowired
+    private MessagesService messagesService;
+
     @Transactional
     public Alarma crearAlarma(AlarmaRequest request) {
         // Crear entidad Alerta
@@ -71,16 +77,16 @@ public class AlarmaService {
     @Transactional
     public void actualizarUbicacion(UUID alarmaId, UbicacionRequest request) {
         Alarma alarma = alarmaRepository.findById(alarmaId)
-                .orElseThrow(() -> new RuntimeException("Alerta no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.alarma.not-found")));
 
         if (!alarma.getEstadoAlarma().equals(estadoAlarmaService.getEstadoActiva())) {
-            throw new RuntimeException("La alerta no está activa");
+            throw new BadRequestException(messagesService.getMessage("error.alarma.not-active"));
         }
 
         Ubicacion ubicacion = ubicacionService.actualizarUbicacion(alarma, request);
 
         // Publicar ubicación en tiempo real
-        webSocketPublisher.publicarUbicacion(alarmaId, ubicacion);
+        webSocketPublisher.publicarUbicacion(ubicacion);
     }
 
     @Transactional
@@ -95,7 +101,7 @@ public class AlarmaService {
 
     private void publicarCambioAlarma(UUID alarmaId, OffsetDateTime fechaFin, EstadoAlarma estadoAlarma) {
         Alarma alarma = alarmaRepository.findById(alarmaId)
-                .orElseThrow(() -> new RuntimeException("Alerta no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.alarma.not-found")));
 
         alarma.setFechaFinalizacion(fechaFin != null ? fechaFin : OffsetDateTime.now());
         alarma.setEstadoAlarma(estadoAlarma); 
@@ -107,10 +113,10 @@ public class AlarmaService {
     @Transactional
     public void reactivarAlarma(UUID alarmaId, UUID dispositivoId) {
         Alarma alarma = alarmaRepository.findById(alarmaId)
-                .orElseThrow(() -> new RuntimeException("Alarma no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.alarma.not-found")));
 
         if (!alarma.getEstadoAlarma().equals(estadoAlarmaService.getEstadoActiva())) {
-            throw new RuntimeException("No se puede reactivar una alerta no activa");
+            throw new BadRequestException(messagesService.getMessage("error.alarma.not-active"));
         }
 
         alarma.setFueReactivada(true);
@@ -122,7 +128,7 @@ public class AlarmaService {
 
     public Alarma obtenerAlarma(UUID alarmaId) {
         return alarmaRepository.findById(alarmaId)
-            .orElseThrow(() -> new RuntimeException("Alarma no encontrada"));
+            .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.alarma.not-found")));
     }
 
 }

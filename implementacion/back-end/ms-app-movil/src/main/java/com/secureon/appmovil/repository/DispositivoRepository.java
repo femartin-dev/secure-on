@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.appmovil.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Dispositivo;
 
 @Repository
 public interface DispositivoRepository extends JpaRepository<Dispositivo, UUID>{

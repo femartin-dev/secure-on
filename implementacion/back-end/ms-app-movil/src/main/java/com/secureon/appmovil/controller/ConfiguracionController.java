@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.secureon.appmovil.dto.request.ConfiguracionRequest;
 import com.secureon.appmovil.dto.response.ConfiguracionResponse;
-import com.secureon.appmovil.model.entity.ConfiguracionUsuario;
+import com.secureon.common.model.entity.ConfiguracionUsuario;
 import com.secureon.appmovil.service.ConfiguracionService;
 
 import lombok.RequiredArgsConstructor;

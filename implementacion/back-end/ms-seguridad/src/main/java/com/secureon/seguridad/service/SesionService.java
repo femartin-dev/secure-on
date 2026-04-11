@@ -2,9 +2,10 @@ package com.secureon.seguridad.service;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.exception.UnauthorizedException;
 import com.secureon.common.model.entity.Sesion;
 import com.secureon.common.util.MessagesService;
 
@@ -19,8 +21,10 @@ import com.secureon.seguridad.repository.SesionRepository;
 import com.secureon.seguridad.security.JwtTokenProvider;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class SesionService {
     @Autowired
     private SesionRepository sesionRepository;
@@ -45,12 +49,22 @@ public class SesionService {
 
         // log for debugging (remove/adjust level in production)
         // log.debug("auth request username='{}' (len={})", username, username != null ? username.length() : 0);
-
-        Authentication authentication = authenticationManager.authenticate(
+        log.info("Intentando autenticar usuario '{}'", username);
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
-        );
+            );
+        } catch (BadCredentialsException ex) {
+            log.info("Fallo autenticacion para usuario '{}': {}", username, ex.getClass().getSimpleName());
+            throw new UnauthorizedException(messageService.getMessage("error.bad-credentials"));
+        } catch (AuthenticationException ex) {
+            log.info("Fallo autenticacion para usuario '{}': {}", username, ex.getClass().getSimpleName());
+            throw new UnauthorizedException(messageService.getMessage("error.unauthorized"));
+        }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return tokenProvider.generateToken(authentication);
+
     }
 
 

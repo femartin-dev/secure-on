@@ -23,7 +23,7 @@ public class LoginAppRequest {
     private String email;
 
     @JsonIgnore
-    @Pattern(regexp = "\\+?[0-9]{10,15}")
+    @Pattern(regexp = "\\+?[0-9]{10,15}", message = "{err.phone.not-valid}")
     private String telefono;
 
     private UUID dispositivoAppId;

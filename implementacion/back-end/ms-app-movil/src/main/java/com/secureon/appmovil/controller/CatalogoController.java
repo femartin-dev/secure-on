@@ -76,4 +76,5 @@ public class CatalogoController {
                                                     .build();
         return ResponseEntity.ok().body(response);
     }
+
 }

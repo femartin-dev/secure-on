@@ -17,7 +17,7 @@ import com.secureon.appmovil.dto.request.AlarmaRequest;
 import com.secureon.appmovil.dto.request.FinalizarRequest;
 import com.secureon.appmovil.dto.request.UbicacionRequest;
 import com.secureon.appmovil.dto.response.AlarmaResponse;
-import com.secureon.appmovil.model.entity.Alarma;
+import com.secureon.common.model.entity.Alarma;
 import com.secureon.appmovil.service.AlarmaService;
 
 import lombok.RequiredArgsConstructor;

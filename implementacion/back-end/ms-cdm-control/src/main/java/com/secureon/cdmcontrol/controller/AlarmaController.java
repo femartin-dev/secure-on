@@ -57,9 +57,7 @@ public class AlarmaController {
 
     @GetMapping("/alarma/{id}")
     public ResponseEntity<AlarmaResponse> obtenerAlarma(@PathVariable UUID id) {
-        return alarmaService.obtenerAlarma(id)
-                .map(alarma -> ResponseEntity.ok(AlarmaResponse.fromEntity(alarma)))
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(AlarmaResponse.fromEntity(alarmaService.obtenerAlarma(id)));
     }
 
     @GetMapping("/alarma/{id}/ubicaciones")
@@ -82,7 +80,7 @@ public class AlarmaController {
         return ResponseEntity.ok(AlarmaResponse.fromEntity(alarma));
     }
 
-    @PostMapping("/alarmas/{id}/asignar/{operadorId}")
+    @PostMapping("/alarma/{id}/asignar/{operadorId}")
     public ResponseEntity<AlarmaResponse> asignarOperador(@PathVariable UUID id, @PathVariable UUID operadorId) {
         AlarmaOperador asignacion = asignacionService.reasignarAlarma(id, operadorId);
         return ResponseEntity.ok(AlarmaResponse.fromEntity(asignacion));

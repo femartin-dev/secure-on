@@ -1,5 +1,6 @@
 package com.secureon.seguridad.security;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         // normalize/sanitize input same way as authentication service
         if (username != null) {
             username = username.trim();
-            username = java.text.Normalizer.normalize(username, java.text.Normalizer.Form.NFC);
+            username = Normalizer.normalize(username, Normalizer.Form.NFC);
         }
 
         // Primero intentamos como usuario móvil
@@ -54,7 +55,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Operador operador = operadorRepository.findByEmail(username).orElse(null);
         if (operador != null) {
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-            String role = operador.getEsAdministrador() ? rolesProps.getRolAdminsitrador(): rolesProps.getRolOperador();
+            String role = operador.getEsAdministrador() ? rolesProps.getRolAdministrador(): rolesProps.getRolOperador();
             authorities.add(new SimpleGrantedAuthority(role));
             return new User(operador.getEmail(), operador.getHashContrasena(), authorities);
         }

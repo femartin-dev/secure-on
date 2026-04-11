@@ -12,12 +12,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.secureon.appmovil.dto.messages.AlarmaDTO;
-import com.secureon.appmovil.dto.messages.EventDTO;
-import com.secureon.appmovil.dto.messages.UbicacionDTO;
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.Ubicacion;
-import com.secureon.appmovil.property.DestinoWSEnum;
+import com.secureon.common.dto.AlarmaDTO;
+import com.secureon.common.dto.EventoDTO;
+import com.secureon.common.dto.UbicacionDTO;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.Ubicacion;
+import com.secureon.common.property.WsDestinoEnum;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,7 +35,7 @@ public class WsMensajeriaService {
         this.url = url + path;
     }
     
-    private void enviarMensajeHttp(EventDTO mensaje) {
+    private void enviarMensajeHttp(EventoDTO mensaje) {
         
         try {
             ResponseEntity<Void> response = 
@@ -54,22 +54,22 @@ public class WsMensajeriaService {
     }
 
     public void publicarNuevaAlarma(Alarma alarma) {
-        this.enviarMensajeHttp(EventDTO.fromObject(AlarmaDTO.fromEntity(alarma), 
-                                            DestinoWSEnum.TOPIC_ALARMA_NUEVA));
+        this.enviarMensajeHttp(EventoDTO.fromObject(AlarmaDTO.fromEntity(alarma), 
+                                            WsDestinoEnum.TOPIC_ALARMA_NUEVA));
     }
 
-    public void publicarUbicacion(UUID alarmaId, Ubicacion ubicacion) {
-        this.enviarMensajeHttp(EventDTO.fromObject(UbicacionDTO.fromEntity(ubicacion, alarmaId), 
-                                            DestinoWSEnum.TOPIC_UBICACION_REALTIME));
+    public void publicarUbicacion(Ubicacion ubicacion) {
+        this.enviarMensajeHttp(EventoDTO.fromObject(UbicacionDTO.fromEntity(ubicacion), 
+                                            WsDestinoEnum.TOPIC_UBICACION_REALTIME));
     }
 
     public void publicarFinalizacion(Alarma alarma) {
-        this.enviarMensajeHttp(EventDTO.fromObject(AlarmaDTO.fromEntity(alarma), 
-                                            DestinoWSEnum.TOPIC_ALARMA_FINALIZACION));
+        this.enviarMensajeHttp(EventoDTO.fromObject(AlarmaDTO.fromEntity(alarma), 
+                                            WsDestinoEnum.TOPIC_ALARMA_FINALIZACION));
     }
 
     public void publicarReactivacion(Alarma alarma) {
-        this.enviarMensajeHttp(EventDTO.fromObject(AlarmaDTO.fromEntity(alarma), 
-                                            DestinoWSEnum.TOPIC_ALARMA_REACTIVACION));
+        this.enviarMensajeHttp(EventoDTO.fromObject(AlarmaDTO.fromEntity(alarma), 
+                                            WsDestinoEnum.TOPIC_ALARMA_REACTIVACION));
     }
 }

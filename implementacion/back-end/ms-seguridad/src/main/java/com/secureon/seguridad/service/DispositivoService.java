@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.secureon.common.exception.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import com.secureon.seguridad.repository.DispositivoRepository;
 import com.secureon.seguridad.repository.IdiomaRepository;
 import com.secureon.seguridad.repository.UsuarioRepository;
 
+import io.micrometer.common.util.StringUtils;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -95,6 +97,7 @@ public class DispositivoService {
     }
 
     private Idioma getIdiomaPorId(String idiomaId) {
+        idiomaId = StringUtils.isBlank(idiomaId) ? messageService.getMessage("user.default.language") : idiomaId;
         return idiomaRepository.findById(idiomaId)
             .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.language.not-found")));
     }

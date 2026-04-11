@@ -7,9 +7,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.EstadoAlarma;
-import com.secureon.appmovil.model.entity.Usuario;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.Usuario;
 
 @Repository
 public interface AlarmaRepository extends JpaRepository<Alarma, UUID> {

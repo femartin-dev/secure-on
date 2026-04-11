@@ -3,8 +3,8 @@ package com.secureon.appmovil.dto.response;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.EstadoAlarma;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

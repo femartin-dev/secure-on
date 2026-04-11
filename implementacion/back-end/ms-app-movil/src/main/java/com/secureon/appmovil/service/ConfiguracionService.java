@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.secureon.appmovil.dto.request.ConfiguracionRequest;
-import com.secureon.appmovil.model.entity.ConfiguracionUsuario;
-import com.secureon.appmovil.model.entity.Dispositivo;
-import com.secureon.appmovil.model.entity.Usuario;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.ConfiguracionUsuario;
+import com.secureon.common.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Usuario;
+import com.secureon.common.util.MessagesService;
 import com.secureon.appmovil.repository.ConfiguracionRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,15 +22,16 @@ public class ConfiguracionService {
     private final ConfiguracionRepository configuracionRepository;
     private final UsuarioService usuarioService;
     private final DispositivoService dispositivoService;
+    private final MessagesService messagesService;  
 
     public ConfiguracionUsuario getConfiguracionUsuario(UUID usuarioId, UUID dispositivoId) {
         return configuracionRepository.findByUsuarioIdAndDispositivoId(usuarioId, dispositivoId)
-                        .orElseThrow(() -> new RuntimeException("Configuracion no encontrada"));
+                        .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.configuracion.not-found")));
     }
 
     public ConfiguracionUsuario getConfiguracionUsuario(Usuario usuario, Dispositivo dispositivo) {
         return configuracionRepository.findByUsuarioAndDispositivo(usuario, dispositivo)
-                        .orElseThrow(() -> new RuntimeException("Configuracion no encontrada"));
+                        .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.configuracion.not-found")));
     }
 
     @Transactional
@@ -36,13 +39,13 @@ public class ConfiguracionService {
         ConfiguracionUsuario configuracion;
         if (configuracionId == null) {
             configuracionRepository.findByUsuarioIdAndDispositivoId(request.getUsuarioId(), request.getDispositivoId())
-                .ifPresent(config -> { throw new RuntimeException("Configuracion de usuario ya existe para este dispositivo"); });
+                .ifPresent(config -> { throw new ResourceNotFoundException(messagesService.getMessage("error.configuracion.already-exists")); });
             configuracion = new ConfiguracionUsuario();
             configuracion.setUsuario(usuarioService.getUsuario(request.getUsuarioId()));
             configuracion.setDispositivo(dispositivoService.getDispositivo(request.getDispositivoId()));
         } else {
             configuracion = configuracionRepository.findById(configuracionId)
-                .orElseThrow(() -> new RuntimeException("Configuracion de usuario no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.configuracion.not-found")));
         }
         setConfiguracion(configuracion, request);
         configuracionRepository.save(configuracion);

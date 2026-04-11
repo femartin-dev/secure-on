@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -13,8 +14,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
-import com.secureon.cdmcontrol.dto.messages.AlarmaDTO;
-import com.secureon.cdmcontrol.property.DestinoWSEnum;
+import com.secureon.common.dto.AlarmaDTO;
+import com.secureon.common.property.WsDestinoEnum;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -63,6 +64,23 @@ public class WsGatewaySubscriberService {
                     public void handleTransportError(StompSession session, Throwable exception) {
                         log.error("Error de transporte STOMP: {}", exception.getMessage(), exception);
                     }
+
+                    @Override
+                    public void handleFrame(StompHeaders headers, Object payload) {
+                        log.debug("Frame recibido por session handler. headers={}, payloadType={}",
+                                headers,
+                                payload != null ? payload.getClass().getName() : "null");
+                    }
+
+                    @Override
+                    public void handleException(StompSession session, StompCommand command,
+                            StompHeaders headers, byte[] payload, Throwable exception) {
+                        log.error("Error procesando frame STOMP. command={}, headers={}, payload={} ",
+                                command,
+                                headers,
+                                payload != null ? new String(payload) : null,
+                                exception);
+                    }
                 });
 
         future.whenComplete((result, error) -> {
@@ -80,7 +98,7 @@ public class WsGatewaySubscriberService {
     }
 
     private void subscribeToTopics(StompSession session) {
-        String destinoAlarmaNueva = DestinoWSEnum.TOPIC_ALARMA_NUEVA.getPath();
+        String destinoAlarmaNueva = WsDestinoEnum.TOPIC_ALARMA_NUEVA.getPath();
         if (!StringUtils.hasText(destinoAlarmaNueva)) {
             log.warn("Destino TOPIC_ALARMA_NUEVA no configurado");
             return;
@@ -89,13 +107,17 @@ public class WsGatewaySubscriberService {
         session.subscribe(destinoAlarmaNueva, new StompFrameHandler() {
             @Override
             public Type getPayloadType(StompHeaders headers) {
+                log.debug("Suscripcion {} recibe headers {}", destinoAlarmaNueva, headers);
                 return AlarmaDTO.class;
             }
 
             @Override
             public void handleFrame(StompHeaders headers, Object payload) {
+                log.debug("handleFrame ejecutado en {} con payloadType={}",
+                        destinoAlarmaNueva,
+                        payload != null ? payload.getClass().getName() : "null");
                 if (payload instanceof AlarmaDTO alarmaDTO) {
-                    alarmaWsProcessor.procesarNueva(alarmaDTO, "ws-gateway");
+                    alarmaWsProcessor.procesarNuevaAlarma(alarmaDTO, "ws-gateway");
                 } else {
                     log.warn("Payload inesperado en {}: {}",
                             destinoAlarmaNueva,

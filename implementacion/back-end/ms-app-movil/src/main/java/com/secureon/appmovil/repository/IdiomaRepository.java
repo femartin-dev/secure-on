@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.appmovil.model.entity.Idioma;
+import com.secureon.common.model.entity.Idioma;
 
 @Repository
 public interface IdiomaRepository extends JpaRepository<Idioma, String> {

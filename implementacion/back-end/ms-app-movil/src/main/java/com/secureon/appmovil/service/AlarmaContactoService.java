@@ -2,11 +2,11 @@ package com.secureon.appmovil.service;
 
 import org.springframework.stereotype.Service;
 
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.AlarmaContacto;
-import com.secureon.appmovil.model.entity.CanalNotificacion;
-import com.secureon.appmovil.model.entity.Contacto;
-import com.secureon.appmovil.model.entity.EstadoEnvio;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.AlarmaContacto;
+import com.secureon.common.model.entity.CanalNotificacion;
+import com.secureon.common.model.entity.Contacto;
+import com.secureon.common.model.entity.EstadoEnvio;
 import com.secureon.appmovil.repository.AlarmaContactoRespository;
 
 import lombok.RequiredArgsConstructor;

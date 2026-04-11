@@ -6,12 +6,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import com.secureon.appmovil.model.entity.CanalNotificacion;
-import com.secureon.appmovil.model.entity.EstadoEnvio;
-import com.secureon.appmovil.model.entity.Idioma;
-import com.secureon.appmovil.model.entity.MetodoActivacion;
-import com.secureon.appmovil.model.entity.MetodoUbicacion;
-import com.secureon.appmovil.model.entity.PrioridadAlarma;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.CanalNotificacion;
+import com.secureon.common.model.entity.EstadoEnvio;
+import com.secureon.common.model.entity.Idioma;
+import com.secureon.common.model.entity.MetodoActivacion;
+import com.secureon.common.model.entity.MetodoUbicacion;
+import com.secureon.common.model.entity.PrioridadAlarma;
+import com.secureon.common.util.MessagesService;
 import com.secureon.appmovil.repository.CanalNotificacionRepository;
 import com.secureon.appmovil.repository.EstadoEnvioRepository;
 import com.secureon.appmovil.repository.IdiomaRepository;
@@ -34,25 +36,26 @@ public class CatalogoService {
     private final EstadoEnvioRepository envioRepository;
     @Value("${app.static-values.prioridad.normal}")
     private Integer prioridadNueva;
+    private final MessagesService messagesService;
 
     public MetodoUbicacion getMetodoUbicacion(Integer id) {
         return metodoUbicacionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Metodo de ubicacion no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.metodo-ubicacion.not-found")));
     }
 
     public MetodoActivacion getMetodoActivacion(Integer id) {
         return metodoActivacionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Metodo de activacion no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.metodo-activacion.not-found")));
     }
 
     public Idioma getIdioma(String idioma) {
         return idiomaRepository.findById(idioma)
-                .orElseThrow(() -> new RuntimeException("Idioma no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.idioma.not-found")));
     }
 
     public PrioridadAlarma getPrioridad(Integer id) {
         return prioridadRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Prioridad de alarma no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.prioridad.not-found")));
     }
 
     public PrioridadAlarma getPrioridadNueva() {
@@ -61,12 +64,12 @@ public class CatalogoService {
 
     public CanalNotificacion getCanalNotificacion(Integer id) {
         return canalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Canal de Notificacion a contacto no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.canal-notificacion.not-found")));
     }
 
     public EstadoEnvio getEstadoEnvio(Integer id) {
         return envioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Estado de envio a contacto no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.estado-envio.not-found")));
     }
 
     @Cacheable(value = "catalogos", key = "'metodosUbicacion'")

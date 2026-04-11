@@ -8,7 +8,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.secureon.appmovil.model.entity.EstadoAlarma;
+import com.secureon.common.exception.ResourceNotFoundException;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.util.MessagesService;
 import com.secureon.appmovil.repository.EstadoAlarmaRepository;
 
 import lombok.Getter;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class EstadoAlarmaService {
 
     private final EstadoAlarmaRepository estadoAlarmaRepository;
+    private final MessagesService messagesService;
 
     @Value("${app.static-values.estado-alarma.activa}")
     private Integer estadoActivaId;
@@ -47,7 +50,7 @@ public class EstadoAlarmaService {
 
     public EstadoAlarma getEstadoAlarma(Integer id) {
         return estadoAlarmaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Estado de alarma no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.estado-alarma.not-found")));
     }
     
     @Cacheable(value = "catalogos", key = "'estadosAlarma'")

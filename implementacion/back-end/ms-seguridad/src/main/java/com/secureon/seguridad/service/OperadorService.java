@@ -40,13 +40,13 @@ public class OperadorService {
     @Transactional
     public Operador registrar(RegistrarOperadorRequest request, boolean esAdministrador) {
         if (operadorRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException(messageService.getMessage("err.email.invalid"));
+            throw new BadRequestException(messageService.getMessage("err.email.not-available"));
         }
         if (operadorRepository.existsByTelefono(request.getTelefono())) {
-            throw new BadRequestException(messageService.getMessage("err.uname.invalid"));
+            throw new BadRequestException(messageService.getMessage("err.phone.not-available"));
         }
         if (operadorRepository.existsByLegajo(request.getLegajo())) {
-            throw new BadRequestException(messageService.getMessage("err.nfile.invalid"));
+            throw new BadRequestException(messageService.getMessage("err.dossier.not-available", request.getLegajo()));
         }
 
         Operador operador = new Operador();

@@ -3,10 +3,6 @@ package com.secureon.seguridad;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.context.annotation.Import;
-
-import com.secureon.common.config.MessageConfig;
-import com.secureon.common.util.MessagesService;
 
 //@SpringBootApplication
 //@Import({ MessageConfig.class, MessagesService.class })

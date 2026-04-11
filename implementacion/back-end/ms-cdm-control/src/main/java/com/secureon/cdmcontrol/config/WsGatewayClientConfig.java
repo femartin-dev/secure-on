@@ -2,6 +2,9 @@ package com.secureon.cdmcontrol.config;
 
 import java.util.Collections;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -23,8 +26,15 @@ public class WsGatewayClientConfig {
         Transport webSocketTransport = new WebSocketTransport(webSocketClient);
         SockJsClient sockJsClient = new SockJsClient(Collections.singletonList(webSocketTransport));
 
+        ObjectMapper objectMapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+
+        MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter();
+        messageConverter.setObjectMapper(objectMapper);
+
         WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
-        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+        stompClient.setMessageConverter(messageConverter);
         stompClient.setTaskScheduler(taskScheduler);
         stompClient.setDefaultHeartbeat(new long[] {10000, 10000});
         stompClient.setAutoStartup(true);

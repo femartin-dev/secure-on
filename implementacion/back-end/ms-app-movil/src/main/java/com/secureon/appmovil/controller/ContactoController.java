@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.secureon.appmovil.dto.request.ContactoRequest;
 import com.secureon.appmovil.dto.response.ContactoResponse;
-import com.secureon.appmovil.model.entity.Contacto;
+import com.secureon.common.model.entity.Contacto;
 import com.secureon.appmovil.service.ContactoService;
 
 import lombok.RequiredArgsConstructor;

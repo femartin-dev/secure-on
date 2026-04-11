@@ -11,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class RoutingService {
+
+    private static final String AUTH_LOGIN_SUFFIX = "/auth/login";
 
     private final RestTemplate restTemplate = new RestTemplate();
     @Autowired
@@ -48,12 +51,15 @@ public class RoutingService {
 
     public ResponseEntity<String> forward(String path, String method, String body, HttpServletRequest request) {
         String url = getTargetUrl(path);
+        boolean loginRequest = path.endsWith(AUTH_LOGIN_SUFFIX);
         log.info("URL forwarder " + url);
         HttpHeaders headers = new HttpHeaders();
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String header = headerNames.nextElement();
-            if (header.equalsIgnoreCase("host") || header.equalsIgnoreCase("content-length")) {
+            if (header.equalsIgnoreCase("host")
+                    || header.equalsIgnoreCase("content-length")
+                    || (loginRequest && header.equalsIgnoreCase("authorization"))) {
                 continue;
             }
             headers.set(header, request.getHeader(header));
@@ -62,8 +68,12 @@ public class RoutingService {
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.valueOf(method), entity, String.class);
             return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(response.getBody());
-        } catch (HttpStatusCodeException e) {
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.info("Downstream status: {} url: {} body: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
             throw new DownstreamHttpException(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());
-        }
+        } catch (HttpStatusCodeException e) {
+            log.info("Downstream status: {} url: {} body: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
+            throw new DownstreamHttpException(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());
+        } 
     }
 }

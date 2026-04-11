@@ -3,13 +3,13 @@ package com.secureon.appmovil.dto.response;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.secureon.appmovil.model.entity.CanalNotificacion;
-import com.secureon.appmovil.model.entity.EstadoAlarma;
-import com.secureon.appmovil.model.entity.EstadoEnvio;
-import com.secureon.appmovil.model.entity.Idioma;
-import com.secureon.appmovil.model.entity.MetodoActivacion;
-import com.secureon.appmovil.model.entity.MetodoUbicacion;
-import com.secureon.appmovil.model.entity.PrioridadAlarma;
+import com.secureon.common.model.entity.CanalNotificacion;
+import com.secureon.common.model.entity.EstadoAlarma;
+import com.secureon.common.model.entity.EstadoEnvio;
+import com.secureon.common.model.entity.Idioma;
+import com.secureon.common.model.entity.MetodoActivacion;
+import com.secureon.common.model.entity.MetodoUbicacion;
+import com.secureon.common.model.entity.PrioridadAlarma;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -5,9 +5,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.secureon.appmovil.model.entity.ConfiguracionUsuario;
-import com.secureon.appmovil.model.entity.Dispositivo;
-import com.secureon.appmovil.model.entity.Usuario;
+import com.secureon.common.model.entity.ConfiguracionUsuario;
+import com.secureon.common.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Usuario;
 
 import java.util.Optional;
 

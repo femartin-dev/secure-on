@@ -44,10 +44,10 @@ public class UsuarioService {
     @Transactional
     public Usuario registrar(RegistrarUsuarioRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException(messageService.getMessage("err.email.invalid"));
+            throw new BadRequestException(messageService.getMessage("err.email.not-available"));
         }
         if (usuarioRepository.existsByTelefono(request.getTelefono())) {
-            throw new BadRequestException(messageService.getMessage("err.phone.invalid"));
+            throw new BadRequestException(messageService.getMessage("err.phone.not-available"));
         }
 
         Usuario usuario = new Usuario();

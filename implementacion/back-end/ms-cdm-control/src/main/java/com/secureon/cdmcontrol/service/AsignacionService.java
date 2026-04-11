@@ -8,12 +8,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.secureon.common.exception.ResourceNotFoundException;
 import com.secureon.common.model.entity.Alarma;
 import com.secureon.common.model.entity.AlarmaOperador;
 import com.secureon.common.model.entity.EstadoAlarma;
 import com.secureon.common.model.entity.EstadoAsignacion;
 import com.secureon.common.model.entity.Operador;
 import com.secureon.common.model.entity.PrioridadAlarma;
+import com.secureon.common.util.MessagesService;
 import com.secureon.cdmcontrol.repository.AlarmaOperadorRepository;
 
 import java.time.OffsetDateTime;
@@ -40,6 +42,9 @@ public class AsignacionService {
 
     @Autowired
     private AlarmaService alarmaService;
+
+    @Autowired
+    private MessagesService messagesService;
 
     public Page<AlarmaOperador> listarAlarmas(Integer estadoAlarmaId, Integer prioridadId,
                                     OffsetDateTime fechaDesde, OffsetDateTime fechaHasta,
@@ -76,7 +81,7 @@ public class AsignacionService {
             }
         }
         if (seleccionados.isEmpty()) {
-            throw new RuntimeException("No hay operadores disponibles");
+            throw new ResourceNotFoundException(messagesService.getMessage("error.asignacion-auto.not-available"));
         }
         List<AlarmaOperador> cerrarAOs = alarmaOperadorRepository.findByAlarma(alarma).stream()
             .filter(ao -> ao.getOperador() == null || seleccionados.contains(ao.getOperador()))
@@ -122,12 +127,10 @@ public class AsignacionService {
 
     @Transactional
     public AlarmaOperador reasignarAlarma(UUID alarmaId, UUID operadorId) {
-        Alarma alarma = alarmaService.obtenerAlarma(alarmaId)
-                    .orElseThrow(() -> new RuntimeException("Alarma no encontrada"));
+        Alarma alarma = alarmaService.obtenerAlarma(alarmaId);
         Operador operador = operadorService.obtenerPorId(operadorId);
         return reasignarAlarma(alarma, operador);
     }
-
 
     private AlarmaOperador crearAsignacion(Alarma alarma, Operador operador, 
                                         Integer estadoId, boolean esAuto) {
@@ -157,8 +160,6 @@ public class AsignacionService {
         return ao;
     }
 
-
-
     private int getValoracionCargaTrabajo(List<AlarmaOperador> alarmasOperador, PrioridadAlarma prioridad) {
         if (alarmasOperador == null || alarmasOperador.isEmpty())
             return 0;
@@ -167,6 +168,4 @@ public class AsignacionService {
                                     .count();
         return result.intValue() * prioridad.getValoracion();
     }
-
-
 }

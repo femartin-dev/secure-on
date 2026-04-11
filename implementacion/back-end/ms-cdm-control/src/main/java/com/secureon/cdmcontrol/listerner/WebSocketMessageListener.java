@@ -8,7 +8,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
-import com.secureon.cdmcontrol.dto.messages.AlarmaDTO;
+import com.secureon.common.dto.AlarmaDTO;
 import com.secureon.cdmcontrol.service.AlarmaWsProcessor;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class WebSocketMessageListener {
 
     @MessageMapping("/topic/alarma/nueva")
     public void onAlarmaNueva(@Payload AlarmaDTO alarmaDTO, Principal principal) {
-        alarmaWsProcessor.procesarNueva(
+        alarmaWsProcessor.procesarNuevaAlarma(
                 alarmaDTO,
                 principal != null ? principal.getName() : "anonimo");
     }

@@ -2,8 +2,8 @@ package com.secureon.appmovil.dto.response;
 
 import java.util.UUID;
 
-import com.secureon.appmovil.model.entity.CanalNotificacion;
-import com.secureon.appmovil.model.entity.Contacto;
+import com.secureon.common.model.entity.CanalNotificacion;
+import com.secureon.common.model.entity.Contacto;
 
 import lombok.Builder;
 import lombok.Data;

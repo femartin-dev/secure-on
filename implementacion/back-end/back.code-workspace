@@ -19,6 +19,6 @@
   "settings": {
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "interactive",
-    "java.debug.settings.onBuildFailureProceed": true
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
   }
 }

@@ -20,4 +20,5 @@ public class DownstreamHttpException extends RuntimeException {
     public String getResponseBody() {
         return responseBody;
     }
+
 }

@@ -11,13 +11,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.secureon.appmovil.config.TwilioConfig;
-import com.secureon.appmovil.model.entity.Alarma;
-import com.secureon.appmovil.model.entity.ConfiguracionUsuario;
-import com.secureon.appmovil.model.entity.Contacto;
-import com.secureon.appmovil.model.entity.Dispositivo;
-import com.secureon.appmovil.model.entity.Ubicacion;
-import com.secureon.appmovil.model.entity.Usuario;
-import com.secureon.appmovil.util.MessageService;
+import com.secureon.common.exception.BadRequestException;
+import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.ConfiguracionUsuario;
+import com.secureon.common.model.entity.Contacto;
+import com.secureon.common.model.entity.Dispositivo;
+import com.secureon.common.model.entity.Ubicacion;
+import com.secureon.common.model.entity.Usuario;
+import com.secureon.common.util.MessagesService;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 
@@ -37,7 +38,7 @@ public class NotificacionService {
     private ConfiguracionService configuracionService;
 
     @Autowired
-    private MessageService messageService;
+    private MessagesService messagesService;
 
     @Autowired
     private AlarmaContactoService alarmaContactoService;
@@ -84,14 +85,14 @@ public class NotificacionService {
         long segundos = Duration.between(desde, OffsetDateTime.now()).getSeconds();
         long abs = Math.abs(segundos);
         if (abs <= 120) {
-            return abs + " " + messageService.getMessage("time.seconds");
+            return abs + " " + messagesService.getMessage("time.seconds");
         }
         long minutos = abs / 60;
         if (minutos <= 120) {
-            return minutos + " " + messageService.getMessage("time.minutes");
+            return minutos + " " + messagesService.getMessage("time.minutes");
         }
         long horas = minutos / 60;
-        return horas + " " + messageService.getMessage("time.hours");
+        return horas + " " + messagesService.getMessage("time.hours");
     }
 
     private String getUltimaUbicacion(List<Ubicacion> ubicaciones) {
@@ -103,7 +104,7 @@ public class NotificacionService {
         if (existe.isPresent()) {
             double lat = existe.get().getPosicion().getY();
             double lng = existe.get().getPosicion().getX();
-            ubicacionStr = String.format("https://maps.google.com/?q=%.6f,%.6f", lat, lng);
+            ubicacionStr = messagesService.getMessage("google.maps.place.point", lat, lng, 18);
         }
         return ubicacionStr;
     }
@@ -119,8 +120,8 @@ public class NotificacionService {
         try {
             esSMS = Integer.valueOf(1).equals(contacto.getCanalNotificacion().getId());
             esWhatsapp = Integer.valueOf(2).equals(contacto.getCanalNotificacion().getId());
-            if (!esSMS || !esWhatsapp) {
-                throw new RuntimeException("Servicio no implementado");
+            if (!esSMS && !esWhatsapp) {
+                throw new BadRequestException("Servicio no implementado");
             } 
             this.enviarMensaje(mensaje, contacto.getTelefono(), esSMS);
             alarmaContactoService.enviarAlarmaContacto(alarma, contacto, contacto.getCanalNotificacion(), 

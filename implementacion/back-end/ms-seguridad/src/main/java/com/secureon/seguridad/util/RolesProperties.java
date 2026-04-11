@@ -25,7 +25,7 @@ public class RolesProperties {
         return prefijo + operador;
     }
 
-    public String getRolAdminsitrador() {
+    public String getRolAdministrador() {
         return prefijo + admin;
     }
 }
