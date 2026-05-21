@@ -1,0 +1,3194 @@
+
++------------+
+|   UC-014   |
++------------+
+
+AquÃ­ tienes el anÃ¡lisis completo para el UC-014 Finalizar Alarma, desarrollado segÃºn la metodologÃ­a del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+ğŸ§© IdentificaciÃ³n de Clases de AnÃ¡lisis (PatrÃ³n ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor)	InteractÃºa con el dispositivo para finalizar la alarma.
+CentroMonitoreo	A (Actor Secundario)	Puede enviar una seÃ±al de finalizaciÃ³n remota autorizada.
+InterfazFinalizacion	I (Interfaz)	Muestra botÃ³n de "Finalizar Alarma", interfaz de autenticaciÃ³n, pantalla de resumen.
+ControlFinalizacionAlarma	C (Controlador)	Orquesta el proceso de finalizaciÃ³n: autenticaciÃ³n, validaciÃ³n de credenciales, detenciÃ³n de servicios, notificaciÃ³n al CdM, manejo de fallos y bloqueos.
+ControlAutenticacion	C (Controlador)	Valida credenciales del usuario (huella, patrÃ³n, PIN, contraseÃ±a) contra almacÃ©n seguro.
+GestorAlarma	C (Controlador)	Detiene servicios de recolecciÃ³n de evidencias (audio, fotos, geolocalizaciÃ³n) y libera el bloqueo del dispositivo.
+ControlComunicacionCdM	C (Controlador)	Notifica al Centro de Monitoreo sobre la finalizaciÃ³n de la alarma.
+ControlPersistenciaEstado	C (Controlador)	Actualiza el estado persistente de la alarma (bandera activa) y registra eventos en historial.
+ConfiguracionSeguridad	E (Entidad)	Almacena parÃ¡metros de seguridad: nÃºmero mÃ¡ximo de intentos fallidos (3), tiempo de bloqueo (2 minutos).
+AlmacenSeguro	E (Entidad)	Contiene las credenciales del usuario para validaciÃ³n (huella, PIN, patrÃ³n).
+HistorialEventos	E (Entidad)	Registra la finalizaciÃ³n de la alarma, intentos fallidos y eventos relacionados.
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Usuario|
+|Sistema|
+start
+:Usuario presiona pantalla o botones;
+:Sistema presenta botÃ³n "Finalizar Alarma" superpuesto;
+:Usuario pulsa "Finalizar Alarma";
+:Sistema presenta interfaz de autenticaciÃ³n (huella/patrÃ³n/PIN/contraseÃ±a);
+
+if (Â¿SeÃ±al de finalizaciÃ³n remota del CdM?) then (SÃ­)
+  :Sistema valida seÃ±al remota;
+  :Sistema finaliza alarma sin autenticaciÃ³n local;
+  :Sistema notifica al usuario que fue desactivada remotamente;
+  :Sistema detiene servicios de evidencias y desbloquea;
+  :Sistema muestra pantalla de resumen;
+  stop
+else (No)
+  :Usuario ingresa credenciales;
+  :Sistema valida credenciales contra almacÃ©n seguro;
+  if (Â¿Credenciales vÃ¡lidas?) then (SÃ­)
+    :Sistema notifica al CdM finalizaciÃ³n;
+    :Sistema registra evento en historial;
+    :Sistema detiene servicios de recolecciÃ³n de evidencias;
+    :Sistema libera bloqueo y restaura pantalla principal;
+    :Sistema muestra encuesta post-alarma (UC-015);
+    stop
+  else (No)
+    :Sistema incrementa contador de fallos;
+    if (Â¿NÃºmero de fallos â‰?3?) then (SÃ­)
+      :Sistema permite reintentar autenticaciÃ³n;
+      -> vuelve a "Sistema presenta interfaz de autenticaciÃ³n";
+    else (No)
+      :Sistema bloquea reintentos por 2 minutos mostrando temporizador;
+      :Sistema notifica al CdM actividad sospechosa;
+      stop
+    endif
+  endif
+endif
+
+' Manejo de reinicio durante finalizaciÃ³n
+if (Â¿Dispositivo se apaga/reinicia durante proceso?) then (SÃ­)
+  :Al reiniciar, UC-008 detecta proceso de finalizaciÃ³n pendiente;
+  -> continÃºa en "Sistema presenta interfaz de autenticaciÃ³n";
+endif
+@enduml
+ğŸ“ Bosquejo del Diagrama de Actividad
+text
+INICIO
+  â”?
+  â–?
+[Usuario presiona pantalla/botones]
+  â”?
+  â–?
+[Sistema muestra botÃ³n "Finalizar Alarma"]
+  â”?
+  â–?
+[Usuario pulsa botÃ³n]
+  â”?
+  â–?
+[Sistema muestra interfaz de autenticaciÃ³n]
+  â”?
+  â”œâ”€â”€[SeÃ±al remota CdM vÃ¡lida]â”€â”€â–?[Finalizar sin autenticaciÃ³n] â”€â”€â–?[Notificar usuario] â”€â”€â–?[Detener servicios y desbloquear] â”€â”€â–?[Mostrar resumen] â”€â”€â–?FIN
+  â”?
+  â””â”€â”€[Sin seÃ±al remota]â”€â”€â–?[Usuario ingresa credenciales]
+                              â”?
+                              â–?
+                    [Sistema valida credenciales]
+                              â”?
+              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+              â”?                              â”?
+        [VÃ¡lidas]                       [InvÃ¡lidas]
+              â”?                              â”?
+              â–?                              â–?
+   [Notificar CdM]                  [Incrementar contador fallos]
+              â”?                              â”?
+              â–?                   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+   [Registrar en historial]        â”?                    â”?
+              â”?             [Fallos â‰?3]        [Fallos > 3]
+              â–?                   â”?                    â”?
+   [Detener servicios de evidencias]   â–?                    â–?
+              â”?             [Permitir reintento]   [Bloquear 2 minutos]
+              â–?                   â”?                    â”?
+   [Liberar bloqueo y restaurar]    â””â”€â”€â–?(vuelve a autenticaciÃ³n)  â–?
+              â”?                                       [Notificar CdM actividad sospechosa]
+              â–?                                                 â”?
+   [Mostrar encuesta UC-015]                                    â–?
+              â”?                                                FIN
+              â–?
+             FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado del proceso de finalizaciÃ³n de la alarma.
+
+plantuml
+@startuml
+[*] --> AlarmaActiva
+
+state AlarmaActiva {
+  [*] --> Bloqueado
+  Bloqueado --> MostrandoBotonFinalizar : usuarioInteractua()
+}
+
+state MostrandoBotonFinalizar {
+  [*] --> EsperandoPulsacion
+  EsperandoPulsacion --> SolicitandoAutenticacion : usuarioPulsaFinalizar()
+  EsperandoPulsacion --> FinalizacionRemota : recibeSeÃ±alRemotaCdM()
+}
+
+state FinalizacionRemota {
+  [*] --> ValidandoSeÃ±al
+  ValidandoSeÃ±al --> DeteniendoServicios : seÃ±alVÃ¡lida
+  ValidandoSeÃ±al --> AlarmaActiva : seÃ±alInvÃ¡lida
+}
+
+state SolicitandoAutenticacion {
+  [*] --> MostrandoMetodosAuth
+  MostrandoMetodosAuth --> Autenticando : usuarioIngresaCredenciales()
+  Autenticando --> AutenticacionExitosa : credencialesVÃ¡lidas()
+  Autenticando --> AutenticacionFallida : credencialesInvÃ¡lidas()
+  AutenticacionFallida --> VerificandoReintentos
+  VerificandoReintentos --> MostrandoMetodosAuth : fallos <= 3
+  VerificandoReintentos --> BloqueoTemporal : fallos > 3
+  BloqueoTemporal --> MostrandoMetodosAuth : timeout 2min
+}
+
+state AutenticacionExitosa {
+  [*] --> NotificandoCdM
+  NotificandoCdM --> DeteniendoServicios : notificacionEnviada()
+  DeteniendoServicios --> Desbloqueando : serviciosDetenidos()
+  Desbloqueando --> MostrandoEncuesta : dispositivoNormal()
+  MostrandoEncuesta --> [*] : encuestaCompletada()
+}
+
+state DeteniendoServicios --> [*] : (desde finalizaciÃ³n remota)
+@enduml
+ğŸ“ Bosquejo del Diagrama de Estado
+text
+ESTADO: AlarmaActiva (Bloqueado)
+   â”?
+   â””â”€[usuarioInteractua()]â”€â”€â–?ESTADO: MostrandoBotonFinalizar
+                                  â”œâ”€ EsperandoPulsacion
+                                  â”?    â”œâ”€[pulsaciÃ³n]â”€â”€â–?SolicitandoAutenticacion
+                                  â”?    â””â”€[seÃ±al remota]â”€â”€â–?FinalizacionRemota
+                                  â”?
+                                  â””â”€ FinalizacionRemota
+                                        â””â”€ ValidandoSeÃ±al â”€â”€â–?[vÃ¡lida]â”€â”€â–?DeteniendoServicios â”€â”€â–?[*]
+
+ESTADO: SolicitandoAutenticacion
+   â”œâ”€ MostrandoMetodosAuth
+   â”œâ”€ Autenticando
+   â”?    â”œâ”€[credenciales vÃ¡lidas]â”€â”€â–?AutenticacionExitosa
+   â”?    â””â”€[credenciales invÃ¡lidas]â”€â”€â–?AutenticacionFallida â”€â”€â–?VerificandoReintentos
+   â”?                                       â”œâ”€[fallos â‰?3]â”€â”€â–?MostrandoMetodosAuth
+   â”?                                       â””â”€[fallos > 3]â”€â”€â–?BloqueoTemporal (2min) â”€â”€â–?MostrandoMetodosAuth
+   â”?
+   â””â”€ AutenticacionExitosa
+         â”œâ”€ NotificandoCdM
+         â”œâ”€ DeteniendoServicios
+         â”œâ”€ Desbloqueando
+         â””â”€ MostrandoEncuesta â”€â”€â–?[*]
+3. Diagrama de Clases de AnÃ¡lisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actores
+actor Usuario as "Usuario" <<A>>
+actor "CentroMonitoreo" as CdM <<A>>
+
+' Interfaz
+class InterfazFinalizacion <<I>> {
+  +mostrarBotonFinalizar()
+  +mostrarMetodosAutenticacion()
+  +mostrarPantallaResumen()
+  +mostrarEncuestaPostAlarma()
+  +mostrarTemporizadorBloqueo(segundos: int)
+}
+
+' Controladores
+class ControlFinalizacionAlarma <<C>> {
+  +iniciarProcesoFinalizacion()
+  +manejarPulsacionFinalizar()
+  +procesarAutenticacion(credenciales: Credenciales)
+  +manejarFinalizacionRemota(seÃ±al: SeÃ±al)
+  +finalizarAlarma()
+}
+
+class ControlAutenticacion <<C>> {
+  +validarCredenciales(metodo: String, datos: Object): Boolean
+  +incrementarContadorFallos()
+  +estaBloqueado(): Boolean
+  +reiniciarContador()
+}
+
+class GestorAlarma <<C>> {
+  +detenerServiciosEvidencias()
+  +desbloquearDispositivo()
+  +restaurarInterfazNormal()
+}
+
+class ControlComunicacionCdM <<C>> {
+  +notificarFinalizacionAlarma()
+  +recibirSeÃ±alRemota(): SeÃ±al
+  +notificarIntentoFallido()
+}
+
+class ControlPersistenciaEstado <<C>> {
+  +actualizarEstadoAlarma(estado: String)
+  +registrarEvento(tipo: String, detalles: String)
+}
+
+' Entidades
+class ConfiguracionSeguridad <<E>> {
+  -maxIntentosFallidos: int (3)
+  -tiempoBloqueo: int (120 segundos)
+  +obtenerMaxIntentos(): int
+  +obtenerTiempoBloqueo(): int
+}
+
+class AlmacenSeguro <<E>> {
+  +verificarCredenciales(metodo: String, datos: Object): Boolean
+}
+
+class HistorialEventos <<E>> {
+  +guardarEvento(evento: Evento)
+}
+
+' Relaciones
+Usuario --> InterfazFinalizacion : "interactÃºa"
+InterfazFinalizacion --> ControlFinalizacionAlarma : "envÃ­a eventos"
+ControlFinalizacionAlarma --> ControlAutenticacion : "valida credenciales"
+ControlFinalizacionAlarma --> GestorAlarma : "detiene servicios"
+ControlFinalizacionAlarma --> ControlComunicacionCdM : "notifica CdM"
+ControlFinalizacionAlarma --> ControlPersistenciaEstado : "registra cambios"
+ControlAutenticacion --> AlmacenSeguro : "verifica"
+ControlAutenticacion --> ConfiguracionSeguridad : "consulta lÃ­mites"
+ControlComunicacionCdM --> CdM : "comunica"
+ControlPersistenciaEstado --> HistorialEventos : "guarda eventos"
+@enduml
+ğŸ“ Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- CentroMonitoreo <<A>>
+- InterfazFinalizacion <<I>>
+- ControlFinalizacionAlarma <<C>>
+- ControlAutenticacion <<C>>
+- GestorAlarma <<C>>
+- ControlComunicacionCdM <<C>>
+- ControlPersistenciaEstado <<C>>
+- ConfiguracionSeguridad <<E>>
+- AlmacenSeguro <<E>>
+- HistorialEventos <<E>>
+
+Relaciones:
+Usuario â”€â”€â–?InterfazFinalizacion
+InterfazFinalizacion â”€â”€â–?ControlFinalizacionAlarma
+ControlFinalizacionAlarma â”€â”€â–?ControlAutenticacion
+ControlFinalizacionAlarma â”€â”€â–?GestorAlarma
+ControlFinalizacionAlarma â”€â”€â–?ControlComunicacionCdM
+ControlFinalizacionAlarma â”€â”€â–?ControlPersistenciaEstado
+ControlAutenticacion â”€â”€â–?AlmacenSeguro
+ControlAutenticacion â”€â”€â–?ConfiguracionSeguridad
+ControlComunicacionCdM â”€â”€â–?CentroMonitoreo
+ControlPersistenciaEstado â”€â”€â–?HistorialEventos
+4. Diagrama de ColaboraciÃ³n
+Formal (PlantUML)
+plantuml
+@startuml
+object "Usuario" as usuario <<A>>
+object "CentroMonitoreo" as cdm <<A>>
+object ":InterfazFinalizacion" as interfaz <<I>>
+object ":ControlFinalizacionAlarma" as ctrlFinal <<C>>
+object ":ControlAutenticacion" as ctrlAuth <<C>>
+object ":AlmacenSeguro" as almacen <<E>>
+object ":ConfiguracionSeguridad" as config <<E>>
+object ":GestorAlarma" as gestor <<C>>
+object ":ControlComunicacionCdM" as ctrlCdM <<C>>
+object ":ControlPersistenciaEstado" as ctrlPersistencia <<C>>
+object ":HistorialEventos" as historial <<E>>
+
+usuario -> interfaz : 1: presionarPantalla()
+interfaz -> ctrlFinal : 2: iniciarProcesoFinalizacion()
+ctrlFinal -> interfaz : 3: mostrarBotonFinalizar()
+interfaz -> usuario : 4: mostrar botÃ³n
+usuario -> interfaz : 5: pulsarFinalizar()
+interfaz -> ctrlFinal : 6: manejarPulsacionFinalizar()
+
+alt recibeSeÃ±alRemotaCdM
+  ctrlFinal -> ctrlCdM : 7: recibirSeÃ±alRemota()
+  ctrlCdM --> ctrlFinal : 8: seÃ±alVÃ¡lida
+  ctrlFinal -> ctrlFinal : 9: finalizarAlarmaSinAuth()
+else noSeÃ±alRemota
+  ctrlFinal -> interfaz : 7: mostrarMetodosAutenticacion()
+  interfaz -> usuario : 8: mostrar mÃ©todos
+  usuario -> interfaz : 9: ingresarCredenciales(metodo, datos)
+  interfaz -> ctrlFinal : 10: procesarAutenticacion(credenciales)
+  
+  ctrlFinal -> ctrlAuth : 11: validarCredenciales(metodo, datos)
+  ctrlAuth -> almacen : 12: verificarCredenciales(metodo, datos)
+  almacen --> ctrlAuth : 13: resultado
+  ctrlAuth --> ctrlFinal : 14: valido/invalido
+  
+  alt credencialesInvalidas
+    ctrlFinal -> ctrlAuth : 15: incrementarContadorFallos()
+    ctrlAuth -> config : 16: obtenerMaxIntentos()
+    config --> ctrlAuth : 17: 3
+    ctrlAuth -> ctrlAuth : 18: verificarLimite()
+    alt fallos <= 3
+      ctrlAuth --> ctrlFinal : 19: permitirReintento
+      -> vuelve a paso 7
+    else fallos > 3
+      ctrlAuth -> ctrlAuth : 19: bloquearPor(120s)
+      ctrlFinal -> interfaz : 20: mostrarTemporizadorBloqueo(120)
+      ctrlFinal -> ctrlCdM : 21: notificarIntentoFallido()
+      ctrlCdM -> cdm : 22: enviar notificaciÃ³n
+      stop
+    end
+  end
+end
+
+' Credenciales vÃ¡lidas o seÃ±al remota autÃ©ntica
+ctrlFinal -> ctrlCdM : 23: notificarFinalizacionAlarma()
+ctrlCdM -> cdm : 24: enviar estado finalizado
+ctrlCdM --> ctrlFinal : 25: confirmaciÃ³n
+
+ctrlFinal -> gestor : 26: detenerServiciosEvidencias()
+gestor --> ctrlFinal : 27: serviciosDetenidos
+
+ctrlFinal -> gestor : 28: desbloquearDispositivo()
+gestor --> ctrlFinal : 29: desbloqueado
+
+ctrlFinal -> ctrlPersistencia : 30: actualizarEstadoAlarma("inactiva")
+ctrlPersistencia -> historial : 31: guardarEvento("finalizacion", metodo)
+
+ctrlFinal -> interfaz : 32: mostrarEncuestaPostAlarma()
+interfaz -> usuario : 33: mostrar encuesta
+@enduml
+ğŸ“ Bosquejo del Diagrama de ColaboraciÃ³n
+text
+Objetos:
+- Usuario (A)
+- CentroMonitoreo (A)
+- :InterfazFinalizacion (I)
+- :ControlFinalizacionAlarma (C)
+- :ControlAutenticacion (C)
+- :AlmacenSeguro (E)
+- :ConfiguracionSeguridad (E)
+- :GestorAlarma (C)
+- :ControlComunicacionCdM (C)
+- :ControlPersistenciaEstado (C)
+- :HistorialEventos (E)
+
+Mensajes numerados:
+1-6: InteracciÃ³n inicial hasta pulsar "Finalizar Alarma".
+
+[Alternativa finalizaciÃ³n remota]
+7-9: Recibir y validar seÃ±al remota, proceder a finalizar sin autenticaciÃ³n.
+
+[Sin seÃ±al remota]
+7-10: Mostrar autenticaciÃ³n y recibir credenciales.
+11-14: Validar credenciales contra almacÃ©n seguro.
+
+[Credenciales invÃ¡lidas]
+15-19: Incrementar contador y verificar lÃ­mite.
+   Si fallos â‰?, volver al paso 7.
+   Si fallos >3:
+      19: Bloquear por 120 segundos.
+      20: Mostrar temporizador.
+      21-22: Notificar actividad sospechosa al CdM.
+
+[Credenciales vÃ¡lidas o seÃ±al remota]
+23-25: Notificar finalizaciÃ³n al CdM.
+26-27: Detener servicios de evidencias.
+28-29: Desbloquear dispositivo.
+30-31: Actualizar estado persistente y registrar en historial.
+32-33: Mostrar encuesta post-alarma (UC-015).
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+actor Usuario as U
+actor "CentroMonitoreo" as CdM <<A>>
+participant ":InterfazFinalizacion" as Interfaz <<I>>
+participant ":ControlFinalizacionAlarma" as CtrlFinal <<C>>
+participant ":ControlAutenticacion" as CtrlAuth <<C>>
+participant ":AlmacenSeguro" as Almacen <<E>>
+participant ":ConfiguracionSeguridad" as Config <<E>>
+participant ":GestorAlarma" as Gestor <<C>>
+participant ":ControlComunicacionCdM" as CtrlCdM <<C>>
+participant ":ControlPersistenciaEstado" as CtrlPersistencia <<C>>
+participant ":HistorialEventos" as Historial <<E>>
+
+U -> Interfaz : 1: presionarPantalla()
+activate Interfaz
+Interfaz -> CtrlFinal : 2: iniciarProcesoFinalizacion()
+activate CtrlFinal
+CtrlFinal -> Interfaz : 3: mostrarBotonFinalizar()
+Interfaz -> U : 4: mostrar botÃ³n
+U -> Interfaz : 5: pulsarFinalizar()
+Interfaz -> CtrlFinal : 6: manejarPulsacionFinalizar()
+
+alt recibeSeÃ±alRemotaCdM
+  CtrlFinal -> CtrlCdM : 7: recibirSeÃ±alRemota()
+  activate CtrlCdM
+  CtrlCdM --> CtrlFinal : 8: seÃ±alVÃ¡lida
+  deactivate CtrlCdM
+  CtrlFinal -> CtrlFinal : 9: finalizarAlarmaSinAuth()
+else noSeÃ±alRemota
+  CtrlFinal -> Interfaz : 7: mostrarMetodosAutenticacion()
+  Interfaz -> U : 8: mostrar mÃ©todos
+  U -> Interfaz : 9: ingresarCredenciales(metodo, datos)
+  Interfaz -> CtrlFinal : 10: procesarAutenticacion(credenciales)
+  
+  CtrlFinal -> CtrlAuth : 11: validarCredenciales(metodo, datos)
+  activate CtrlAuth
+  CtrlAuth -> Almacen : 12: verificarCredenciales(metodo, datos)
+  activate Almacen
+  Almacen --> CtrlAuth : 13: resultado
+  deactivate Almacen
+  CtrlAuth --> CtrlFinal : 14: valido/invalido
+  deactivate CtrlAuth
+  
+  alt credencialesInvalidas
+    CtrlFinal -> CtrlAuth : 15: incrementarContadorFallos()
+    activate CtrlAuth
+    CtrlAuth -> Config : 16: obtenerMaxIntentos()
+    activate Config
+    Config --> CtrlAuth : 17: 3
+    deactivate Config
+    CtrlAuth -> CtrlAuth : 18: verificarLimite()
+    alt fallos <= 3
+      CtrlAuth --> CtrlFinal : 19: permitirReintento
+      deactivate CtrlAuth
+      CtrlFinal -> Interfaz : 20: mostrarErrorAutenticacion()
+      note right: vuelve al paso 7 implÃ­citamente
+    else fallos > 3
+      CtrlAuth -> CtrlAuth : 19: bloquearPor(120s)
+      CtrlAuth --> CtrlFinal : 20: bloqueado
+      deactivate CtrlAuth
+      CtrlFinal -> Interfaz : 21: mostrarTemporizadorBloqueo(120)
+      CtrlFinal -> CtrlCdM : 22: notificarIntentoFallido()
+      activate CtrlCdM
+      CtrlCdM -> CdM : 23: enviar notificaciÃ³n
+      deactivate CtrlCdM
+      stop
+    end
+  end
+end
+
+' Flujo exitoso
+CtrlFinal -> CtrlCdM : 24: notificarFinalizacionAlarma()
+activate CtrlCdM
+CtrlCdM -> CdM : 25: enviar estado finalizado
+CtrlCdM --> CtrlFinal : 26: confirmaciÃ³n
+deactivate CtrlCdM
+
+CtrlFinal -> Gestor : 27: detenerServiciosEvidencias()
+activate Gestor
+Gestor --> CtrlFinal : 28: serviciosDetenidos
+deactivate Gestor
+
+CtrlFinal -> Gestor : 29: desbloquearDispositivo()
+activate Gestor
+Gestor --> CtrlFinal : 30: desbloqueado
+deactivate Gestor
+
+CtrlFinal -> CtrlPersistencia : 31: actualizarEstadoAlarma("inactiva")
+activate CtrlPersistencia
+CtrlPersistencia -> Historial : 32: guardarEvento("finalizacion", metodo)
+activate Historial
+Historial --> CtrlPersistencia : 33: guardado
+deactivate Historial
+CtrlPersistencia --> CtrlFinal : 34: estadoActualizado
+deactivate CtrlPersistencia
+
+CtrlFinal -> Interfaz : 35: mostrarEncuestaPostAlarma()
+Interfaz -> U : 36: mostrar encuesta (UC-015)
+
+deactivate CtrlFinal
+deactivate Interfaz
+@enduml
+ğŸ“ Bosquejo del Diagrama de Secuencia
+text
+Usuario   :Interfaz   :CtrlFinal   :CtrlAuth   :Almacen   :Config   :Gestor   :CtrlCdM   CdM   :CtrlPersistencia   :Historial
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”‚â”€presionarPantallaâ”€â–ºâ”‚           â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”‚â”€iniciarProceso()â”€â”€â–ºâ”‚            â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”‚â—„â”€mostrarBotonâ”€â”€â”€â”€â”€â”€â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”‚â—„â”€mostrar botÃ³nâ”€â”€â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”‚â”€pulsarFinalizarâ”€â–ºâ”‚           â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”‚â”€manejarPulsacion()â”€â–ºâ”‚            â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?[seÃ±al remota]      â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€recibirSeÃ±alRemota()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚        â”?         â”?              â”?
+   â”?         â”?          â”‚â—„â”€â”€seÃ±alVÃ¡lidaâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?[sin seÃ±al remota]   â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”‚â—„â”€mostrarMetodosAuth()â”€â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”‚â—„â”€mostrar mÃ©todosâ”€â”€â”€â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”‚â”€ingresarCredencialesâ”€â–ºâ”‚           â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”‚â”€procesarAutenticacion()â”€â–ºâ”‚            â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€validarCredenciales()â”€â–ºâ”‚          â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”‚â”€verificarCredenciales()â”€â–ºâ”‚          â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”‚â—„â”€â”€â”€â”€â”€â”€resultadoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â—„â”€â”€â”€â”€â”€â”€valido/invalidoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?[credenciales invÃ¡lidas]          â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€incrementarContadorFallos()â”€â–ºâ”‚          â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”‚â”€obtenerMaxIntentos()â”€â”€â–ºâ”‚          â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”‚â—„â”€â”€â”€â”€â”€â”€â”€3â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”‚â”€verificarLimite()     â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”?[â‰?] vuelve a paso 7   â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”?[>3] bloquea 120s      â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”‚â—„â”€mostrarTemporizadorBloqueo(120)â”€â”?           â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€notificarIntentoFallido()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚        â”?         â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”‚â”€enviar notificaciÃ³nâ”€â–ºCdM   â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?[credenciales vÃ¡lidas]           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€notificarFinalizacionAlarma()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚        â”?         â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”‚â”€enviar estado finalizadoâ”€â–ºCdMâ”?              â”?
+   â”?         â”?          â”‚â—„â”€â”€confirmaciÃ³nâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?       â”?         â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€detenerServiciosEvidencias()â”€â”€â–ºâ”‚          â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â—„â”€â”€serviciosDetenidosâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€desbloquearDispositivo()â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚          â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â—„â”€â”€desbloqueadoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”?         â”?          â”‚â”€actualizarEstadoAlarma("inactiva")â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚          â”?              â”?
+   â”?         â”?          â”?           â”?         â”?         â”?        â”?         â”?       â”‚â”€guardarEvento()â”€â–ºâ”‚
+   â”?         â”?          â”‚â—„â”€â”€estadoActualizadoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?              â”?
+   â”?         â”‚â—„â”€mostrarEncuestaPostAlarma()â”€â”?           â”?         â”?        â”?         â”?       â”?         â”?              â”?
+   â”‚â—„â”€mostrar encuesta (UC-015)â”€â”€â”?          â”?           â”?         â”?        â”?         â”?       â”?         â”?              â”?
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposiciÃ³n.
+
+
++------------+
+|   UC-015   |
++------------+
+
+AquÃ­ tienes el anÃ¡lisis completo para el UC-015 Mostrar Encuesta Post-alarma, desarrollado segÃºn la metodologÃ­a del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+ğŸ§© IdentificaciÃ³n de Clases de AnÃ¡lisis (PatrÃ³n ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor)	Completa y envÃ­a el cuestionario post-alarma, o lo pospone.
+InterfazEncuesta	I (Interfaz)	Muestra el formulario modal, captura las respuestas, resalta campos obligatorios faltantes y permite posponer.
+ControlEncuestaPostAlarma	C (Controlador)	Orquesta la presentaciÃ³n de la encuesta, valida los campos obligatorios, gestiona el guardado local y el envÃ­o al CdM.
+ControlPersistenciaEncuesta	C (Controlador)	Guarda y recupera encuestas (completas o borradores) en la base de datos local.
+GestorAlarma	C (Controlador)	Proporciona el contexto de la alarma finalizada (ID de caso, timestamp) para asociar las respuestas.
+ControlComunicacionCdM	C (Controlador)	Sincroniza las respuestas de la encuesta con el servidor del Centro de Monitoreo.
+Cuestionario	E (Entidad)	Define la estructura de la encuesta: preguntas, tipos de campo, campos obligatorios.
+RespuestaEncuesta	E (Entidad)	Almacena las respuestas del usuario vinculadas a un ID de alarma.
+HistorialEventos	E (Entidad)	Actualiza el historial de la alarma con la informaciÃ³n de la encuesta completada.
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Usuario|
+|Sistema|
+start
+:Sistema muestra pantalla modal de encuesta post-alarma;
+:Usuario interactÃºa con el cuestionario;
+if (Â¿Usuario presiona "Completar mÃ¡s tarde"?) then (SÃ­)
+  :Sistema guarda borrador local con respuestas cargadas;
+  :Sistema cierra la encuesta y retorna a pantalla principal;
+  stop
+else (No)
+  :Usuario completa datos y presiona "Enviar";
+  :Sistema valida campos obligatorios;
+  if (Â¿Campos obligatorios completos?) then (No)
+    :Sistema indica campo(s) faltante(s) y hace foco en ellos;
+    -> vuelve a "Usuario interactÃºa con el cuestionario";
+  else (SÃ­)
+    :Sistema guarda respuestas en base de datos local;
+    :Sistema envÃ­a respuestas al CdM inmediatamente;
+    :Sistema actualiza historial de la alarma;
+    :Sistema cierra la encuesta y retorna a pantalla principal;
+    stop
+  endif
+endif
+@enduml
+ğŸ“ Bosquejo del Diagrama de Actividad
+text
+INICIO
+  â”?
+  â–?
+[Mostrar pantalla modal de encuesta]
+  â”?
+  â–?
+[Usuario interactÃºa con el cuestionario]
+  â”?
+  â”œâ”€â”€[Presiona "Completar mÃ¡s tarde"]â”€â”€â–?[Guardar borrador local] â”€â”€â–?[Cerrar encuesta y retornar] â”€â”€â–?FIN
+  â”?
+  â””â”€â”€[Presiona "Enviar"]â”€â”€â–?[Validar campos obligatorios]
+                              â”?
+              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+              â”?                              â”?
+        [Faltan datos]                 [Todos completos]
+              â”?                              â”?
+              â–?                              â–?
+   [Indicar campo faltante]      [Guardar respuestas en BD local]
+   [Hacer foco en el campo]                    â”?
+              â”?                              â–?
+              â””â”€â”€â–?(vuelve a interacciÃ³n)   [Enviar respuestas al CdM]
+                                             â”?
+                                             â–?
+                                 [Actualizar historial de alarma]
+                                             â”?
+                                             â–?
+                              [Cerrar encuesta y retornar]
+                                             â”?
+                                             â–?
+                                            FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de la encuesta post-alarma.
+
+plantuml
+@startuml
+[*] --> EncuestaMostrada
+
+state EncuestaMostrada {
+  [*] --> EsperandoAccionUsuario
+  EsperandoAccionUsuario --> Completando : usuarioIngresaDatos()
+  EsperandoAccionUsuario --> Pospuesta : usuarioSeleccionaPosponer()
+}
+
+state Completando {
+  [*] --> ValidandoEnvio : usuarioPresionaEnviar()
+  ValidandoEnvio --> CamposFaltantes : faltanObligatorios
+  ValidandoEnvio --> EncuestaCompleta : todosObligatoriosCompletos
+  CamposFaltantes --> Completando : sistemaIndicaFaltantes()
+}
+
+state EncuestaCompleta {
+  [*] --> GuardandoLocal
+  GuardandoLocal --> EnviandoACdM : guardadoLocalOK()
+  EnviandoACdM --> ActualizandoHistorial : envioExitoso()
+  ActualizandoHistorial --> Cerrada : historialActualizado()
+}
+
+state Pospuesta {
+  [*] --> GuardandoBorrador
+  GuardandoBorrador --> Cerrada : borradorGuardado()
+}
+
+state Cerrada --> [*]
+@enduml
+ğŸ“ Bosquejo del Diagrama de Estado
+text
+ESTADO: EncuestaMostrada
+   â”œâ”€ EsperandoAccionUsuario
+   â”?    â”œâ”€[ingresa datos]â”€â”€â–?Completando
+   â”?    â””â”€[posponer]â”€â”€â–?Pospuesta â”€â”€â–?GuardandoBorrador â”€â”€â–?Cerrada â”€â”€â–?[*]
+   â”?
+   â””â”€ Completando
+         â”œâ”€ ValidandoEnvio (al presionar enviar)
+         â”?    â”œâ”€[faltan obligatorios]â”€â”€â–?CamposFaltantes â”€â”€â–?(vuelve a Completando)
+         â”?    â””â”€[todos completos]â”€â”€â–?EncuestaCompleta
+         â”?
+         â””â”€ EncuestaCompleta
+               â”œâ”€ GuardandoLocal
+               â”œâ”€ EnviandoACdM
+               â”œâ”€ ActualizandoHistorial
+               â””â”€ Cerrada â”€â”€â–?[*]
+3. Diagrama de Clases de AnÃ¡lisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actor
+actor Usuario as "Usuario" <<A>>
+
+' Interfaz
+class InterfazEncuesta <<I>> {
+  +mostrarCuestionario(cuestionario: Cuestionario)
+  +resaltarCamposFaltantes(campos: List<String>)
+  +cerrarEncuesta()
+}
+
+' Controladores
+class ControlEncuestaPostAlarma <<C>> {
+  +iniciarEncuesta(idAlarma: String)
+  +manejarEnvio(respuestas: Map)
+  +manejarPosponer(respuestas: Map)
+  +validarCamposObligatorios(respuestas: Map): List<String>
+}
+
+class ControlPersistenciaEncuesta <<C>> {
+  +guardarRespuestas(idAlarma: String, respuestas: Map, estado: String)
+  +guardarBorrador(idAlarma: String, respuestas: Map)
+  +obtenerBorrador(idAlarma: String): Map
+}
+
+class GestorAlarma <<C>> {
+  +obtenerIdAlarmaActiva(): String
+  +obtenerContextoAlarma(): ContextoAlarma
+}
+
+class ControlComunicacionCdM <<C>> {
+  +enviarEncuesta(idAlarma: String, respuestas: Map)
+}
+
+' Entidades
+class Cuestionario <<E>> {
+  -preguntas: List<Pregunta>
+  +obtenerPreguntas(): List<Pregunta>
+  +validarObligatorias(respuestas: Map): List<String>
+}
+
+class RespuestaEncuesta <<E>> {
+  -idAlarma: String
+  -respuestas: Map
+  -estado: String (borrador/completo)
+  -timestamp: DateTime
+}
+
+class HistorialEventos <<E>> {
+  +actualizarConEncuesta(idAlarma: String, respuestas: Map)
+}
+
+' Relaciones
+Usuario --> InterfazEncuesta : "interactÃºa"
+InterfazEncuesta --> ControlEncuestaPostAlarma : "envÃ­a eventos"
+ControlEncuestaPostAlarma --> Cuestionario : "valida estructura"
+ControlEncuestaPostAlarma --> ControlPersistenciaEncuesta : "guarda respuestas"
+ControlEncuestaPostAlarma --> ControlComunicacionCdM : "envÃ­a al CdM"
+ControlEncuestaPostAlarma --> GestorAlarma : "obtiene contexto"
+ControlPersistenciaEncuesta --> RespuestaEncuesta : "persiste"
+ControlComunicacionCdM --> HistorialEventos : "actualiza historial"
+@enduml
+ğŸ“ Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- InterfazEncuesta <<I>>
+- ControlEncuestaPostAlarma <<C>>
+- ControlPersistenciaEncuesta <<C>>
+- GestorAlarma <<C>>
+- ControlComunicacionCdM <<C>>
+- Cuestionario <<E>>
+- RespuestaEncuesta <<E>>
+- HistorialEventos <<E>>
+
+Relaciones:
+Usuario â”€â”€â–?InterfazEncuesta
+InterfazEncuesta â”€â”€â–?ControlEncuestaPostAlarma
+ControlEncuestaPostAlarma â”€â”€â–?Cuestionario
+ControlEncuestaPostAlarma â”€â”€â–?ControlPersistenciaEncuesta
+ControlEncuestaPostAlarma â”€â”€â–?ControlComunicacionCdM
+ControlEncuestaPostAlarma â”€â”€â–?GestorAlarma
+ControlPersistenciaEncuesta â”€â”€â–?RespuestaEncuesta
+ControlComunicacionCdM â”€â”€â–?HistorialEventos
+4. Diagrama de ColaboraciÃ³n
+Formal (PlantUML)
+plantuml
+@startuml
+object "Usuario" as usuario <<A>>
+object ":InterfazEncuesta" as interfaz <<I>>
+object ":ControlEncuestaPostAlarma" as ctrlEncuesta <<C>>
+object ":GestorAlarma" as gestor <<C>>
+object ":Cuestionario" as cuestionario <<E>>
+object ":ControlPersistenciaEncuesta" as ctrlPersistencia <<C>>
+object ":RespuestaEncuesta" as respuesta <<E>>
+object ":ControlComunicacionCdM" as ctrlCdM <<C>>
+object ":HistorialEventos" as historial <<E>>
+
+usuario -> interfaz : 1: interactuarConCuestionario()
+interfaz -> ctrlEncuesta : 2: iniciarEncuesta(idAlarma)
+ctrlEncuesta -> gestor : 3: obtenerIdAlarmaActiva()
+gestor --> ctrlEncuesta : 4: idAlarma
+ctrlEncuesta -> cuestionario : 5: obtenerPreguntas()
+cuestionario --> ctrlEncuesta : 6: preguntas
+ctrlEncuesta -> interfaz : 7: mostrarCuestionario(preguntas)
+interfaz -> usuario : 8: mostrar formulario
+
+alt usuarioPresionaEnviar
+  usuario -> interfaz : 9: enviarCuestionario(respuestas)
+  interfaz -> ctrlEncuesta : 10: manejarEnvio(respuestas)
+  ctrlEncuesta -> cuestionario : 11: validarObligatorias(respuestas)
+  cuestionario --> ctrlEncuesta : 12: camposFaltantes
+  
+  alt camposFaltantes.isEmpty()
+    ctrlEncuesta -> ctrlPersistencia : 13: guardarRespuestas(idAlarma, respuestas, "completo")
+    ctrlPersistencia -> respuesta : 14: persistir()
+    respuesta --> ctrlPersistencia : 15: ok
+    ctrlPersistencia --> ctrlEncuesta : 16: guardado
+    
+    ctrlEncuesta -> ctrlCdM : 17: enviarEncuesta(idAlarma, respuestas)
+    ctrlCdM -> historial : 18: actualizarConEncuesta(idAlarma, respuestas)
+    historial --> ctrlCdM : 19: actualizado
+    ctrlCdM --> ctrlEncuesta : 20: envioExitoso
+    
+    ctrlEncuesta -> interfaz : 21: cerrarEncuesta()
+    interfaz -> usuario : 22: retornar a pantalla principal
+  else !camposFaltantes.isEmpty()
+    ctrlEncuesta -> interfaz : 13: resaltarCamposFaltantes(camposFaltantes)
+    interfaz -> usuario : 14: mostrar indicaciones
+    ' vuelve a interacciÃ³n
+  end
+else usuarioPresionaPosponer
+  usuario -> interfaz : 9: posponerEncuesta(respuestas)
+  interfaz -> ctrlEncuesta : 10: manejarPosponer(respuestas)
+  ctrlEncuesta -> ctrlPersistencia : 11: guardarBorrador(idAlarma, respuestas)
+  ctrlPersistencia -> respuesta : 12: persistir(estado="borrador")
+  respuesta --> ctrlPersistencia : 13: ok
+  ctrlPersistencia --> ctrlEncuesta : 14: borradorGuardado
+  ctrlEncuesta -> interfaz : 15: cerrarEncuesta()
+  interfaz -> usuario : 16: retornar a pantalla principal
+end
+@enduml
+ğŸ“ Bosquejo del Diagrama de ColaboraciÃ³n
+text
+Objetos:
+- Usuario (A)
+- :InterfazEncuesta (I)
+- :ControlEncuestaPostAlarma (C)
+- :GestorAlarma (C)
+- :Cuestionario (E)
+- :ControlPersistenciaEncuesta (C)
+- :RespuestaEncuesta (E)
+- :ControlComunicacionCdM (C)
+- :HistorialEventos (E)
+
+Mensajes numerados:
+1-8: Iniciar y mostrar la encuesta al usuario.
+
+[Alternativa: Enviar]
+9-10: Usuario envÃ­a respuestas.
+11-12: Validar campos obligatorios contra Cuestionario.
+   [Si todos completos]
+   13-16: Guardar respuestas completas vÃ­a ControlPersistenciaEncuesta y RespuestaEncuesta.
+   17-20: Enviar al CdM y actualizar HistorialEventos.
+   21-22: Cerrar encuesta y retornar.
+   [Si faltan obligatorios]
+   13-14: Resaltar campos faltantes y volver a interacciÃ³n.
+
+[Alternativa: Posponer]
+9-10: Usuario pospone.
+11-14: Guardar borrador localmente con estado "borrador".
+15-16: Cerrar encuesta y retornar.
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+actor Usuario as U
+participant ":InterfazEncuesta" as Interfaz <<I>>
+participant ":ControlEncuestaPostAlarma" as CtrlEncuesta <<C>>
+participant ":GestorAlarma" as Gestor <<C>>
+participant ":Cuestionario" as Cuestionario <<E>>
+participant ":ControlPersistenciaEncuesta" as CtrlPersistencia <<C>>
+participant ":RespuestaEncuesta" as Respuesta <<E>>
+participant ":ControlComunicacionCdM" as CtrlCdM <<C>>
+participant ":HistorialEventos" as Historial <<E>>
+
+U -> Interfaz : 1: interactuarConCuestionario()
+activate Interfaz
+Interfaz -> CtrlEncuesta : 2: iniciarEncuesta()
+activate CtrlEncuesta
+
+CtrlEncuesta -> Gestor : 3: obtenerIdAlarmaActiva()
+activate Gestor
+Gestor --> CtrlEncuesta : 4: idAlarma
+deactivate Gestor
+
+CtrlEncuesta -> Cuestionario : 5: obtenerPreguntas()
+activate Cuestionario
+Cuestionario --> CtrlEncuesta : 6: preguntas
+deactivate Cuestionario
+
+CtrlEncuesta -> Interfaz : 7: mostrarCuestionario(preguntas)
+Interfaz -> U : 8: mostrar formulario
+
+alt usuarioPresionaEnviar
+  U -> Interfaz : 9: enviarCuestionario(respuestas)
+  Interfaz -> CtrlEncuesta : 10: manejarEnvio(respuestas)
+  
+  CtrlEncuesta -> Cuestionario : 11: validarObligatorias(respuestas)
+  activate Cuestionario
+  Cuestionario --> CtrlEncuesta : 12: camposFaltantes
+  deactivate Cuestionario
+  
+  alt camposFaltantes.isEmpty()
+    CtrlEncuesta -> CtrlPersistencia : 13: guardarRespuestas(idAlarma, respuestas, "completo")
+    activate CtrlPersistencia
+    CtrlPersistencia -> Respuesta : 14: persistir()
+    activate Respuesta
+    Respuesta --> CtrlPersistencia : 15: ok
+    deactivate Respuesta
+    CtrlPersistencia --> CtrlEncuesta : 16: guardado
+    deactivate CtrlPersistencia
+    
+    CtrlEncuesta -> CtrlCdM : 17: enviarEncuesta(idAlarma, respuestas)
+    activate CtrlCdM
+    CtrlCdM -> Historial : 18: actualizarConEncuesta(idAlarma, respuestas)
+    activate Historial
+    Historial --> CtrlCdM : 19: actualizado
+    deactivate Historial
+    CtrlCdM --> CtrlEncuesta : 20: envioExitoso
+    deactivate CtrlCdM
+    
+    CtrlEncuesta -> Interfaz : 21: cerrarEncuesta()
+    Interfaz -> U : 22: retornar a pantalla principal
+  else !camposFaltantes.isEmpty()
+    CtrlEncuesta -> Interfaz : 13: resaltarCamposFaltantes(camposFaltantes)
+    Interfaz -> U : 14: mostrar indicaciones
+    note right: El flujo vuelve implÃ­citamente\na la interacciÃ³n inicial
+  end
+  
+else usuarioPresionaPosponer
+  U -> Interfaz : 9: posponerEncuesta(respuestas)
+  Interfaz -> CtrlEncuesta : 10: manejarPosponer(respuestas)
+  
+  CtrlEncuesta -> CtrlPersistencia : 11: guardarBorrador(idAlarma, respuestas)
+  activate CtrlPersistencia
+  CtrlPersistencia -> Respuesta : 12: persistir(estado="borrador")
+  activate Respuesta
+  Respuesta --> CtrlPersistencia : 13: ok
+  deactivate Respuesta
+  CtrlPersistencia --> CtrlEncuesta : 14: borradorGuardado
+  deactivate CtrlPersistencia
+  
+  CtrlEncuesta -> Interfaz : 15: cerrarEncuesta()
+  Interfaz -> U : 16: retornar a pantalla principal
+end
+
+deactivate CtrlEncuesta
+deactivate Interfaz
+@enduml
+ğŸ“ Bosquejo del Diagrama de Secuencia
+text
+Usuario   :Interfaz   :CtrlEncuesta   :Gestor   :Cuestionario   :CtrlPersistencia   :Respuesta   :CtrlCdM   :Historial
+   â”?         â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”‚â”€interactuar()â”€â–ºâ”‚            â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”‚â”€iniciarEncuesta()â”€â–ºâ”‚             â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â”€obtenerIdAlarmaActiva()â”€â–ºâ”‚            â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â—„â”€â”€â”€â”€idAlarmaâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â”€obtenerPreguntas()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                 â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â—„â”€â”€â”€â”€preguntasâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?                â”?               â”?          â”?          â”?
+   â”?         â”‚â—„â”€mostrarCuestionario(preguntas)â”€â”?           â”?                â”?               â”?          â”?          â”?
+   â”‚â—„â”€mostrar formularioâ”€â”€â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?[Enviar] â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”‚â”€enviarCuestionario(respuestas)â”€â–ºâ”‚            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”‚â”€manejarEnvio(respuestas)â”€â–ºâ”‚            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â”€validarObligatorias(respuestas)â”€â”€â”€â”€â–ºâ”‚                 â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â—„â”€â”€â”€â”€camposFaltantesâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”?[completo]  â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â”€guardarRespuestas(id, respuestas, "completo")â”€â–ºâ”‚                â”?          â”?          â”?
+   â”?         â”?           â”?            â”?           â”?                â”‚â”€persistir()â”€â”€â”€â”€â–ºâ”‚           â”?          â”?
+   â”?         â”?           â”?            â”?           â”?                â”‚â—„â”€â”€â”€â”€â”€okâ”€â”€â”€â”€â”€â”€â”€â”€â”?          â”?          â”?
+   â”?         â”?           â”‚â—„â”€â”€â”€â”€â”€â”€guardadoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â”€enviarEncuesta(id, respuestas)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚           â”?
+   â”?         â”?           â”?            â”?           â”?                â”?               â”?          â”‚â”€actualizarConEncuesta()â”€â–ºâ”‚
+   â”?         â”?           â”?            â”?           â”?                â”?               â”?          â”‚â—„â”€â”€â”€â”€â”€â”€actualizadoâ”€â”€â”€â”€â”€â”€â”€â”€â”?
+   â”?         â”?           â”‚â—„â”€â”€â”€â”€â”€â”€envioExitosoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?          â”?          â”?
+   â”?         â”‚â—„â”€cerrarEncuesta()â”€â”€â”€â”€â”€â”?           â”?           â”?                â”?               â”?          â”?          â”?
+   â”‚â—„â”€retornar a pantalla principalâ”€â”€â”?           â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”?[faltantes] â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”‚â—„â”€resaltarCamposFaltantes(campos)â”€â”?           â”?                â”?               â”?          â”?          â”?
+   â”‚â—„â”€mostrar indicacionesâ”€â”€â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?[Posponer]â”?           â”?            â”?           â”?                â”?               â”?          â”?          â”?
+   â”‚â”€posponerEncuesta(respuestas)â”€â–ºâ”‚            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”‚â”€manejarPosponer(respuestas)â”€â–ºâ”‚            â”?           â”?                â”?               â”?          â”?          â”?
+   â”?         â”?           â”‚â”€guardarBorrador(id, respuestas)â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                 â”?               â”?          â”?          â”?
+   â”?         â”?           â”?            â”?           â”?                â”‚â”€persistir(estado="borrador")â”€â–ºâ”‚           â”?
+   â”?         â”?           â”?            â”?           â”?                â”‚â—„â”€â”€â”€â”€â”€okâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?          â”?
+   â”?         â”?           â”‚â—„â”€â”€â”€â”€â”€â”€borradorGuardadoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?               â”?          â”?          â”?
+   â”?         â”‚â—„â”€cerrarEncuesta()â”€â”€â”€â”€â”€â”?           â”?           â”?                â”?               â”?          â”?          â”?
+   â”‚â—„â”€retornar a pantalla principalâ”€â”€â”?           â”?           â”?                â”?               â”?          â”?          â”?
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposiciÃ³n.
+
+
++------------+
+|   UC-016   |
++------------+
+AquÃ­ tienes el anÃ¡lisis completo para el UC-016 Consultar Historial del Usuario, desarrollado segÃºn la metodologÃ­a del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+ğŸ§© IdentificaciÃ³n de Clases de AnÃ¡lisis (PatrÃ³n ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor)	Navega, consulta, filtra y exporta el historial de alarmas.
+InterfazConsultaHistorial	I (Interfaz)	Muestra la lista paginada de alarmas, los filtros, la vista detallada con pestaÃ±as (Resumen, UbicaciÃ³n, Evidencias, Encuesta, Comentarios CdM) y opciones de exportaciÃ³n.
+ControlConsultaHistorial	C (Controlador)	Orquesta la carga del historial (local y remoto), aplica filtros, gestiona la paginaciÃ³n y la navegaciÃ³n a detalles.
+ControlExportacionReporte	C (Controlador)	Genera el archivo ZIP con CSV, PDF y evidencias comprimidas. Gestiona el compartir seguro.
+ControlPersistenciaHistorial	C (Controlador)	Recupera y almacena los registros de historial en la base de datos local.
+ControlSincronizacionRemota	C (Controlador)	Sincroniza en segundo plano el historial local con el servidor del Centro de Monitoreo.
+GestorAlarma	C (Controlador)	Proporciona el contexto de las alarmas (metadatos, ubicaciones, evidencias, encuestas).
+HistorialAlarmas	E (Entidad)	Almacena los registros de alarmas (fecha, mÃ©todo, estado, ubicaciÃ³n, duraciÃ³n).
+Evidencia	E (Entidad)	Contiene los archivos de audio, fotos y sus metadatos asociados a una alarma.
+RespuestaEncuesta	E (Entidad)	Contiene las respuestas del usuario a la encuesta post-alarma (UC-015).
+ConfiguracionExportacion	E (Entidad)	Define los formatos y lÃ­mites para la exportaciÃ³n (tamaÃ±o mÃ¡ximo de ZIP).
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Usuario|
+|Sistema|
+start
+:Usuario navega a "Consulta de Alarmas" desde menÃº principal;
+:Sistema carga historial desde base de datos local (rÃ¡pido);
+:Sistema muestra lista paginada con:\n- Fecha/Hora\n- MÃ©todo de activaciÃ³n\n- Estado\n- UbicaciÃ³n aproximada\n- Icono de resumen;
+:Sistema inicia sincronizaciÃ³n en segundo plano con servidor remoto;
+:Sistema actualiza lista si hay nuevos datos remotos;
+
+:Usuario interactÃºa con la lista (opcional: aplica filtros, refresca);
+if (Â¿Usuario selecciona "Exportar"?) then (SÃ­)
+  :Sistema genera archivo ZIP con:\n- CSV de metadatos\n- PDF de resumen estadÃ­stico\n- Evidencias comprimidas (si autoriza);
+  :Sistema permite compartir archivo vÃ­a mÃ©todos seguros;
+  stop
+else (No)
+  :Usuario selecciona una alarma especÃ­fica;
+  :Sistema muestra vista detallada con pestaÃ±as:\n- Resumen (lÃ­nea de tiempo, contactos)\n- UbicaciÃ³n (mapa interactivo)\n- Evidencias (miniaturas, audio)\n- Encuesta (respuestas)\n- Comentarios CdM;
+  :Usuario cierra vista detallada y retorna a lista;
+  :Usuario sale de la vista de Consulta de Alarmas;
+  stop
+endif
+@enduml
+ğŸ“ Bosquejo del Diagrama de Actividad
+text
+INICIO
+  â”?
+  â–?
+[Usuario navega a "Consulta de Alarmas"]
+  â”?
+  â–?
+[Sistema carga historial desde BD local (rÃ¡pido)]
+  â”?
+  â–?
+[Sistema muestra lista paginada con resumen]
+  â”?
+  â”œâ”€â”€[SincronizaciÃ³n en segundo plano con servidor remoto]â”€â”€â–?(actualiza lista si hay cambios)
+  â”?
+  â–?
+[Usuario interactÃºa con lista (filtros/refrescar)]
+  â”?
+  â”œâ”€â”€[Selecciona "Exportar"]â”€â”€â–?[Generar ZIP con CSV, PDF, evidencias] â”€â”€â–?[Compartir archivo seguro] â”€â”€â–?FIN
+  â”?
+  â””â”€â”€[Selecciona una alarma especÃ­fica]â”€â”€â–?[Mostrar vista detallada con pestaÃ±as]
+                                              â”?
+                                              â”œâ”€ Resumen (lÃ­nea de tiempo, contactos)
+                                              â”œâ”€ UbicaciÃ³n (mapa interactivo)
+                                              â”œâ”€ Evidencias (miniaturas, audio)
+                                              â”œâ”€ Encuesta (respuestas)
+                                              â””â”€ Comentarios CdM
+                                              â”?
+                                              â–?
+                                 [Usuario cierra detalle y retorna a lista]
+                                              â”?
+                                              â–?
+                                 [Usuario sale de Consulta de Alarmas]
+                                              â”?
+                                              â–?
+                                             FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de la consulta del historial.
+
+plantuml
+@startuml
+[*] --> VistaLista
+
+state VistaLista {
+  [*] --> CargandoLocal
+  CargandoLocal --> ListaMostrada : datosLocalesCargados()
+  ListaMostrada --> SincronizandoRemoto : iniciaSegundoPlano()
+  SincronizandoRemoto --> ListaMostrada : sincronizacionCompleta()
+  ListaMostrada --> AplicandoFiltros : usuarioAplicaFiltros()
+  AplicandoFiltros --> ListaMostrada : filtrosAplicados()
+  ListaMostrada --> Exportando : usuarioSeleccionaExportar()
+  ListaMostrada --> NavegandoADetalle : usuarioSeleccionaAlarma()
+}
+
+state Exportando {
+  [*] --> GenerandoZIP
+  GenerandoZIP --> ZIPGenerado : archivoCreado()
+  ZIPGenerado --> Compartiendo : usuarioComparte()
+  Compartiendo --> ListaMostrada : compartido()
+}
+
+state NavegandoADetalle {
+  [*] --> CargandoDetalle
+  CargandoDetalle --> MostrandoPestanaResumen : detalleCargado()
+  MostrandoPestanaResumen --> MostrandoPestanaUbicacion : usuarioCambiaPestana()
+  MostrandoPestanaResumen --> MostrandoPestanaEvidencias : usuarioCambiaPestana()
+  MostrandoPestanaResumen --> MostrandoPestanaEncuesta : usuarioCambiaPestana()
+  MostrandoPestanaResumen --> MostrandoPestanaComentariosCdM : usuarioCambiaPestana()
+  MostrandoPestanaUbicacion --> MostrandoPestanaResumen
+  MostrandoPestanaEvidencias --> MostrandoPestanaResumen
+  MostrandoPestanaEncuesta --> MostrandoPestanaResumen
+  MostrandoPestanaComentariosCdM --> MostrandoPestanaResumen
+  CargandoDetalle --> CerrandoDetalle : usuarioCierra()
+  MostrandoPestanaResumen --> CerrandoDetalle : usuarioCierra()
+}
+
+CerrandoDetalle --> VistaLista
+VistaLista --> [*] : usuarioSale()
+@enduml
+ğŸ“ Bosquejo del Diagrama de Estado
+text
+ESTADO: VistaLista
+   â”œâ”€ CargandoLocal â”€â”€â–?ListaMostrada
+   â”œâ”€ ListaMostrada
+   â”?    â”œâ”€ SincronizandoRemoto (en segundo plano) â”€â”€â–?ListaMostrada
+   â”?    â”œâ”€ AplicandoFiltros â”€â”€â–?ListaMostrada
+   â”?    â”œâ”€ Exportando â”€â”€â–?GenerandoZIP â”€â”€â–?ZIPGenerado â”€â”€â–?Compartiendo â”€â”€â–?ListaMostrada
+   â”?    â””â”€ NavegandoADetalle
+   â”?
+   â””â”€ NavegandoADetalle
+         â”œâ”€ CargandoDetalle
+         â”œâ”€ MostrandoPestanaResumen
+         â”œâ”€ MostrandoPestanaUbicacion
+         â”œâ”€ MostrandoPestanaEvidencias
+         â”œâ”€ MostrandoPestanaEncuesta
+         â”œâ”€ MostrandoPestanaComentariosCdM
+         â””â”€ CerrandoDetalle â”€â”€â–?VistaLista
+
+VistaLista â”€â”€â–?[*] (usuario sale)
+3. Diagrama de Clases de AnÃ¡lisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actor
+actor Usuario as "Usuario" <<A>>
+
+' Interfaz
+class InterfazConsultaHistorial <<I>> {
+  +mostrarListaAlarmas(alarmas: List<ResumenAlarma>)
+  +mostrarVistaDetallada(idAlarma: String)
+  +mostrarPestana(pestana: String, datos: Object)
+  +mostrarOpcionesExportacion()
+}
+
+' Controladores
+class ControlConsultaHistorial <<C>> {
+  +cargarHistorialLocal(): List<ResumenAlarma>
+  +sincronizarHistorialRemoto()
+  +aplicarFiltros(filtros: Filtros): List<ResumenAlarma>
+  +obtenerDetalleAlarma(idAlarma: String): DetalleAlarma
+}
+
+class ControlExportacionReporte <<C>> {
+  +generarZIP(alarmas: List<ResumenAlarma>, incluirEvidencias: Boolean): ArchivoZIP
+  +compartirArchivo(archivo: ArchivoZIP, metodo: String)
+}
+
+class ControlPersistenciaHistorial <<C>> {
+  +recuperarHistorialLocal(): List<Alarma>
+  +guardarHistorialLocal(alarmas: List<Alarma>)
+}
+
+class ControlSincronizacionRemota <<C>> {
+  +sincronizarConServidor(): List<Alarma>
+}
+
+class GestorAlarma <<C>> {
+  +obtenerDetallesAlarma(idAlarma: String): DetalleAlarma
+  +obtenerEvidencias(idAlarma: String): List<Evidencia>
+  +obtenerRespuestasEncuesta(idAlarma: String): RespuestaEncuesta
+  +obtenerComentariosCdM(idAlarma: String): String
+}
+
+' Entidades
+class HistorialAlarmas <<E>> {
+  -alarmas: List<Alarma>
+  +buscar(filtros: Filtros): List<Alarma>
+  +obtenerPorId(id: String): Alarma
+}
+
+class Evidencia <<E>> {
+  -idAlarma: String
+  -tipo: String (audio/foto)
+  -archivo: Blob
+  -timestamp: DateTime
+}
+
+class RespuestaEncuesta <<E>> {
+  -idAlarma: String
+  -respuestas: Map
+}
+
+class ConfiguracionExportacion <<E>> {
+  -tamanoMaximoZIP: int
+  -formatosPermitidos: List<String>
+  +obtenerLimites(): LimitesExportacion
+}
+
+' Relaciones
+Usuario --> InterfazConsultaHistorial : "interactÃºa"
+InterfazConsultaHistorial --> ControlConsultaHistorial : "solicita datos"
+ControlConsultaHistorial --> ControlPersistenciaHistorial : "carga local"
+ControlConsultaHistorial --> ControlSincronizacionRemota : "sincroniza remoto"
+ControlConsultaHistorial --> GestorAlarma : "obtiene detalles"
+ControlConsultaHistorial --> ControlExportacionReporte : "exporta"
+ControlPersistenciaHistorial --> HistorialAlarmas : "persiste/recupera"
+GestorAlarma --> Evidencia : "obtiene evidencias"
+GestorAlarma --> RespuestaEncuesta : "obtiene encuesta"
+ControlExportacionReporte --> ConfiguracionExportacion : "consulta lÃ­mites"
+@enduml
+ğŸ“ Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- InterfazConsultaHistorial <<I>>
+- ControlConsultaHistorial <<C>>
+- ControlExportacionReporte <<C>>
+- ControlPersistenciaHistorial <<C>>
+- ControlSincronizacionRemota <<C>>
+- GestorAlarma <<C>>
+- HistorialAlarmas <<E>>
+- Evidencia <<E>>
+- RespuestaEncuesta <<E>>
+- ConfiguracionExportacion <<E>>
+
+Relaciones:
+Usuario â”€â”€â–?InterfazConsultaHistorial
+InterfazConsultaHistorial â”€â”€â–?ControlConsultaHistorial
+ControlConsultaHistorial â”€â”€â–?ControlPersistenciaHistorial
+ControlConsultaHistorial â”€â”€â–?ControlSincronizacionRemota
+ControlConsultaHistorial â”€â”€â–?GestorAlarma
+ControlConsultaHistorial â”€â”€â–?ControlExportacionReporte
+ControlPersistenciaHistorial â”€â”€â–?HistorialAlarmas
+GestorAlarma â”€â”€â–?Evidencia
+GestorAlarma â”€â”€â–?RespuestaEncuesta
+ControlExportacionReporte â”€â”€â–?ConfiguracionExportacion
+4. Diagrama de ColaboraciÃ³n
+Formal (PlantUML)
+plantuml
+@startuml
+object "Usuario" as usuario <<A>>
+object ":InterfazConsultaHistorial" as interfaz <<I>>
+object ":ControlConsultaHistorial" as ctrlConsulta <<C>>
+object ":ControlPersistenciaHistorial" as ctrlPersistencia <<C>>
+object ":HistorialAlarmas" as historial <<E>>
+object ":ControlSincronizacionRemota" as ctrlSincro <<C>>
+object ":GestorAlarma" as gestor <<C>>
+object ":Evidencia" as evidencia <<E>>
+object ":RespuestaEncuesta" as encuesta <<E>>
+object ":ControlExportacionReporte" as ctrlExport <<C>>
+object ":ConfiguracionExportacion" as config <<E>>
+
+usuario -> interfaz : 1: navegarAConsulta()
+interfaz -> ctrlConsulta : 2: cargarHistorialLocal()
+ctrlConsulta -> ctrlPersistencia : 3: recuperarHistorialLocal()
+ctrlPersistencia -> historial : 4: buscar()
+historial --> ctrlPersistencia : 5: listaAlarmas
+ctrlPersistencia --> ctrlConsulta : 6: listaAlarmas
+ctrlConsulta -> interfaz : 7: mostrarListaAlarmas(listaAlarmas)
+interfaz -> usuario : 8: mostrar lista
+
+ctrlConsulta -> ctrlSincro : 9: sincronizarConServidor() (en segundo plano)
+ctrlSincro --> ctrlConsulta : 10: nuevasAlarmas
+ctrlConsulta -> ctrlPersistencia : 11: guardarHistorialLocal(nuevasAlarmas)
+ctrlPersistencia -> historial : 12: guardar()
+ctrlConsulta -> interfaz : 13: actualizarLista()
+
+alt usuarioSeleccionaExportar
+  usuario -> interfaz : 14: seleccionarExportar(incluirEvidencias)
+  interfaz -> ctrlConsulta : 15: exportarHistorial(filtros, incluirEvidencias)
+  ctrlConsulta -> ctrlExport : 16: generarZIP(alarmas, incluirEvidencias)
+  ctrlExport -> config : 17: obtenerLimites()
+  config --> ctrlExport : 18: limites
+  ctrlExport --> ctrlConsulta : 19: archivoZIP
+  ctrlConsulta -> interfaz : 20: mostrarOpcionesCompartir(archivoZIP)
+  interfaz -> usuario : 21: permitir compartir
+else usuarioSeleccionaAlarma
+  usuario -> interfaz : 14: seleccionarAlarma(idAlarma)
+  interfaz -> ctrlConsulta : 15: obtenerDetalleAlarma(idAlarma)
+  ctrlConsulta -> gestor : 16: obtenerDetallesAlarma(idAlarma)
+  gestor -> evidencia : 17: obtenerEvidencias()
+  gestor -> encuesta : 18: obtenerRespuestas()
+  gestor --> ctrlConsulta : 19: detalleCompleto
+  ctrlConsulta -> interfaz : 20: mostrarVistaDetallada(detalleCompleto)
+  interfaz -> usuario : 21: mostrar pestaÃ±as (Resumen, UbicaciÃ³n, Evidencias, Encuesta, Comentarios)
+  usuario -> interfaz : 22: cambiarPestana(pestana)
+  interfaz -> ctrlConsulta : 23: obtenerDatosPestana(pestana)
+  ctrlConsulta -> gestor : 24: obtenerDatosEspecificos(pestana)
+  gestor --> ctrlConsulta : 25: datosPestana
+  ctrlConsulta -> interfaz : 26: mostrarPestana(pestana, datosPestana)
+  usuario -> interfaz : 27: cerrarDetalle()
+  interfaz -> ctrlConsulta : 28: volverALista()
+  ctrlConsulta -> interfaz : 29: mostrarListaAlarmas()
+end
+@enduml
+ğŸ“ Bosquejo del Diagrama de ColaboraciÃ³n
+text
+Objetos:
+- Usuario (A)
+- :InterfazConsultaHistorial (I)
+- :ControlConsultaHistorial (C)
+- :ControlPersistenciaHistorial (C)
+- :HistorialAlarmas (E)
+- :ControlSincronizacionRemota (C)
+- :GestorAlarma (C)
+- :Evidencia (E)
+- :RespuestaEncuesta (E)
+- :ControlExportacionReporte (C)
+- :ConfiguracionExportacion (E)
+
+Mensajes numerados (flujo principal):
+1-8: Navegar, cargar historial local y mostrar lista.
+9-13: SincronizaciÃ³n en segundo plano (sin bloquear UI) y actualizaciÃ³n de lista.
+
+[Alternativa: Exportar]
+14-15: Usuario solicita exportar.
+16-19: Generar archivo ZIP con lÃ­mites de configuraciÃ³n.
+20-21: Mostrar opciones para compartir.
+
+[Alternativa: Ver detalle]
+14-15: Usuario selecciona una alarma especÃ­fica.
+16-19: Obtener detalle completo desde GestorAlarma (incluye evidencias y encuesta).
+20-21: Mostrar vista detallada con pestaÃ±as.
+22-26: Usuario cambia entre pestaÃ±as (Resumen, UbicaciÃ³n, Evidencias, Encuesta, Comentarios CdM).
+27-29: Cerrar detalle y volver a la lista.
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+actor Usuario as U
+participant ":InterfazConsultaHistorial" as Interfaz <<I>>
+participant ":ControlConsultaHistorial" as CtrlConsulta <<C>>
+participant ":ControlPersistenciaHistorial" as CtrlPersistencia <<C>>
+participant ":HistorialAlarmas" as Historial <<E>>
+participant ":ControlSincronizacionRemota" as CtrlSincro <<C>>
+participant ":GestorAlarma" as Gestor <<C>>
+participant ":Evidencia" as Evidencia <<E>>
+participant ":RespuestaEncuesta" as Encuesta <<E>>
+participant ":ControlExportacionReporte" as CtrlExport <<C>>
+participant ":ConfiguracionExportacion" as Config <<E>>
+
+U -> Interfaz : 1: navegarAConsulta()
+activate Interfaz
+Interfaz -> CtrlConsulta : 2: cargarHistorialLocal()
+activate CtrlConsulta
+
+CtrlConsulta -> CtrlPersistencia : 3: recuperarHistorialLocal()
+activate CtrlPersistencia
+CtrlPersistencia -> Historial : 4: buscar()
+activate Historial
+Historial --> CtrlPersistencia : 5: listaAlarmas
+deactivate Historial
+CtrlPersistencia --> CtrlConsulta : 6: listaAlarmas
+deactivate CtrlPersistencia
+
+CtrlConsulta -> Interfaz : 7: mostrarListaAlarmas(listaAlarmas)
+Interfaz -> U : 8: mostrar lista
+
+' SincronizaciÃ³n en segundo plano
+CtrlConsulta -> CtrlSincro : 9: sincronizarConServidor()
+activate CtrlSincro
+CtrlSincro --> CtrlConsulta : 10: nuevasAlarmas
+deactivate CtrlSincro
+
+CtrlConsulta -> CtrlPersistencia : 11: guardarHistorialLocal(nuevasAlarmas)
+activate CtrlPersistencia
+CtrlPersistencia -> Historial : 12: guardar()
+activate Historial
+Historial --> CtrlPersistencia : 13: ok
+deactivate Historial
+deactivate CtrlPersistencia
+
+CtrlConsulta -> Interfaz : 14: actualizarLista()
+
+alt usuarioSeleccionaExportar
+  U -> Interfaz : 15: seleccionarExportar(incluirEvidencias)
+  Interfaz -> CtrlConsulta : 16: exportarHistorial(filtros, incluirEvidencias)
+  
+  CtrlConsulta -> CtrlExport : 17: generarZIP(alarmas, incluirEvidencias)
+  activate CtrlExport
+  CtrlExport -> Config : 18: obtenerLimites()
+  activate Config
+  Config --> CtrlExport : 19: limites
+  deactivate Config
+  CtrlExport --> CtrlConsulta : 20: archivoZIP
+  deactivate CtrlExport
+  
+  CtrlConsulta -> Interfaz : 21: mostrarOpcionesCompartir(archivoZIP)
+  Interfaz -> U : 22: permitir compartir
+  
+else usuarioSeleccionaAlarma
+  U -> Interfaz : 15: seleccionarAlarma(idAlarma)
+  Interfaz -> CtrlConsulta : 16: obtenerDetalleAlarma(idAlarma)
+  
+  CtrlConsulta -> Gestor : 17: obtenerDetallesAlarma(idAlarma)
+  activate Gestor
+  Gestor -> Evidencia : 18: obtenerEvidencias(idAlarma)
+  activate Evidencia
+  Evidencia --> Gestor : 19: evidencias
+  deactivate Evidencia
+  Gestor -> Encuesta : 20: obtenerRespuestas(idAlarma)
+  activate Encuesta
+  Encuesta --> Gestor : 21: respuestas
+  deactivate Encuesta
+  Gestor --> CtrlConsulta : 22: detalleCompleto
+  deactivate Gestor
+  
+  CtrlConsulta -> Interfaz : 23: mostrarVistaDetallada(detalleCompleto)
+  Interfaz -> U : 24: mostrar pestaÃ±as (Resumen, UbicaciÃ³n, Evidencias, Encuesta, Comentarios)
+  
+  U -> Interfaz : 25: cambiarPestana(pestana)
+  Interfaz -> CtrlConsulta : 26: obtenerDatosPestana(pestana)
+  CtrlConsulta -> Gestor : 27: obtenerDatosEspecificos(pestana)
+  activate Gestor
+  Gestor --> CtrlConsulta : 28: datosPestana
+  deactivate Gestor
+  CtrlConsulta -> Interfaz : 29: mostrarPestana(pestana, datosPestana)
+  Interfaz -> U : 30: mostrar contenido de pestaÃ±a
+  
+  U -> Interfaz : 31: cerrarDetalle()
+  Interfaz -> CtrlConsulta : 32: volverALista()
+  CtrlConsulta -> Interfaz : 33: mostrarListaAlarmas(listaAlarmas)
+  Interfaz -> U : 34: mostrar lista
+end
+
+deactivate CtrlConsulta
+deactivate Interfaz
+@enduml
+ğŸ“ Bosquejo del Diagrama de Secuencia
+text
+Usuario   :Interfaz   :CtrlConsulta   :CtrlPersistencia   :Historial   :CtrlSincro   :Gestor   :Evidencia   :Encuesta   :CtrlExport   :Config
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â”€navegarAConsulta()â”€â–ºâ”‚             â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â”€cargarHistorialLocal()â”€â–ºâ”‚                 â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â”€recuperarHistorialLocal()â”€â–ºâ”‚               â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”‚â”€buscar()â”€â”€â–ºâ”‚               â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”‚â—„â”€â”€listaAlarmasâ”€â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â—„â”€â”€â”€listaAlarmasâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â—„â”€mostrarListaAlarmas(lista)â”€â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â—„â”€mostrar listaâ”€â”€â”€â”€â”€â”€â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â”€sincronizarConServidor()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚          â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â—„â”€â”€â”€nuevasAlarmasâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â”€guardarHistorialLocal(nuevas)â”€â–ºâ”‚               â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”‚â”€guardar()â”€â”€â–ºâ”‚               â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â—„â”€actualizarLista()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?[Exportar]â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â”€seleccionarExportar(incluirEvidencias)â”€â–ºâ”‚             â”?                â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â”€exportarHistorial(filtros, incluir)â”€â–ºâ”‚                 â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â”€generarZIP(alarmas, incluir)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚           â”?
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”‚â”€obtenerLimites()â”€â–ºâ”‚
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”‚â—„â”€â”€â”€limitesâ”€â”€â”€â”€â”€â”€â”€â”?
+   â”?         â”?            â”‚â—„â”€â”€â”€archivoZIPâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?          â”?
+   â”?         â”‚â—„â”€mostrarOpcionesCompartir(archivoZIP)â”€â”?                â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â—„â”€permitir compartirâ”€â”€â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?[Ver detalle]            â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â”€seleccionarAlarma(id)â”€â–ºâ”‚             â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â”€obtenerDetalleAlarma(id)â”€â–ºâ”‚                 â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â”€obtenerDetallesAlarma(id)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚          â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”‚â”€obtenerEvidencias()â”€â–ºâ”‚           â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”‚â—„â”€â”€â”€â”€evidenciasâ”€â”€â”€â”€â”€â”€â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”‚â”€obtenerRespuestas()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚           â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”‚â—„â”€â”€â”€â”€respuestasâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?          â”?           â”?
+   â”?         â”?            â”‚â—„â”€â”€â”€detalleCompletoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â—„â”€mostrarVistaDetallada(detalle)â”€â”?                â”?              â”?         â”?          â”?          â”?           â”?
+   â”‚â—„â”€mostrar pestaÃ±asâ”€â”€â”€â”€â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â”€cambiarPestana(pestana)â”€â–ºâ”‚             â”?                â”?              â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â”€obtenerDatosPestana(pestana)â”€â–ºâ”‚                 â”?              â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â”€obtenerDatosEspecificos(pestana)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚          â”?          â”?          â”?           â”?
+   â”?         â”?            â”‚â—„â”€â”€â”€datosPestanaâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â—„â”€mostrarPestana(pestana, datos)â”€â”?                â”?              â”?         â”?          â”?          â”?           â”?
+   â”‚â—„â”€mostrar contenido de pestaÃ±aâ”€â”?            â”?                â”?              â”?         â”?          â”?          â”?           â”?
+   â”?         â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â”€cerrarDetalle()â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚             â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â”€volverALista()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                 â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”?         â”‚â—„â”€mostrarListaAlarmas(lista)â”€â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+   â”‚â—„â”€mostrar listaâ”€â”€â”€â”€â”€â”€â”?            â”?                â”?              â”?           â”?         â”?          â”?          â”?           â”?
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposiciÃ³n.
+
+
++------------+
+|   UC-017   |
++------------+
+
+AquÃ­ tienes el anÃ¡lisis completo para el UC-017 Gestionar Preferencias del Usuario, desarrollado segÃºn la metodologÃ­a del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+ğŸ§© IdentificaciÃ³n de Clases de AnÃ¡lisis (PatrÃ³n ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor)	Navega por las categorÃ­as de configuraciÃ³n, modifica opciones, guarda, cancela o restaura preferencias.
+InterfazConfiguracion	I (Interfaz)	Muestra la pantalla de configuraciÃ³n con pestaÃ±as (categorÃ­as), panel central de opciones, botones de acciÃ³n (Guardar, Cancelar, Restaurar) y diÃ¡logos de confirmaciÃ³n.
+ControlPreferencias	C (Controlador)	Orquesta la gestiÃ³n de preferencias: carga configuraciÃ³n actual, responde a navegaciÃ³n entre categorÃ­as, valida consistencia, aplica cambios y persiste.
+ControlPersistenciaPreferencias	C (Controlador)	Guarda y recupera las preferencias en almacenamiento local y sincroniza con la nube.
+ControlContactosEmbebido	C (Controlador)	Llama al UC-018 (Gestionar Contactos) de forma embebida en el panel central cuando se selecciona la pestaÃ±a Contactos.
+ControlPermisosEmbebido	C (Controlador)	Llama al UC-019 (Gestionar Permisos) de forma embebida cuando se selecciona la pestaÃ±a Permisos.
+PreferenciasUsuario	E (Entidad)	Almacena todas las preferencias del usuario: mÃ©todos de activaciÃ³n, umbrales de sensibilidad, comportamientos de emergencia, privacidad.
+ConfiguracionSistema	E (Entidad)	Contiene los valores por defecto de fÃ¡brica para restaurar configuraciÃ³n.
+HistorialCambios	E (Entidad)	Registra los cambios de configuraciÃ³n para auditorÃ­a y sincronizaciÃ³n.
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Usuario|
+|Sistema|
+start
+:Usuario accede a "ConfiguraciÃ³n" desde menÃº principal;
+:Sistema muestra pantalla de configuraciÃ³n con pestaÃ±a "General" seleccionada\n- Cabecera con tÃ­tulo y botones de navegaciÃ³n\n- Panel central con opciones de la categorÃ­a\n- Barra inferior: Guardar, Cancelar, Restaurar;
+
+:Usuario navega entre categorÃ­as (botones < > o menÃº contextual);
+:Sistema cambia a la categorÃ­a seleccionada y muestra opciones en panel central;
+
+if (Â¿CategorÃ­a es "Contactos"?) then (SÃ­)
+  :Sistema invoca UC-018 (Gestionar Contactos) embebido en el panel central;
+else if (Â¿CategorÃ­a es "Permisos"?) then (SÃ­)
+  :Sistema invoca UC-019 (Gestionar Permisos) embebido en el panel central;
+endif
+
+:Usuario configura opciones disponibles;
+:Usuario presiona un botÃ³n de acciÃ³n;
+
+if (Â¿BotÃ³n presionado?) then (Cancelar)
+  :Sistema muestra diÃ¡logo de confirmaciÃ³n para descartar cambios;
+  if (Â¿Usuario confirma?) then (SÃ­)
+    :Sistema descarta cambios y vuelve a pantalla principal;
+    stop
+  else (No)
+    :Sistema cierra diÃ¡logo y mantiene foco en cambios actuales;
+    -> vuelve a "Usuario configura opciones disponibles";
+  endif
+elseif (Restaurar)
+  :Sistema muestra diÃ¡logo de confirmaciÃ³n para restaurar valores por defecto;
+  if (Â¿Usuario confirma?) then (SÃ­)
+    :Sistema restaura configuraciÃ³n por defecto;
+    :Sistema valida consistencia de configuraciones;
+    if (Â¿ConfiguraciÃ³n consistente?) then (No)
+      :Sistema muestra errores y permite corregir;
+      -> vuelve a "Usuario configura opciones disponibles";
+    else (SÃ­)
+      :Sistema guarda y aplica cambios;
+      :Sistema vuelve a pantalla principal;
+      stop
+    endif
+  else (No)
+    :Sistema cierra diÃ¡logo y mantiene foco;
+    -> vuelve a "Usuario configura opciones disponibles";
+  endif
+elseif (Guardar)
+  :Sistema valida consistencia de configuraciones;
+  if (Â¿ConfiguraciÃ³n consistente?) then (No)
+    :Sistema muestra errores y permite corregir;
+    -> vuelve a "Usuario configura opciones disponibles";
+  else (SÃ­)
+    :Sistema guarda configuraciÃ³n localmente y sincroniza con nube;
+    :Sistema aplica cambios inmediatamente o programa reinicio de servicios;
+    :Sistema notifica Ã©xito al usuario;
+    :Sistema vuelve a pantalla principal;
+    stop
+  endif
+endif
+@enduml
+ğŸ“ Bosquejo del Diagrama de Actividad
+text
+INICIO
+  â”?
+  â–?
+[Usuario accede a "ConfiguraciÃ³n"]
+  â”?
+  â–?
+[Mostrar pantalla con pestaÃ±a General, panel central, barra de botones]
+  â”?
+  â–?
+[Usuario navega entre categorÃ­as (< > o menÃº)]
+  â”?
+  â”œâ”€â”€[CategorÃ­a Contactos]â”€â”€â–?[Invoca UC-018 embebido en panel]
+  â”œâ”€â”€[CategorÃ­a Permisos]â”€â”€â”€â–?[Invoca UC-019 embebido en panel]
+  â””â”€â”€[Otras categorÃ­as]â”€â”€â”€â”€â”€â–?[Mostrar opciones correspondientes]
+  â”?
+  â–?
+[Usuario configura opciones]
+  â”?
+  â–?
+[Usuario presiona botÃ³n de acciÃ³n]
+  â”?
+  â”œâ”€â”€[Cancelar]â”€â”€â–?[DiÃ¡logo confirmaciÃ³n]â”€â”€â–?[SÃ­: descartar cambios y salir] â”€â”€â–?FIN
+  â”?                    â””â”€â”€[No: cerrar diÃ¡logo y volver a configuraciÃ³n]
+  â”?
+  â”œâ”€â”€[Restaurar]â”€â”€â–?[DiÃ¡logo confirmaciÃ³n]â”€â”€â–?[SÃ­: restaurar defaults] â”€â”€â–?[Validar consistencia] â”€â”€â–?[Errores?]
+  â”?                    â””â”€â”€[No: cerrar diÃ¡logo y volver]                          â”?
+  â”?                                                          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+  â”?                                                    [Consistente]                        [Inconsistente]
+  â”?                                                          â”?                                   â”?
+  â”?                                                          â–?                                   â–?
+  â”?                                                   [Guardar y aplicar]                [Mostrar errores y corregir]
+  â”?                                                          â”?                                   â”?
+  â”?                                                          â–?                                   â”?
+  â”?                                                   [Volver a pantalla principal] â†â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+  â”?                                                          â”?
+  â”?                                                          â–?
+  â”?                                                         FIN
+  â”?
+  â””â”€â”€[Guardar]â”€â”€â–?[Validar consistencia] â”€â”€â–?[Errores?]
+                              â”?
+                â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+          [Consistente]               [Inconsistente]
+                â”?                          â”?
+                â–?                          â–?
+     [Guardar local y nube]      [Mostrar errores y corregir]
+                â”?                          â”?
+                â–?                          â”?
+      [Aplicar cambios] â†â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+                â”?
+                â–?
+   [Notificar Ã©xito y volver a principal]
+                â”?
+                â–?
+               FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de la interfaz de configuraciÃ³n.
+
+plantuml
+@startuml
+[*] --> PantallaPrincipal
+
+state PantallaPrincipal {
+  [*] --> MostrandoMenu
+  MostrandoMenu --> NavegandoAConfiguracion : usuarioSeleccionaConfiguracion()
+}
+
+state NavegandoAConfiguracion --> ConfiguracionMostrada
+
+state ConfiguracionMostrada {
+  [*] --> CategoriaGeneral
+  CategoriaGeneral --> NavegandoCategorias : usuarioPresionaSiguiente() / Anterior()
+  NavegandoCategorias --> CategoriaSeleccionada : categoriaCambiada()
+  CategoriaSeleccionada --> CategoriaContactos : categoria == "Contactos"
+  CategoriaSeleccionada --> CategoriaPermisos : categoria == "Permisos"
+  CategoriaSeleccionada --> CategoriaOpciones : otra categoria
+  
+  state CategoriaContactos {
+    [*] --> MostrandoUC018Embebido
+  }
+  
+  state CategoriaPermisos {
+    [*] --> MostrandoUC019Embebido
+  }
+  
+  CategoriaOpciones --> Configurando : usuarioModificaOpciones()
+  Configurando --> EsperandoAccion : usuarioTerminaModificacion()
+}
+
+state EsperandoAccion {
+  [*] --> ValidandoGuardar : usuarioPresionaGuardar()
+  [*] --> ConfirmandoCancelar : usuarioPresionaCancelar()
+  [*] --> ConfirmandoRestaurar : usuarioPresionaRestaurar()
+}
+
+state ConfirmandoCancelar {
+  [*] --> MostrandoDialogoCancelar
+  MostrandoDialogoCancelar --> DescartandoCambios : usuarioConfirma()
+  MostrandoDialogoCancelar --> ConfiguracionMostrada : usuarioCancela()
+}
+
+state ConfirmandoRestaurar {
+  [*] --> MostrandoDialogoRestaurar
+  MostrandoDialogoRestaurar --> RestaurandoDefaults : usuarioConfirma()
+  MostrandoDialogoRestaurar --> ConfiguracionMostrada : usuarioCancela()
+}
+
+state RestaurandoDefaults {
+  [*] --> AplicandoDefaults
+  AplicandoDefaults --> ValidandoConsistencia : defaultsAplicados()
+}
+
+state ValidandoGuardar {
+  [*] --> ValidandoConsistencia
+  ValidandoConsistencia --> MostrandoErrores : inconsistencias
+  ValidandoConsistencia --> Guardando : consistente
+  MostrandoErrores --> ConfiguracionMostrada : usuarioCorrige()
+}
+
+state Guardando {
+  [*] --> PersistiendoLocal
+  PersistiendoLocal --> SincronizandoNube : localGuardado()
+  SincronizandoNube --> AplicandoCambios : nubeSincronizada()
+  AplicandoCambios --> NotificandoExito : cambiosAplicados()
+  NotificandoExito --> PantallaPrincipal
+}
+
+DescartandoCambios --> PantallaPrincipal
+@enduml
+ğŸ“ Bosquejo del Diagrama de Estado
+text
+ESTADO: PantallaPrincipal
+   â””â”€ NavegandoAConfiguracion â”€â”€â–?ConfiguracionMostrada
+
+ESTADO: ConfiguracionMostrada
+   â”œâ”€ CategoriaGeneral â”€â”€â–?NavegandoCategorias â”€â”€â–?CategoriaSeleccionada
+   â”?     â”œâ”€ CategoriaContactos (UC-018 embebido)
+   â”?     â”œâ”€ CategoriaPermisos (UC-019 embebido)
+   â”?     â””â”€ CategoriaOpciones â”€â”€â–?Configurando â”€â”€â–?EsperandoAccion
+   â”?
+   â””â”€ EsperandoAccion
+         â”œâ”€ [Guardar]â”€â”€â–?ValidandoGuardar
+         â”?                 â”œâ”€ ValidandoConsistencia
+         â”?                 â”?    â”œâ”€[inconsistencias]â”€â”€â–?MostrandoErrores â”€â”€â–?ConfiguracionMostrada
+         â”?                 â”?    â””â”€[consistente]â”€â”€â–?Guardando
+         â”?                 â”?           â”œâ”€ PersistiendoLocal
+         â”?                 â”?           â”œâ”€ SincronizandoNube
+         â”?                 â”?           â”œâ”€ AplicandoCambios
+         â”?                 â”?           â””â”€ NotificandoExito â”€â”€â–?PantallaPrincipal
+         â”?
+         â”œâ”€ [Cancelar]â”€â”€â–?ConfirmandoCancelar
+         â”?                 â”œâ”€[confirma]â”€â”€â–?DescartandoCambios â”€â”€â–?PantallaPrincipal
+         â”?                 â””â”€[cancela]â”€â”€â–?ConfiguracionMostrada
+         â”?
+         â””â”€ [Restaurar]â”€â”€â–?ConfirmandoRestaurar
+                            â”œâ”€[confirma]â”€â”€â–?RestaurandoDefaults
+                            â”?                 â””â”€ AplicandoDefaults â”€â”€â–?ValidandoConsistencia â”€â”€â–?Guardando
+                            â””â”€[cancela]â”€â”€â–?ConfiguracionMostrada
+3. Diagrama de Clases de AnÃ¡lisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actor
+actor Usuario as "Usuario" <<A>>
+
+' Interfaz
+class InterfazConfiguracion <<I>> {
+  +mostrarPantallaConfiguracion(categoriaInicial: String)
+  +mostrarCategoria(categoria: String, opciones: List<Opcion>)
+  +mostrarDialogoConfirmacion(mensaje: String)
+  +mostrarErroresValidacion(errores: List<String>)
+  +notificarExito(mensaje: String)
+  +volverAPantallaPrincipal()
+}
+
+' Controladores
+class ControlPreferencias <<C>> {
+  +cargarPreferenciasActuales(): PreferenciasUsuario
+  +navegarCategoria(direccion: String)
+  +seleccionarCategoria(categoria: String)
+  +modificarOpcion(categoria: String, clave: String, valor: Object)
+  +validarConsistencia(preferencias: PreferenciasUsuario): List<String>
+  +guardarCambios()
+  +cancelarCambios()
+  +restaurarDefaults()
+}
+
+class ControlPersistenciaPreferencias <<C>> {
+  +guardarLocalmente(preferencias: PreferenciasUsuario)
+  +cargarLocalmente(): PreferenciasUsuario
+  +sincronizarConNube(preferencias: PreferenciasUsuario)
+}
+
+class ControlContactosEmbebido <<C>> {
+  +iniciarUC018Embebido(contenedor: Panel)
+}
+
+class ControlPermisosEmbebido <<C>> {
+  +iniciarUC019Embebido(contenedor: Panel)
+}
+
+' Entidades
+class PreferenciasUsuario <<E>> {
+  -metodosActivacion: Map
+  -umbralesSensibilidad: Map
+  -comportamientoEmergencia: Map
+  -privacidad: Map
+  +actualizar(categoria: String, clave: String, valor: Object)
+  +obtenerCopia(): PreferenciasUsuario
+}
+
+class ConfiguracionSistema <<E>> {
+  -valoresPorDefecto: PreferenciasUsuario
+  +obtenerDefaults(): PreferenciasUsuario
+}
+
+class HistorialCambios <<E>> {
+  +registrarCambio(usuario: String, categoria: String, cambios: Map)
+}
+
+' Relaciones
+Usuario --> InterfazConfiguracion : "interactÃºa"
+InterfazConfiguracion --> ControlPreferencias : "envÃ­a acciones"
+ControlPreferencias --> ControlPersistenciaPreferencias : "persiste/carga"
+ControlPreferencias --> PreferenciasUsuario : "gestiona estado"
+ControlPreferencias --> ConfiguracionSistema : "obtiene defaults"
+ControlPreferencias --> HistorialCambios : "registra cambios"
+ControlPreferencias --> ControlContactosEmbebido : "invoca UC-018"
+ControlPreferencias --> ControlPermisosEmbebido : "invoca UC-019"
+ControlPersistenciaPreferencias --> PreferenciasUsuario : "serializa/deserializa"
+@enduml
+ğŸ“ Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- InterfazConfiguracion <<I>>
+- ControlPreferencias <<C>>
+- ControlPersistenciaPreferencias <<C>>
+- ControlContactosEmbebido <<C>>
+- ControlPermisosEmbebido <<C>>
+- PreferenciasUsuario <<E>>
+- ConfiguracionSistema <<E>>
+- HistorialCambios <<E>>
+
+Relaciones:
+Usuario â”€â”€â–?InterfazConfiguracion
+InterfazConfiguracion â”€â”€â–?ControlPreferencias
+ControlPreferencias â”€â”€â–?ControlPersistenciaPreferencias
+ControlPreferencias â”€â”€â–?PreferenciasUsuario
+ControlPreferencias â”€â”€â–?ConfiguracionSistema
+ControlPreferencias â”€â”€â–?HistorialCambios
+ControlPreferencias â”€â”€â–?ControlContactosEmbebido
+ControlPreferencias â”€â”€â–?ControlPermisosEmbebido
+ControlPersistenciaPreferencias â”€â”€â–?PreferenciasUsuario
+4. Diagrama de ColaboraciÃ³n
+Formal (PlantUML)
+plantuml
+@startuml
+object "Usuario" as usuario <<A>>
+object ":InterfazConfiguracion" as interfaz <<I>>
+object ":ControlPreferencias" as ctrlPref <<C>>
+object ":ControlPersistenciaPreferencias" as ctrlPersistencia <<C>>
+object ":PreferenciasUsuario" as prefs <<E>>
+object ":ConfiguracionSistema" as configSistema <<E>>
+object ":HistorialCambios" as historial <<E>>
+object ":ControlContactosEmbebido" as ctrlContactos <<C>>
+object ":ControlPermisosEmbebido" as ctrlPermisos <<C>>
+
+usuario -> interfaz : 1: accederAConfiguracion()
+interfaz -> ctrlPref : 2: cargarPreferenciasActuales()
+ctrlPref -> ctrlPersistencia : 3: cargarLocalmente()
+ctrlPersistencia -> prefs : 4: obtenerCopia()
+prefs --> ctrlPersistencia : 5: preferencias
+ctrlPersistencia --> ctrlPref : 6: preferencias
+ctrlPref -> interfaz : 7: mostrarPantallaConfiguracion("General", preferencias)
+
+loop navegacionCategorias
+  usuario -> interfaz : 8: presionarSiguiente() / Anterior() / seleccionarCategoria()
+  interfaz -> ctrlPref : 9: navegarCategoria(direccion)
+  ctrlPref -> interfaz : 10: mostrarCategoria(categoria, opciones)
+  
+  alt categoria == "Contactos"
+    ctrlPref -> ctrlContactos : 11: iniciarUC018Embebido(panelCentral)
+  else categoria == "Permisos"
+    ctrlPref -> ctrlPermisos : 11: iniciarUC019Embebido(panelCentral)
+  end
+end
+
+usuario -> interfaz : 12: modificarOpcion(categoria, clave, valor)
+interfaz -> ctrlPref : 13: modificarOpcion(categoria, clave, valor)
+ctrlPref -> prefs : 14: actualizar(categoria, clave, valor)
+
+alt usuarioPresionaCancelar
+  usuario -> interfaz : 15: presionarCancelar()
+  interfaz -> ctrlPref : 16: cancelarCambios()
+  ctrlPref -> interfaz : 17: mostrarDialogoConfirmacion("Â¿Descartar cambios?")
+  interfaz -> usuario : 18: mostrar diÃ¡logo
+  usuario -> interfaz : 19: confirmar()
+  interfaz -> ctrlPref : 20: confirmarCancelacion()
+  ctrlPref -> interfaz : 21: volverAPantallaPrincipal()
+  
+else usuarioPresionaRestaurar
+  usuario -> interfaz : 15: presionarRestaurar()
+  interfaz -> ctrlPref : 16: restaurarDefaults()
+  ctrlPref -> interfaz : 17: mostrarDialogoConfirmacion("Â¿Restaurar valores por defecto?")
+  interfaz -> usuario : 18: mostrar diÃ¡logo
+  usuario -> interfaz : 19: confirmar()
+  interfaz -> ctrlPref : 20: confirmarRestauracion()
+  ctrlPref -> configSistema : 21: obtenerDefaults()
+  configSistema --> ctrlPref : 22: defaults
+  ctrlPref -> prefs : 23: actualizarTodo(defaults)
+  ctrlPref -> ctrlPref : 24: validarConsistencia(prefs)
+  alt inconsistencias
+    ctrlPref -> interfaz : 25: mostrarErroresValidacion(errores)
+    ' vuelve a configuraciÃ³n
+  else consistente
+    ctrlPref -> ctrlPersistencia : 25: guardarLocalmente(prefs)
+    ctrlPersistencia -> prefs : 26: persistir()
+    ctrlPref -> ctrlPersistencia : 27: sincronizarConNube(prefs)
+    ctrlPref -> historial : 28: registrarCambio("restauracion", defaults)
+    ctrlPref -> interfaz : 29: notificarExito("ConfiguraciÃ³n restaurada")
+    ctrlPref -> interfaz : 30: volverAPantallaPrincipal()
+  end
+  
+else usuarioPresionaGuardar
+  usuario -> interfaz : 15: presionarGuardar()
+  interfaz -> ctrlPref : 16: guardarCambios()
+  ctrlPref -> ctrlPref : 17: validarConsistencia(prefs)
+  alt inconsistencias
+    ctrlPref -> interfaz : 18: mostrarErroresValidacion(errores)
+    ' vuelve a configuraciÃ³n
+  else consistente
+    ctrlPref -> ctrlPersistencia : 18: guardarLocalmente(prefs)
+    ctrlPersistencia -> prefs : 19: persistir()
+    ctrlPref -> ctrlPersistencia : 20: sincronizarConNube(prefs)
+    ctrlPref -> historial : 21: registrarCambio(usuario, categoria, cambios)
+    ctrlPref -> interfaz : 22: notificarExito("Cambios guardados")
+    ctrlPref -> interfaz : 23: volverAPantallaPrincipal()
+  end
+end
+@enduml
+ğŸ“ Bosquejo del Diagrama de ColaboraciÃ³n
+text
+Objetos:
+- Usuario (A)
+- :InterfazConfiguracion (I)
+- :ControlPreferencias (C)
+- :ControlPersistenciaPreferencias (C)
+- :PreferenciasUsuario (E)
+- :ConfiguracionSistema (E)
+- :HistorialCambios (E)
+- :ControlContactosEmbebido (C)
+- :ControlPermisosEmbebido (C)
+
+Mensajes numerados:
+1-7: Acceso inicial, carga de preferencias, mostrar pantalla General.
+8-11: NavegaciÃ³n entre categorÃ­as; si Contactos o Permisos, invocar UC-018/UC-019 embebidos.
+12-14: ModificaciÃ³n de opciones y actualizaciÃ³n del objeto PreferenciasUsuario.
+
+[Cancelar]
+15-20: Mostrar diÃ¡logo de confirmaciÃ³n y, si confirma, descartar cambios y volver a pantalla principal.
+
+[Restaurar]
+15-22: Confirmar, obtener defaults de ConfiguracionSistema, actualizar PreferenciasUsuario.
+24: Validar consistencia.
+Si hay errores, mostrarlos y regresar a configuraciÃ³n.
+Si consistente:
+25-30: Guardar local, sincronizar nube, registrar en historial, notificar Ã©xito y volver a principal.
+
+[Guardar]
+15-17: Validar consistencia.
+Si errores, mostrar y regresar.
+Si consistente:
+18-23: Guardar local, sincronizar nube, registrar cambios, notificar Ã©xito y volver a principal.
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+actor Usuario as U
+participant ":InterfazConfiguracion" as Interfaz <<I>>
+participant ":ControlPreferencias" as CtrlPref <<C>>
+participant ":ControlPersistenciaPreferencias" as CtrlPersistencia <<C>>
+participant ":PreferenciasUsuario" as Prefs <<E>>
+participant ":ConfiguracionSistema" as ConfigSistema <<E>>
+participant ":HistorialCambios" as Historial <<E>>
+participant ":ControlContactosEmbebido" as CtrlContactos <<C>>
+participant ":ControlPermisosEmbebido" as CtrlPermisos <<C>>
+
+U -> Interfaz : 1: accederAConfiguracion()
+activate Interfaz
+Interfaz -> CtrlPref : 2: cargarPreferenciasActuales()
+activate CtrlPref
+CtrlPref -> CtrlPersistencia : 3: cargarLocalmente()
+activate CtrlPersistencia
+CtrlPersistencia -> Prefs : 4: obtenerCopia()
+activate Prefs
+Prefs --> CtrlPersistencia : 5: preferencias
+deactivate Prefs
+CtrlPersistencia --> CtrlPref : 6: preferencias
+deactivate CtrlPersistencia
+CtrlPref -> Interfaz : 7: mostrarPantallaConfiguracion("General", preferencias)
+Interfaz -> U : 8: mostrar pantalla
+
+loop navegacionCategorias
+  U -> Interfaz : 9: presionarSiguiente() / Anterior() / seleccionarCategoria()
+  Interfaz -> CtrlPref : 10: navegarCategoria(direccion)
+  CtrlPref -> Interfaz : 11: mostrarCategoria(categoria, opciones)
+  
+  alt categoria == "Contactos"
+    CtrlPref -> CtrlContactos : 12: iniciarUC018Embebido(panelCentral)
+    activate CtrlContactos
+    CtrlContactos --> CtrlPref : 13: UC018 mostrado
+    deactivate CtrlContactos
+  else categoria == "Permisos"
+    CtrlPref -> CtrlPermisos : 12: iniciarUC019Embebido(panelCentral)
+    activate CtrlPermisos
+    CtrlPermisos --> CtrlPref : 13: UC019 mostrado
+    deactivate CtrlPermisos
+  end
+end
+
+U -> Interfaz : 14: modificarOpcion(categoria, clave, valor)
+Interfaz -> CtrlPref : 15: modificarOpcion(categoria, clave, valor)
+CtrlPref -> Prefs : 16: actualizar(categoria, clave, valor)
+activate Prefs
+Prefs --> CtrlPref : 17: ok
+deactivate Prefs
+
+alt usuarioPresionaCancelar
+  U -> Interfaz : 18: presionarCancelar()
+  Interfaz -> CtrlPref : 19: cancelarCambios()
+  CtrlPref -> Interfaz : 20: mostrarDialogoConfirmacion("Â¿Descartar cambios?")
+  Interfaz -> U : 21: mostrar diÃ¡logo
+  U -> Interfaz : 22: confirmar()
+  Interfaz -> CtrlPref : 23: confirmarCancelacion()
+  CtrlPref -> Interfaz : 24: volverAPantallaPrincipal()
+  Interfaz -> U : 25: mostrar pantalla principal
+  
+else usuarioPresionaRestaurar
+  U -> Interfaz : 18: presionarRestaurar()
+  Interfaz -> CtrlPref : 19: restaurarDefaults()
+  CtrlPref -> Interfaz : 20: mostrarDialogoConfirmacion("Â¿Restaurar valores por defecto?")
+  Interfaz -> U : 21: mostrar diÃ¡logo
+  U -> Interfaz : 22: confirmar()
+  Interfaz -> CtrlPref : 23: confirmarRestauracion()
+  CtrlPref -> ConfigSistema : 24: obtenerDefaults()
+  activate ConfigSistema
+  ConfigSistema --> CtrlPref : 25: defaults
+  deactivate ConfigSistema
+  CtrlPref -> Prefs : 26: actualizarTodo(defaults)
+  activate Prefs
+  Prefs --> CtrlPref : 27: ok
+  deactivate Prefs
+  CtrlPref -> CtrlPref : 28: validarConsistencia(prefs)
+  alt inconsistencias
+    CtrlPref -> Interfaz : 29: mostrarErroresValidacion(errores)
+    Interfaz -> U : 30: mostrar errores
+  else consistente
+    CtrlPref -> CtrlPersistencia : 29: guardarLocalmente(prefs)
+    activate CtrlPersistencia
+    CtrlPersistencia -> Prefs : 30: persistir()
+    activate Prefs
+    Prefs --> CtrlPersistencia : 31: ok
+    deactivate Prefs
+    CtrlPersistencia --> CtrlPref : 32: guardado
+    deactivate CtrlPersistencia
+    CtrlPref -> CtrlPersistencia : 33: sincronizarConNube(prefs)
+    activate CtrlPersistencia
+    CtrlPersistencia --> CtrlPref : 34: sincronizado
+    deactivate CtrlPersistencia
+    CtrlPref -> Historial : 35: registrarCambio("restauracion", defaults)
+    activate Historial
+    Historial --> CtrlPref : 36: registrado
+    deactivate Historial
+    CtrlPref -> Interfaz : 37: notificarExito("ConfiguraciÃ³n restaurada")
+    Interfaz -> U : 38: mostrar mensaje
+    CtrlPref -> Interfaz : 39: volverAPantallaPrincipal()
+    Interfaz -> U : 40: mostrar pantalla principal
+  end
+  
+else usuarioPresionaGuardar
+  U -> Interfaz : 18: presionarGuardar()
+  Interfaz -> CtrlPref : 19: guardarCambios()
+  CtrlPref -> CtrlPref : 20: validarConsistencia(prefs)
+  alt inconsistencias
+    CtrlPref -> Interfaz : 21: mostrarErroresValidacion(errores)
+    Interfaz -> U : 22: mostrar errores
+  else consistente
+    CtrlPref -> CtrlPersistencia : 21: guardarLocalmente(prefs)
+    activate CtrlPersistencia
+    CtrlPersistencia -> Prefs : 22: persistir()
+    activate Prefs
+    Prefs --> CtrlPersistencia : 23: ok
+    deactivate Prefs
+    CtrlPersistencia --> CtrlPref : 24: guardado
+    deactivate CtrlPersistencia
+    CtrlPref -> CtrlPersistencia : 25: sincronizarConNube(prefs)
+    activate CtrlPersistencia
+    CtrlPersistencia --> CtrlPref : 26: sincronizado
+    deactivate CtrlPersistencia
+    CtrlPref -> Historial : 27: registrarCambio(usuario, categoria, cambios)
+    activate Historial
+    Historial --> CtrlPref : 28: registrado
+    deactivate Historial
+    CtrlPref -> Interfaz : 29: notificarExito("Cambios guardados")
+    Interfaz -> U : 30: mostrar mensaje
+    CtrlPref -> Interfaz : 31: volverAPantallaPrincipal()
+    Interfaz -> U : 32: mostrar pantalla principal
+  end
+end
+
+deactivate CtrlPref
+deactivate Interfaz
+@enduml
+ğŸ“ Bosquejo del Diagrama de Secuencia
+text
+Usuario   :Interfaz   :CtrlPref   :CtrlPersistencia   :Prefs   :ConfigSistema   :Historial   :CtrlContactos   :CtrlPermisos
+   â”?         â”?          â”?              â”?             â”?           â”?             â”?             â”?             â”?
+   â”‚â”€accederAConfiguracion()â”€â–ºâ”‚           â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â”€cargarPreferenciasActuales()â”€â–ºâ”‚               â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€cargarLocalmente()â”€â–ºâ”‚              â”?           â”?             â”?             â”?
+   â”?         â”?          â”?              â”‚â”€obtenerCopia()â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”?              â”‚â—„â”€â”€preferenciasâ”€â”€â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€â”€mostrarPantallaConfiguracion("General", prefs)â”€â”?           â”?             â”?             â”?
+   â”‚â—„â”€mostrar pantallaâ”€â”€â”€â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?[navegaciÃ³n categorÃ­as]â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â”€presionarSiguiente/Anterior/seleccionarCategoria()â”€â–ºâ”‚           â”?              â”?             â”?             â”?
+   â”?         â”‚â”€navegarCategoria(dir)â”€â–ºâ”‚               â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€mostrarCategoria(cat, opciones)â”€â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”? [si Contactos]           â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€iniciarUC018Embebido(panel)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚              â”?
+   â”?         â”?          â”‚â—„â”€â”€â”€UC018 mostradoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?             â”?
+   â”?         â”? [si Permisos]            â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€iniciarUC019Embebido(panel)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+   â”?         â”?          â”‚â—„â”€â”€â”€UC019 mostradoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+   â”?         â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â”€modificarOpcion(cat, clave, valor)â”€â–ºâ”‚           â”?              â”?             â”?           â”?             â”?
+   â”?         â”‚â”€modificarOpcion(cat, clave, valor)â”€â–ºâ”‚               â”?             â”?           â”?             â”?
+   â”?         â”?          â”‚â”€actualizar(cat, clave, valor)â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”‚â—„â”€â”€â”€â”€â”€okâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?           â”?             â”?             â”?
+   â”?         â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?[Cancelar]â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â”€presionarCancelar()â”€â–ºâ”‚           â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â”€cancelarCambios()â”€â”€â”€â”€â”€â”€â–ºâ”‚               â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€mostrarDialogoConfirmacion()â”€â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â—„â”€mostrar diÃ¡logoâ”€â”€â”€â”€â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â”€confirmar()â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚           â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â”€confirmarCancelacion()â”€â–ºâ”‚               â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€volverAPantallaPrincipal()â”€â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â—„â”€mostrar pantalla principalâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+   â”?         â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?[Restaurar]           â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â”€presionarRestaurar()â”€â–ºâ”‚           â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â”€restaurarDefaults()â”€â”€â”€â”€â–ºâ”‚               â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€mostrarDialogoConfirmacion()â”€â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â—„â”€mostrar diÃ¡logoâ”€â”€â”€â”€â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â”€confirmar()â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚           â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â”€confirmarRestauracion()â”€â–ºâ”‚               â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€obtenerDefaults()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”‚â—„â”€â”€â”€â”€â”€defaultsâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€actualizarTodo(defaults)â”€â”€â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”‚â—„â”€â”€â”€â”€â”€okâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€validarConsistencia()      â”?           â”?             â”?             â”?
+   â”?         â”?          â”?[inconsistencias]          â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€mostrarErroresValidacion(errores)â”€â”?              â”?             â”?           â”?             â”?
+   â”‚â—„â”€mostrar erroresâ”€â”€â”€â”€â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”?[consistente]             â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€guardarLocalmente(prefs)â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”?              â”‚â”€persistir()â”€â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”?              â”‚â—„â”€â”€â”€â”€okâ”€â”€â”€â”€â”€â”€â”€â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€sincronizarConNube(prefs)â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”‚â”€registrarCambio()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚              â”?
+   â”?         â”‚â—„â”€notificarExito()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?              â”?             â”?           â”?             â”?
+   â”‚â—„â”€mostrar mensajeâ”€â”€â”€â”€â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€volverAPantallaPrincipal()â”€â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â—„â”€mostrar pantalla principalâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+   â”?         â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?[Guardar]             â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â”€presionarGuardar()â”€â”€â”€â–ºâ”‚           â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â”€guardarCambios()â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚               â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€validarConsistencia()      â”?           â”?             â”?             â”?
+   â”?         â”?          â”?[inconsistencias]          â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€mostrarErroresValidacion()â”€â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â—„â”€mostrar erroresâ”€â”€â”€â”€â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”?          â”?[consistente]             â”?           â”?             â”?             â”?
+   â”?         â”?          â”‚â”€guardarLocalmente(prefs)â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”‚â”€sincronizarConNube(prefs)â”€â–ºâ”‚            â”?             â”?             â”?
+   â”?         â”?          â”‚â”€registrarCambio()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚              â”?
+   â”?         â”‚â—„â”€notificarExito()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?              â”?             â”?           â”?             â”?
+   â”‚â—„â”€mostrar mensajeâ”€â”€â”€â”€â”?          â”?              â”?             â”?           â”?             â”?             â”?
+   â”?         â”‚â—„â”€volverAPantallaPrincipal()â”€â”?              â”?             â”?           â”?             â”?             â”?
+   â”‚â—„â”€mostrar pantalla principalâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposiciÃ³n.
+
+
+
++------------+
+|   UC-018   |
++------------+
+
+AquÃ­ tienes el anÃ¡lisis completo para el UC-018 Gestionar Contactos de Emergencia, desarrollado segÃºn la metodologÃ­a del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+ğŸ§© IdentificaciÃ³n de Clases de AnÃ¡lisis (PatrÃ³n ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor)	InteractÃºa con la interfaz para aÃ±adir, editar, eliminar, ordenar contactos de emergencia.
+InterfazGestionContactos	I (Interfaz)	Muestra lista de contactos, formularios de creaciÃ³n/ediciÃ³n, diÃ¡logos de confirmaciÃ³n, opciones de importaciÃ³n/ordenaciÃ³n.
+ControlGestionContactos	C (Controlador)	Orquesta la lÃ³gica: carga lista, maneja eventos de CRUD, valida datos, persiste cambios, sincroniza con servidor.
+ControlImportacionContactos	C (Controlador)	Accede a la agenda de contactos del dispositivo para importar contactos seleccionados.
+ControlPersistenciaContactos	C (Controlador)	Guarda, recupera y sincroniza la lista de contactos de emergencia en almacenamiento local y remoto.
+AgendaDispositivo	A (Actor Secundario)	Provee la lista de contactos del dispositivo para importaciÃ³n.
+ListaContactosEmergencia	E (Entidad)	Almacena la lista de contactos de emergencia con sus atributos: nombre, relaciÃ³n, canales, direcciÃ³n, orden.
+ContactoEmergencia	E (Entidad)	Representa un contacto individual con sus datos validados.
+ConfiguracionValidacion	E (Entidad)	Define reglas de validaciÃ³n (formato de telÃ©fono, email, lÃ­mite mÃ¡ximo de contactos).
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Usuario|
+|Sistema|
+start
+:Usuario accede a "Contactos de Emergencia" desde ConfiguraciÃ³n;
+:Sistema carga y muestra lista actual de contactos con:\n- Nombre, RelaciÃ³n, Canales, DirecciÃ³n\n- Botones: Editar, Eliminar, AÃ±adir, Ordenar, Guardar, Cancelar;
+
+repeat
+  :Usuario selecciona acciÃ³n;
+  switch (AcciÃ³n)
+  case (AÃ±adir contacto)
+    :Sistema muestra opciÃ³n: Importar o Ingreso manual;
+    if (Â¿Importar?) then (SÃ­)
+      :Sistema muestra lista de contactos del dispositivo (mÃ¡x 200);
+      :Usuario selecciona uno o varios y confirma;
+    else (No)
+      :Sistema muestra formulario de creaciÃ³n manual;
+      :Usuario ingresa datos y confirma;
+    endif
+    :Sistema valida formato y disponibilidad de canales;
+    if (Â¿Datos vÃ¡lidos?) then (No)
+      :Sistema muestra errores y hace foco en campos invÃ¡lidos;
+      -> vuelve a ediciÃ³n;
+    else (SÃ­)
+      :Sistema guarda temporalmente y refresca lista;
+    endif
+  case (Editar contacto)
+    :Usuario selecciona contacto y presiona Editar;
+    :Sistema muestra formulario con datos actuales;
+    :Usuario modifica y confirma;
+    :Sistema valida datos;
+    if (Â¿VÃ¡lidos?) then (No) -> muestra errores;
+    else (SÃ­) -> guarda temporal y refresca;
+    endif
+  case (Eliminar contacto)
+    :Usuario selecciona contacto y presiona Eliminar;
+    :Sistema muestra diÃ¡logo de confirmaciÃ³n;
+    if (Â¿Confirma?) then (SÃ­)
+      :Sistema elimina fila y refresca lista;
+    else (No)
+      :Sistema cierra diÃ¡logo;
+    endif
+  case (Ordenar contactos)
+    :Usuario presiona Ordenar;
+    :Sistema muestra controles de posiciÃ³n (primero, arriba, abajo, Ãºltimo) y permite arrastrar;
+    :Usuario reordena y confirma o cancela;
+    if (Â¿Confirma?) then (SÃ­) -> guarda temporal y refresca;
+    else (No) -> descarta cambios y refresca;
+    endif
+  case (Guardar)
+    :Sistema guarda cambios localmente y sincroniza con servidor en segundo plano;
+    stop
+  case (Cancelar / Salir)
+    :Sistema muestra diÃ¡logo de confirmaciÃ³n para descartar cambios;
+    if (Â¿Confirma descartar?) then (SÃ­)
+      :Sistema descarta cambios y vuelve a ConfiguraciÃ³n;
+      stop
+    else (No)
+      :Sistema cierra diÃ¡logo y continÃºa;
+    endif
+  endswitch
+repeat while (AcciÃ³n != Guardar y AcciÃ³n != Cancelar exitoso)
+@enduml
+ğŸ“ Bosquejo del Diagrama de Actividad
+text
+INICIO
+  â”?
+  â–?
+[Acceder a "Contactos de Emergencia"]
+  â”?
+  â–?
+[Mostrar lista de contactos con opciones]
+  â”?
+  â–?
+[Usuario elige acciÃ³n]
+  â”?
+  â”œâ”€â”€[AÃ±adir]â”€â”€â–?[Mostrar opciÃ³n: Importar o Manual]
+  â”?                â”?
+  â”?                â”œâ”€â”€[Importar]â”€â”€â–?[Mostrar contactos del dispositivo] â”€â”€â–?[Seleccionar y confirmar]
+  â”?                â””â”€â”€[Manual]â”€â”€â”€â”€â–?[Mostrar formulario] â”€â”€â–?[Ingresar datos y confirmar]
+  â”?                             â”?
+  â”?                             â–?
+  â”?                       [Validar datos]
+  â”?                             â”?
+  â”?             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+  â”?       [InvÃ¡lidos]                     [VÃ¡lidos]
+  â”?             â”?                              â”?
+  â”?             â–?                              â–?
+  â”?     [Mostrar errores]            [Guardar temporal y refrescar]
+  â”?             â”?                              â”?
+  â”?             â””â”€â”€â–?(vuelve a ediciÃ³n)         â”?
+  â”?
+  â”œâ”€â”€[Editar]â”€â”€â–?[Mostrar formulario con datos] â”€â”€â–?[Modificar y confirmar] â”€â”€â–?[Validar] â”€â”€â–?[Guardar temporal/errores]
+  â”?
+  â”œâ”€â”€[Eliminar]â”€â”€â–?[DiÃ¡logo confirmaciÃ³n] â”€â”€â–?[SÃ­: eliminar y refrescar] / [No: cerrar]
+  â”?
+  â”œâ”€â”€[Ordenar]â”€â”€â–?[Mostrar controles y arrastre] â”€â”€â–?[Confirmar/Cancelar] â”€â”€â–?[Guardar temporal o descartar]
+  â”?
+  â”œâ”€â”€[Guardar]â”€â”€â–?[Guardar local y sincronizar] â”€â”€â–?FIN
+  â”?
+  â””â”€â”€[Cancelar]â”€â”€â–?[DiÃ¡logo descartar] â”€â”€â–?[SÃ­: salir sin guardar] â”€â”€â–?FIN
+                    [No: continuar en lista]
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de la interfaz de gestiÃ³n de contactos.
+
+plantuml
+@startuml
+[*] --> MostrandoLista
+
+state MostrandoLista {
+  [*] --> EsperandoAccion
+  EsperandoAccion --> Agregando : usuarioSeleccionaAgregar
+  EsperandoAccion --> Editando : usuarioSeleccionaEditar
+  EsperandoAccion --> Eliminando : usuarioSeleccionaEliminar
+  EsperandoAccion --> Ordenando : usuarioSeleccionaOrdenar
+  EsperandoAccion --> Guardando : usuarioPresionaGuardar
+  EsperandoAccion --> Cancelando : usuarioPresionaCancelar
+}
+
+state Agregando {
+  [*] --> SeleccionandoModo
+  SeleccionandoModo --> Importando : usuarioEligeImportar
+  SeleccionandoModo --> CreandoManual : usuarioEligeManual
+  Importando --> SeleccionandoContactos : contactosDispositivoCargados()
+  SeleccionandoContactos --> Validando : usuarioConfirmaSeleccion()
+  CreandoManual --> IngresandoDatos : formularioMostrado()
+  IngresandoDatos --> Validando : usuarioConfirma()
+  Validando --> MostrandoErrores : datosInvalidos
+  Validando --> AgregadoTemporal : datosValidos
+  MostrandoErrores --> IngresandoDatos : usuarioCorrige()
+  AgregadoTemporal --> MostrandoLista
+}
+
+state Editando {
+  [*] --> CargandoFormulario
+  CargandoFormulario --> Modificando : datosCargados()
+  Modificando --> ValidandoEdicion : usuarioConfirma()
+  ValidandoEdicion --> MostrandoErroresEdicion : datosInvalidos
+  ValidandoEdicion --> EditadoTemporal : datosValidos
+  MostrandoErroresEdicion --> Modificando
+  EditadoTemporal --> MostrandoLista
+}
+
+state Eliminando {
+  [*] --> ConfirmandoEliminacion
+  ConfirmandoEliminacion --> EliminadoTemporal : usuarioConfirma()
+  ConfirmandoEliminacion --> MostrandoLista : usuarioCancela()
+  EliminadoTemporal --> MostrandoLista
+}
+
+state Ordenando {
+  [*] --> Reordenando
+  Reordenando --> OrdenadoTemporal : usuarioConfirma()
+  Reordenando --> MostrandoLista : usuarioCancela()
+  OrdenadoTemporal --> MostrandoLista
+}
+
+state Guardando {
+  [*] --> PersistiendoLocal
+  PersistiendoLocal --> SincronizandoRemoto : localOK()
+  SincronizandoRemoto --> [*] : sincronizado()
+}
+
+state Cancelando {
+  [*] --> ConfirmandoDescartar
+  ConfirmandoDescartar --> MostrandoLista : usuarioCancela()
+  ConfirmandoDescartar --> [*] : usuarioConfirmaDescartar()
+}
+@enduml
+ğŸ“ Bosquejo del Diagrama de Estado
+text
+ESTADO: MostrandoLista
+   â”œâ”€ EsperandoAccion
+   â”?    â”œâ”€ Agregando â”€â”€â–?(SeleccionandoModo) â”€â”€â–?Importando / CreandoManual â”€â”€â–?Validando
+   â”?    â”?                    â”œâ”€[invÃ¡lido]â”€â”€â–?MostrandoErrores â”€â”€â–?(vuelve a ediciÃ³n)
+   â”?    â”?                    â””â”€[vÃ¡lido]â”€â”€â–?AgregadoTemporal â”€â”€â–?MostrandoLista
+   â”?    â”œâ”€ Editando â”€â”€â–?CargandoFormulario â”€â”€â–?Modificando â”€â”€â–?ValidandoEdicion
+   â”?    â”?                    â”œâ”€[invÃ¡lido]â”€â”€â–?MostrandoErroresEdicion
+   â”?    â”?                    â””â”€[vÃ¡lido]â”€â”€â–?EditadoTemporal â”€â”€â–?MostrandoLista
+   â”?    â”œâ”€ Eliminando â”€â”€â–?ConfirmandoEliminacion â”€â”€â–?[confirma]â”€â”€â–?EliminadoTemporal â”€â”€â–?MostrandoLista
+   â”?    â”?                    â””â”€[cancela]â”€â”€â–?MostrandoLista
+   â”?    â”œâ”€ Ordenando â”€â”€â–?Reordenando â”€â”€â–?[confirma]â”€â”€â–?OrdenadoTemporal â”€â”€â–?MostrandoLista
+   â”?    â”?                    â””â”€[cancela]â”€â”€â–?MostrandoLista
+   â”?    â”œâ”€ Guardando â”€â”€â–?PersistiendoLocal â”€â”€â–?SincronizandoRemoto â”€â”€â–?[*]
+   â”?    â””â”€ Cancelando â”€â”€â–?ConfirmandoDescartar â”€â”€â–?[confirma]â”€â”€â–?[*]
+   â”?                          â””â”€[cancela]â”€â”€â–?MostrandoLista
+3. Diagrama de Clases de AnÃ¡lisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actores
+actor Usuario as "Usuario" <<A>>
+actor AgendaDispositivo as "AgendaDispositivo" <<A>>
+
+' Interfaz
+class InterfazGestionContactos <<I>> {
+  +mostrarListaContactos(contactos: List<Contacto>)
+  +mostrarFormularioCreacion()
+  +mostrarFormularioEdicion(contacto: Contacto)
+  +mostrarDialogoConfirmacion(mensaje: String)
+  +mostrarControlesOrden()
+  +mostrarErroresValidacion(errores: List<String>)
+  +refrescarLista()
+}
+
+' Controladores
+class ControlGestionContactos <<C>> {
+  +cargarContactosEmergencia()
+  +agregarContacto(contacto: Contacto)
+  +editarContacto(id: String, datos: Contacto)
+  +eliminarContacto(id: String)
+  +reordenarContactos(nuevoOrden: List<String>)
+  +validarContacto(contacto: Contacto): List<String>
+  +guardarCambios()
+  +cancelarCambios()
+}
+
+class ControlImportacionContactos <<C>> {
+  +obtenerContactosDispositivo(): List<ContactoDispositivo>
+  +importarSeleccionados(seleccionados: List<String>): List<Contacto>
+}
+
+class ControlPersistenciaContactos <<C>> {
+  +guardarLocalmente(contactos: List<Contacto>)
+  +cargarLocalmente(): List<Contacto>
+  +sincronizarConServidor(contactos: List<Contacto>)
+}
+
+' Entidades
+class ListaContactosEmergencia <<E>> {
+  -contactos: List<Contacto>
+  +agregar(contacto: Contacto)
+  +eliminar(id: String)
+  +actualizar(id: String, datos: Contacto)
+  +reordenar(ordenIds: List<String>)
+  +obtenerLista(): List<Contacto>
+}
+
+class ContactoEmergencia <<E>> {
+  -id: String
+  -nombre: String
+  -relacion: String
+  -telefono: String
+  -email: String
+  -canalesPreferidos: List<String>
+  -direccion: String
+  -orden: int
+}
+
+class ConfiguracionValidacion <<E>> {
+  -maxContactos: int (200)
+  -formatoTelefono: Regex
+  -formatoEmail: Regex
+  +validarTelefono(numero: String): Boolean
+  +validarEmail(email: String): Boolean
+}
+
+' Relaciones
+Usuario --> InterfazGestionContactos : "interactÃºa"
+InterfazGestionContactos --> ControlGestionContactos : "envÃ­a acciones"
+ControlGestionContactos --> ControlImportacionContactos : "importa contactos"
+ControlGestionContactos --> ControlPersistenciaContactos : "persiste/carga"
+ControlGestionContactos --> ListaContactosEmergencia : "gestiona lista"
+ControlGestionContactos --> ConfiguracionValidacion : "valida datos"
+ControlImportacionContactos --> AgendaDispositivo : "lee contactos"
+ListaContactosEmergencia --> ContactoEmergencia : "contiene"
+@enduml
+ğŸ“ Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- AgendaDispositivo <<A>>
+- InterfazGestionContactos <<I>>
+- ControlGestionContactos <<C>>
+- ControlImportacionContactos <<C>>
+- ControlPersistenciaContactos <<C>>
+- ListaContactosEmergencia <<E>>
+- ContactoEmergencia <<E>>
+- ConfiguracionValidacion <<E>>
+
+Relaciones:
+Usuario â”€â”€â–?InterfazGestionContactos
+InterfazGestionContactos â”€â”€â–?ControlGestionContactos
+ControlGestionContactos â”€â”€â–?ControlImportacionContactos
+ControlGestionContactos â”€â”€â–?ControlPersistenciaContactos
+ControlGestionContactos â”€â”€â–?ListaContactosEmergencia
+ControlGestionContactos â”€â”€â–?ConfiguracionValidacion
+ControlImportacionContactos â”€â”€â–?AgendaDispositivo
+ListaContactosEmergencia â”€â”€â–?ContactoEmergencia
+4. Diagrama de ColaboraciÃ³n
+Formal (PlantUML)
+plantuml
+@startuml
+object "Usuario" as usuario <<A>>
+object ":InterfazGestionContactos" as interfaz <<I>>
+object ":ControlGestionContactos" as ctrlContactos <<C>>
+object ":ControlPersistenciaContactos" as ctrlPersistencia <<C>>
+object ":ListaContactosEmergencia" as lista <<E>>
+object ":ControlImportacionContactos" as ctrlImport <<C>>
+object "AgendaDispositivo" as agenda <<A>>
+object ":ConfiguracionValidacion" as configValid <<E>>
+
+usuario -> interfaz : 1: accederAGestionContactos()
+interfaz -> ctrlContactos : 2: cargarContactosEmergencia()
+ctrlContactos -> ctrlPersistencia : 3: cargarLocalmente()
+ctrlPersistencia -> lista : 4: obtenerLista()
+lista --> ctrlPersistencia : 5: contactos
+ctrlPersistencia --> ctrlContactos : 6: contactos
+ctrlContactos -> interfaz : 7: mostrarListaContactos(contactos)
+interfaz -> usuario : 8: mostrar lista
+
+alt aÃ±adir
+  usuario -> interfaz : 9: seleccionarAgregar
+  interfaz -> ctrlContactos : 10: iniciarAgregar()
+  ctrlContactos -> interfaz : 11: mostrarOpcionImportarManual()
+  usuario -> interfaz : 12: elegirImportar()
+  interfaz -> ctrlContactos : 13: importarContactos()
+  ctrlContactos -> ctrlImport : 14: obtenerContactosDispositivo()
+  ctrlImport -> agenda : 15: consultarContactos()
+  agenda --> ctrlImport : 16: listaDispositivo
+  ctrlImport --> ctrlContactos : 17: contactosDispositivo
+  ctrlContactos -> interfaz : 18: mostrarContactosDispositivo(contactos)
+  usuario -> interfaz : 19: seleccionarContactos(ids)
+  interfaz -> ctrlContactos : 20: importarSeleccionados(ids)
+  ctrlContactos -> ctrlImport : 21: importarSeleccionados(ids)
+  ctrlImport --> ctrlContactos : 22: contactosFormateados
+  loop para cada contacto
+    ctrlContactos -> configValid : 23: validarTelefono() / validarEmail()
+    configValid --> ctrlContactos : 24: resultado
+    alt invÃ¡lido
+      ctrlContactos -> interfaz : 25: mostrarErroresValidacion()
+      interfaz -> usuario : 26: mostrar errores
+    end
+  end
+  ctrlContactos -> lista : 27: agregar(contacto) (temporal)
+  ctrlContactos -> interfaz : 28: refrescarLista()
+
+else editar
+  usuario -> interfaz : 9: seleccionarEditar(id)
+  interfaz -> ctrlContactos : 10: editarContacto(id)
+  ctrlContactos -> lista : 11: obtenerContacto(id)
+  lista --> ctrlContactos : 12: contacto
+  ctrlContactos -> interfaz : 13: mostrarFormularioEdicion(contacto)
+  usuario -> interfaz : 14: modificarDatos(datos)
+  interfaz -> ctrlContactos : 15: confirmarEdicion(datos)
+  ctrlContactos -> configValid : 16: validar...
+  alt vÃ¡lido
+    ctrlContactos -> lista : 17: actualizar(id, datos)
+    ctrlContactos -> interfaz : 18: refrescarLista()
+  else invÃ¡lido -> mostrar errores
+  end
+
+else eliminar
+  usuario -> interfaz : 9: seleccionarEliminar(id)
+  interfaz -> ctrlContactos : 10: confirmarEliminacion(id)
+  ctrlContactos -> interfaz : 11: mostrarDialogoConfirmacion()
+  usuario -> interfaz : 12: confirmar()
+  interfaz -> ctrlContactos : 13: eliminarContacto(id)
+  ctrlContactos -> lista : 14: eliminar(id)
+  ctrlContactos -> interfaz : 15: refrescarLista()
+
+else ordenar
+  usuario -> interfaz : 9: seleccionarOrdenar
+  interfaz -> ctrlContactos : 10: iniciarOrdenamiento()
+  ctrlContactos -> interfaz : 11: mostrarControlesOrden()
+  usuario -> interfaz : 12: reordenar(nuevoOrden)
+  interfaz -> ctrlContactos : 13: reordenarContactos(nuevoOrden)
+  ctrlContactos -> lista : 14: reordenar(nuevoOrden)
+  ctrlContactos -> interfaz : 15: refrescarLista()
+
+else guardar
+  usuario -> interfaz : 9: presionarGuardar
+  interfaz -> ctrlContactos : 10: guardarCambios()
+  ctrlContactos -> ctrlPersistencia : 11: guardarLocalmente(lista)
+  ctrlPersistencia -> lista : 12: persistir()
+  ctrlContactos -> ctrlPersistencia : 13: sincronizarConServidor(lista)
+  ctrlContactos -> interfaz : 14: notificarExito()
+
+else cancelar
+  usuario -> interfaz : 9: presionarCancelar
+  interfaz -> ctrlContactos : 10: cancelarCambios()
+  ctrlContactos -> interfaz : 11: mostrarDialogoDescartar()
+  usuario -> interfaz : 12: confirmarDescartar()
+  interfaz -> ctrlContactos : 13: descartarCambios()
+  ctrlContactos -> interfaz : 14: volverAConfiguracion()
+end
+@enduml
+ğŸ“ Bosquejo del Diagrama de ColaboraciÃ³n
+text
+Objetos:
+- Usuario (A)
+- :InterfazGestionContactos (I)
+- :ControlGestionContactos (C)
+- :ControlPersistenciaContactos (C)
+- :ListaContactosEmergencia (E)
+- :ControlImportacionContactos (C)
+- :AgendaDispositivo (A)
+- :ConfiguracionValidacion (E)
+
+Mensajes principales (resumido por operaciÃ³n):
+
+1-8: Inicio y carga de lista.
+[AÃ±adir]
+9-22: Elegir importar, obtener contactos del dispositivo, seleccionar, formatear.
+23-26: Validar cada contacto, mostrar errores si hay.
+27-28: Agregar a lista temporal y refrescar vista.
+
+[Editar]
+9-13: Cargar datos del contacto en formulario.
+14-18: Validar cambios y actualizar en lista temporal.
+
+[Eliminar]
+9-15: Confirmar eliminaciÃ³n, eliminar de lista temporal y refrescar.
+
+[Ordenar]
+9-15: Activar modo ordenamiento, aplicar nuevo orden, refrescar.
+
+[Guardar]
+9-14: Persistir lista localmente, sincronizar con servidor, notificar Ã©xito.
+
+[Cancelar]
+9-14: Confirmar descarte de cambios y regresar a configuraciÃ³n.
+5. Diagrama de Secuencia
+Debido a la extensiÃ³n, presento el flujo principal de AÃ±adir (Importar) y Guardar, y los demÃ¡s flujos se resumen en notas.
+
+Formal (PlantUML) - Escenario AÃ±adir por ImportaciÃ³n y Guardar
+plantuml
+@startuml
+actor Usuario as U
+participant ":InterfazGestionContactos" as Interfaz <<I>>
+participant ":ControlGestionContactos" as CtrlContactos <<C>>
+participant ":ControlImportacionContactos" as CtrlImport <<C>>
+participant "AgendaDispositivo" as Agenda <<A>>
+participant ":ConfiguracionValidacion" as ConfigValid <<E>>
+participant ":ListaContactosEmergencia" as Lista <<E>>
+participant ":ControlPersistenciaContactos" as CtrlPersistencia <<C>>
+
+U -> Interfaz : 1: accederAGestionContactos()
+activate Interfaz
+Interfaz -> CtrlContactos : 2: cargarContactosEmergencia()
+activate CtrlContactos
+CtrlContactos -> CtrlPersistencia : 3: cargarLocalmente()
+activate CtrlPersistencia
+CtrlPersistencia -> Lista : 4: obtenerLista()
+activate Lista
+Lista --> CtrlPersistencia : 5: contactos
+deactivate Lista
+CtrlPersistencia --> CtrlContactos : 6: contactos
+deactivate CtrlPersistencia
+CtrlContactos -> Interfaz : 7: mostrarListaContactos(contactos)
+Interfaz -> U : 8: mostrar lista
+deactivate CtrlContactos
+
+U -> Interfaz : 9: seleccionarAgregar
+Interfaz -> CtrlContactos : 10: iniciarAgregar()
+activate CtrlContactos
+CtrlContactos -> Interfaz : 11: mostrarOpcionImportarManual()
+Interfaz -> U : 12: elegir
+U -> Interfaz : 13: elegirImportar()
+Interfaz -> CtrlContactos : 14: importarContactos()
+
+CtrlContactos -> CtrlImport : 15: obtenerContactosDispositivo()
+activate CtrlImport
+CtrlImport -> Agenda : 16: consultarContactos()
+activate Agenda
+Agenda --> CtrlImport : 17: listaDispositivo
+deactivate Agenda
+CtrlImport --> CtrlContactos : 18: contactosDispositivo
+deactivate CtrlImport
+
+CtrlContactos -> Interfaz : 19: mostrarContactosDispositivo(contactosDispositivo)
+Interfaz -> U : 20: mostrar
+U -> Interfaz : 21: seleccionarContactos(ids)
+Interfaz -> CtrlContactos : 22: importarSeleccionados(ids)
+CtrlContactos -> CtrlImport : 23: importarSeleccionados(ids)
+activate CtrlImport
+CtrlImport --> CtrlContactos : 24: contactosFormateados
+deactivate CtrlImport
+
+loop para cada contacto
+  CtrlContactos -> ConfigValid : 25: validarTelefono(contacto.telefono)
+  activate ConfigValid
+  ConfigValid --> CtrlContactos : 26: resultadoTelefono
+  deactivate ConfigValid
+  CtrlContactos -> ConfigValid : 27: validarEmail(contacto.email)
+  activate ConfigValid
+  ConfigValid --> CtrlContactos : 28: resultadoEmail
+  deactivate ConfigValid
+  alt datos invÃ¡lidos
+    CtrlContactos -> Interfaz : 29: mostrarErroresValidacion(camposInvalidos)
+    Interfaz -> U : 30: mostrar errores
+    note right: El usuario corrige y reintenta,\npero se omite por brevedad.
+  else datos vÃ¡lidos
+    CtrlContactos -> Lista : 31: agregar(contacto) (temporal)
+    activate Lista
+    Lista --> CtrlContactos : 32: ok
+    deactivate Lista
+  end
+end
+
+CtrlContactos -> Interfaz : 33: refrescarLista()
+deactivate CtrlContactos
+
+' MÃ¡s tarde: Guardar
+U -> Interfaz : 34: presionarGuardar
+Interfaz -> CtrlContactos : 35: guardarCambios()
+activate CtrlContactos
+CtrlContactos -> CtrlPersistencia : 36: guardarLocalmente(listaActual)
+activate CtrlPersistencia
+CtrlPersistencia -> Lista : 37: persistir()
+activate Lista
+Lista --> CtrlPersistencia : 38: ok
+deactivate Lista
+CtrlPersistencia --> CtrlContactos : 39: guardadoLocal
+deactivate CtrlPersistencia
+
+CtrlContactos -> CtrlPersistencia : 40: sincronizarConServidor(listaActual)
+activate CtrlPersistencia
+CtrlPersistencia --> CtrlContactos : 41: sincronizado
+deactivate CtrlPersistencia
+
+CtrlContactos -> Interfaz : 42: notificarExito()
+Interfaz -> U : 43: mostrar Ã©xito
+CtrlContactos -> Interfaz : 44: volverAConfiguracion()
+Interfaz -> U : 45: mostrar configuraciÃ³n
+deactivate CtrlContactos
+deactivate Interfaz
+@enduml
+ğŸ“ Bosquejo del Diagrama de Secuencia (AÃ±adir por ImportaciÃ³n)
+text
+Usuario   :Interfaz   :CtrlContactos   :CtrlImport   Agenda   :ConfigValid   :Lista   :CtrlPersistencia
+   â”?         â”?           â”?              â”?          â”?         â”?           â”?          â”?
+   â”‚â”€accederâ”€â”€â–ºâ”‚            â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”‚â”€cargarContactos()â”€â”€â–ºâ”‚               â”?          â”?         â”?           â”?          â”?
+   â”?         â”?           â”‚â”€cargarLocalmente()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+   â”?         â”?           â”‚â—„â”€â”€â”€contactosâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+   â”‚â—„â”€mostrar listaâ”€â”€â”€â”€â”€â”€â”€â”€â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”?           â”?              â”?          â”?         â”?           â”?          â”?
+   â”‚â”€agregarâ”€â–ºâ”‚            â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”‚â”€iniciarAgregar()â”€â–ºâ”‚               â”?          â”?         â”?           â”?          â”?
+   â”‚â—„â”€elegir importar/manualâ”€â”€â”?              â”?          â”?         â”?           â”?          â”?
+   â”‚â”€importarâ–ºâ”‚            â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”‚â”€obtenerContactosDispositivo()â”€â”€â–ºâ”‚           â”?         â”?           â”?          â”?
+   â”?         â”?           â”?              â”‚â”€consultarâ”€â”€â–ºâ”‚          â”?           â”?          â”?
+   â”?         â”?           â”?              â”‚â—„â”€â”€listaâ”€â”€â”€â”€â”?         â”?           â”?          â”?
+   â”?         â”‚â—„â”€â”€contactosDispositivoâ”€â”€â”€â”€â”?              â”?         â”?           â”?          â”?
+   â”‚â—„â”€mostrar contactos dispositivoâ”€â”€â”€â”€â”?              â”?          â”?         â”?           â”?          â”?
+   â”‚â”€seleccionar(ids)â”€â–ºâ”‚            â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”‚â”€importarSeleccionados(ids)â”€â”€â–ºâ”‚               â”?         â”?           â”?          â”?
+   â”?         â”‚â—„â”€â”€contactosFormateadosâ”€â”€â”€â”€â”€â”€â”€â”?              â”?         â”?           â”?          â”?
+   â”?         â”?           â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”?[loop validaciÃ³n]          â”?              â”?         â”?           â”?          â”?
+   â”?         â”‚â”€validarTelefono()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚          â”?           â”?          â”?
+   â”?         â”‚â—„â”€â”€ok/errorâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?         â”?           â”?          â”?
+   â”?         â”?[si error] mostrarErrores()â”€â”€â–ºâ”‚               â”?         â”?           â”?          â”?
+   â”‚â—„â”€mostrar erroresâ”€â”€â”€â”€â”€â”€â”€â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”?[si ok]     â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”‚â”€agregar(contacto)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚            â”?          â”?
+   â”‚â—„â”€refrescar listaâ”€â”€â”€â”€â”€â”€â”€â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”?           â”?              â”?          â”?         â”?           â”?          â”?
+   ... (otras operaciones) ...
+   â”?         â”?           â”?              â”?          â”?         â”?           â”?          â”?
+   â”‚â”€guardarâ”€â–ºâ”‚            â”?              â”?          â”?         â”?           â”?          â”?
+   â”?         â”‚â”€guardarCambios()â”€â”€â–ºâ”‚               â”?          â”?         â”?           â”?          â”?
+   â”?         â”‚â”€guardarLocalmente(lista)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+   â”?         â”?           â”?              â”?          â”?         â”‚â”€persistir()â”€â–ºâ”‚
+   â”?         â”‚â”€sincronizarConServidor(lista)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+   â”?         â”‚â—„â”€â”€Ã©xitoâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+   â”‚â—„â”€mostrar Ã©xitoâ”€â”€â”€â”€â”€â”€â”€â”€â”?              â”?          â”?         â”?           â”?          â”?
+Nota: Los escenarios de Editar, Eliminar y Ordenar siguen patrones similares con las interacciones correspondientes a los controladores y entidades.
+
+Si requieres diagramas adicionales para otros flujos especÃ­ficos o alguna modificaciÃ³n, quedo a tu disposiciÃ³n.
+
+
++------------+
+|   UC-019   |
++------------+
+
+AquÃ­ tienes el anÃ¡lisis completo para el UC-019 Gestionar Permisos del Dispositivo, desarrollado segÃºn la metodologÃ­a del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+ğŸ§© IdentificaciÃ³n de Clases de AnÃ¡lisis (PatrÃ³n ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor)	Visualiza el estado de los permisos, otorga o deniega permisos mediante diÃ¡logos del sistema operativo.
+SistemaOperativo	A (Actor Secundario)	Proporciona los diÃ¡logos nativos de solicitud de permisos y retorna el resultado (concedido/denegado).
+InterfazPermisos	I (Interfaz)	Muestra la lista categorizada de permisos con descripciÃ³n, estado actual (selector con opciones: Permitir, Solo con la app en uso, Denegar) y advertencias.
+ControlPermisos	C (Controlador)	Orquesta la gestiÃ³n: carga el estado actual de permisos, maneja solicitudes de cambio, invoca diÃ¡logos nativos, actualiza el estado local y aplica consecuencias (habilitar/deshabilitar funcionalidades).
+ControlSistemaOperativo	C (Controlador)	Encapsula las llamadas a las APIs nativas del SO para solicitar permisos especÃ­ficos.
+ControlConfiguracionApp	C (Controlador)	Ajusta el comportamiento de la aplicaciÃ³n segÃºn los permisos disponibles (ej. deshabilitar funciones que dependen de un permiso denegado).
+Permiso	E (Entidad)	Representa un permiso individual con atributos: identificador, categorÃ­a (CrÃ­tico, Importante, Especial), nombre, descripciÃ³n, estado actual (permitido, solo en uso, denegado), consecuencias de denegaciÃ³n.
+ConfiguracionPermisos	E (Entidad)	Almacena el estado local de todos los permisos y las categorÃ­as predefinidas.
+HistorialPermisos	E (Entidad)	Registra los cambios de estado de permisos para diagnÃ³stico y auditorÃ­a.
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Usuario|
+|Sistema|
+start
+:Usuario navega a la pestaÃ±a "Permisos" desde ConfiguraciÃ³n;
+:Sistema carga el estado actual de los permisos;
+:Sistema muestra interfaz con permisos categorizados:
+- CrÃ­ticos (ubicaciÃ³n, cÃ¡mara, micrÃ³fono)
+- Importantes (contactos, SMS, almacenamiento)
+- Especiales (notificaciones, inicio automÃ¡tico, segundo plano);
+:Sistema muestra por cada permiso:
+- DescripciÃ³n
+- Estado actual (selector: Permitir / Solo con app en uso / Denegar)
+- ExplicaciÃ³n de necesidad y consecuencias;
+
+:Usuario selecciona un permiso y cambia su estado;
+if (Â¿Usuario otorga permiso?) then (SÃ­)
+  :Sistema solicita permiso al SO mediante diÃ¡logo nativo;
+  :SO muestra diÃ¡logo al usuario;
+  if (Â¿SO concede el permiso?) then (SÃ­)
+    :Sistema actualiza estado a "Permitido";
+    :Sistema habilita funcionalidades asociadas;
+  else (No)
+    :Sistema muestra explicaciÃ³n de denegaciÃ³n y guÃ­a alternativa;
+    :Sistema mantiene estado anterior o denegado;
+  endif
+else (Usuario deniega permiso)
+  :Sistema actualiza estado localmente a "Denegado";
+  :Sistema deshabilita o limita funcionalidades dependientes;
+  :Sistema muestra advertencia sobre limitaciones;
+endif
+
+:Sistema actualiza la lista de permisos en la interfaz;
+:Sistema registra el cambio en historial;
+
+:Usuario puede continuar gestionando otros permisos o salir;
+stop
+@enduml
+ğŸ“ Bosquejo del Diagrama de Actividad
+text
+INICIO
+  â”?
+  â–?
+[Usuario navega a "Permisos"]
+  â”?
+  â–?
+[Sistema carga estado de permisos y muestra lista categorizada]
+  â”?
+  â–?
+[Usuario selecciona un permiso y cambia estado]
+  â”?
+  â”œâ”€â”€[Otorgar permiso]â”€â”€â–?[Solicitar permiso al SO (diÃ¡logo nativo)]
+  â”?                          â”?
+  â”?                          â–?
+  â”?                     [SO muestra diÃ¡logo]
+  â”?                          â”?
+  â”?           â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+  â”?     [SO concede]                  [SO deniega]
+  â”?           â”?                             â”?
+  â”?           â–?                             â–?
+  â”?  [Actualizar estado a "Permitido"]  [Mostrar explicaciÃ³n y guÃ­a]
+  â”?  [Habilitar funcionalidades]        [Mantener estado anterior]
+  â”?           â”?                             â”?
+  â”?           â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+  â”?                          â”?
+  â””â”€â”€[Denegar permiso]â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+                â”?            â”?
+                â–?            â”?
+   [Actualizar estado a "Denegado"]   â”?
+   [Deshabilitar funcionalidades]     â”?
+   [Mostrar advertencia]              â”?
+                â”?                    â”?
+                â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?
+                           â–?
+            [Actualizar lista en interfaz]
+                           â”?
+                           â–?
+            [Registrar cambio en historial]
+                           â”?
+                           â–?
+                          FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de un permiso individual dentro de la interfaz de gestiÃ³n.
+
+plantuml
+@startuml
+[*] --> EstadoDesconocido
+
+state EstadoDesconocido : Permiso no consultado aÃºn
+
+state EsperandoSeleccion {
+  [*] --> MostrandoOpciones
+  MostrandoOpciones --> SolicitandoPermiso : usuarioSeleccionaOtorgar
+  MostrandoOpciones --> DenegadoLocal : usuarioSeleccionaDenegar
+}
+
+state SolicitandoPermiso {
+  [*] --> EsperandoRespuestaSO
+  EsperandoRespuestaSO --> Concedido : SO concede
+  EsperandoRespuestaSO --> DenegadoSO : SO deniega
+  DenegadoSO --> MostrandoExplicacion : sistema muestra guÃ­a
+  MostrandoExplicacion --> EsperandoSeleccion : usuario cierra explicaciÃ³n
+}
+
+state Concedido {
+  [*] --> FuncionalidadesHabilitadas
+  FuncionalidadesHabilitadas --> EsperandoSeleccion : usuario puede cambiar
+}
+
+state DenegadoLocal {
+  [*] --> FuncionalidadesLimitadas
+  FuncionalidadesLimitadas --> MostrandoAdvertencia : sistema advierte
+  MostrandoAdvertencia --> EsperandoSeleccion : usuario cierra advertencia
+}
+
+Concedido --> EsperandoSeleccion : usuario cambia a denegar
+DenegadoLocal --> EsperandoSeleccion : usuario cambia a otorgar
+@enduml
+ğŸ“ Bosquejo del Diagrama de Estado
+text
+ESTADO: EstadoDesconocido â”€â”€â–?EsperandoSeleccion
+
+ESTADO: EsperandoSeleccion
+   â”œâ”€ MostrandoOpciones
+   â”?    â”œâ”€[usuario otorga]â”€â”€â–?SolicitandoPermiso
+   â”?    â””â”€[usuario deniega]â”€â–?DenegadoLocal
+   â”?
+   â”œâ”€ SolicitandoPermiso
+   â”?    â””â”€ EsperandoRespuestaSO
+   â”?          â”œâ”€[SO concede]â”€â”€â–?Concedido â”€â”€â–?FuncionalidadesHabilitadas
+   â”?          â””â”€[SO deniega]â”€â”€â–?DenegadoSO â”€â”€â–?MostrandoExplicacion â”€â”€â–?EsperandoSeleccion
+   â”?
+   â””â”€ DenegadoLocal
+         â””â”€ FuncionalidadesLimitadas â”€â”€â–?MostrandoAdvertencia â”€â”€â–?EsperandoSeleccion
+
+Concedido â”€â”€â–?(puede volver a EsperandoSeleccion si usuario cambia a denegar)
+DenegadoLocal â”€â”€â–?(puede volver a EsperandoSeleccion si usuario cambia a otorgar)
+3. Diagrama de Clases de AnÃ¡lisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actores
+actor Usuario as "Usuario" <<A>>
+actor SistemaOperativo as "SO" <<A>>
+
+' Interfaz
+class InterfazPermisos <<I>> {
+  +mostrarListaPermisos(permisos: List<Permiso>)
+  +actualizarEstadoPermiso(id: String, estado: String)
+  +mostrarExplicacionDenegacion(permiso: Permiso)
+  +mostrarAdvertenciaLimitacion(permiso: Permiso)
+}
+
+' Controladores
+class ControlPermisos <<C>> {
+  +cargarEstadoPermisos(): List<Permiso>
+  +cambiarEstadoPermiso(id: String, nuevoEstado: String)
+  +solicitarPermisoAlSO(permiso: Permiso)
+  +manejarRespuestaSO(permiso: Permiso, concedido: Boolean)
+  +aplicarConsecuencias(permiso: Permiso)
+}
+
+class ControlSistemaOperativo <<C>> {
+  +solicitarPermiso(tipoPermiso: String): Boolean
+  +verificarEstadoPermiso(tipoPermiso: String): String
+}
+
+class ControlConfiguracionApp <<C>> {
+  +habilitarFuncionalidad(permiso: String)
+  +deshabilitarFuncionalidad(permiso: String)
+}
+
+' Entidades
+class Permiso <<E>> {
+  -id: String
+  -nombre: String
+  -categoria: String (CrÃ­tico/Importante/Especial)
+  -descripcion: String
+  -estado: String (permitido/solo_en_uso/denegado)
+  -consecuenciasDenegacion: String
+}
+
+class ConfiguracionPermisos <<E>> {
+  -permisos: List<Permiso>
+  +obtenerTodos(): List<Permiso>
+  +actualizarEstado(id: String, estado: String)
+}
+
+class HistorialPermisos <<E>> {
+  +registrarCambio(permiso: String, estadoAnterior: String, estadoNuevo: String)
+}
+
+' Relaciones
+Usuario --> InterfazPermisos : "interactÃºa"
+InterfazPermisos --> ControlPermisos : "envÃ­a acciones"
+ControlPermisos --> ControlSistemaOperativo : "solicita/verifica permisos"
+ControlPermisos --> ControlConfiguracionApp : "ajusta funcionalidades"
+ControlPermisos --> ConfiguracionPermisos : "lee/actualiza estado"
+ControlPermisos --> HistorialPermisos : "registra cambios"
+ControlSistemaOperativo --> SO : "invoca APIs nativas"
+@enduml
+ğŸ“ Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- SistemaOperativo <<A>>
+- InterfazPermisos <<I>>
+- ControlPermisos <<C>>
+- ControlSistemaOperativo <<C>>
+- ControlConfiguracionApp <<C>>
+- Permiso <<E>>
+- ConfiguracionPermisos <<E>>
+- HistorialPermisos <<E>>
+
+Relaciones:
+Usuario â”€â”€â–?InterfazPermisos
+InterfazPermisos â”€â”€â–?ControlPermisos
+ControlPermisos â”€â”€â–?ControlSistemaOperativo
+ControlPermisos â”€â”€â–?ControlConfiguracionApp
+ControlPermisos â”€â”€â–?ConfiguracionPermisos
+ControlPermisos â”€â”€â–?HistorialPermisos
+ControlSistemaOperativo â”€â”€â–?SistemaOperativo
+4. Diagrama de ColaboraciÃ³n
+Formal (PlantUML)
+plantuml
+@startuml
+object "Usuario" as usuario <<A>>
+object ":InterfazPermisos" as interfaz <<I>>
+object ":ControlPermisos" as ctrlPermisos <<C>>
+object ":ConfiguracionPermisos" as configPermisos <<E>>
+object ":ControlSistemaOperativo" as ctrlSO <<C>>
+object "SistemaOperativo" as so <<A>>
+object ":ControlConfiguracionApp" as ctrlConfig <<C>>
+object ":HistorialPermisos" as historial <<E>>
+
+usuario -> interfaz : 1: navegarAPermisos()
+interfaz -> ctrlPermisos : 2: cargarEstadoPermisos()
+ctrlPermisos -> configPermisos : 3: obtenerTodos()
+configPermisos --> ctrlPermisos : 4: listaPermisos
+ctrlPermisos -> interfaz : 5: mostrarListaPermisos(listaPermisos)
+
+usuario -> interfaz : 6: cambiarEstadoPermiso(id, nuevoEstado)
+interfaz -> ctrlPermisos : 7: cambiarEstadoPermiso(id, nuevoEstado)
+
+alt usuarioOtorga
+  ctrlPermisos -> ctrlSO : 8: solicitarPermiso(tipoPermiso)
+  ctrlSO -> so : 9: mostrarDialogoNativo()
+  so --> ctrlSO : 10: concedido (true/false)
+  ctrlSO --> ctrlPermisos : 11: concedido
+  alt concedido
+    ctrlPermisos -> configPermisos : 12: actualizarEstado(id, "permitido")
+    ctrlPermisos -> ctrlConfig : 13: habilitarFuncionalidad(tipoPermiso)
+    ctrlPermisos -> historial : 14: registrarCambio(id, anterior, "permitido")
+    ctrlPermisos -> interfaz : 15: actualizarEstadoPermiso(id, "permitido")
+  else denegado
+    ctrlPermisos -> interfaz : 12: mostrarExplicacionDenegacion(permiso)
+    ctrlPermisos -> historial : 13: registrarCambio(id, anterior, "denegado_so")
+  end
+else usuarioDeniega
+  ctrlPermisos -> configPermisos : 8: actualizarEstado(id, "denegado")
+  ctrlPermisos -> ctrlConfig : 9: deshabilitarFuncionalidad(tipoPermiso)
+  ctrlPermisos -> interfaz : 10: mostrarAdvertenciaLimitacion(permiso)
+  ctrlPermisos -> historial : 11: registrarCambio(id, anterior, "denegado_usuario")
+  ctrlPermisos -> interfaz : 12: actualizarEstadoPermiso(id, "denegado")
+end
+@enduml
+ğŸ“ Bosquejo del Diagrama de ColaboraciÃ³n
+text
+Objetos:
+- Usuario (A)
+- :InterfazPermisos (I)
+- :ControlPermisos (C)
+- :ConfiguracionPermisos (E)
+- :ControlSistemaOperativo (C)
+- SistemaOperativo (A)
+- :ControlConfiguracionApp (C)
+- :HistorialPermisos (E)
+
+Mensajes:
+1-5: NavegaciÃ³n, carga y muestra de lista de permisos.
+6-7: Usuario cambia estado de un permiso.
+
+[Si usuario otorga]
+8-11: Solicitar permiso al SO vÃ­a ControlSistemaOperativo; SO retorna concedido/denegado.
+   [Si concedido]
+   12-15: Actualizar estado en ConfiguracionPermisos, habilitar funcionalidad vÃ­a ControlConfiguracionApp, registrar en HistorialPermisos, actualizar interfaz.
+   [Si denegado]
+   12-13: Mostrar explicaciÃ³n de denegaciÃ³n y registrar en historial.
+
+[Si usuario deniega]
+8-12: Actualizar estado local a denegado, deshabilitar funcionalidad, mostrar advertencia, registrar en historial, actualizar interfaz.
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+actor Usuario as U
+participant ":InterfazPermisos" as Interfaz <<I>>
+participant ":ControlPermisos" as CtrlPermisos <<C>>
+participant ":ConfiguracionPermisos" as ConfigPermisos <<E>>
+participant ":ControlSistemaOperativo" as CtrlSO <<C>>
+actor "SistemaOperativo" as SO <<A>>
+participant ":ControlConfiguracionApp" as CtrlConfig <<C>>
+participant ":HistorialPermisos" as Historial <<E>>
+
+U -> Interfaz : 1: navegarAPermisos()
+activate Interfaz
+Interfaz -> CtrlPermisos : 2: cargarEstadoPermisos()
+activate CtrlPermisos
+CtrlPermisos -> ConfigPermisos : 3: obtenerTodos()
+activate ConfigPermisos
+ConfigPermisos --> CtrlPermisos : 4: listaPermisos
+deactivate ConfigPermisos
+CtrlPermisos -> Interfaz : 5: mostrarListaPermisos(listaPermisos)
+Interfaz -> U : 6: mostrar lista
+deactivate CtrlPermisos
+
+U -> Interfaz : 7: cambiarEstadoPermiso(id, nuevoEstado)
+Interfaz -> CtrlPermisos : 8: cambiarEstadoPermiso(id, nuevoEstado)
+activate CtrlPermisos
+
+alt nuevoEstado == "otorgar"
+  CtrlPermisos -> CtrlSO : 9: solicitarPermiso(tipoPermiso)
+  activate CtrlSO
+  CtrlSO -> SO : 10: mostrarDialogoNativo()
+  activate SO
+  SO --> CtrlSO : 11: resultado (concedido)
+  deactivate SO
+  CtrlSO --> CtrlPermisos : 12: concedido
+  deactivate CtrlSO
+  
+  alt concedido == true
+    CtrlPermisos -> ConfigPermisos : 13: actualizarEstado(id, "permitido")
+    activate ConfigPermisos
+    ConfigPermisos --> CtrlPermisos : 14: ok
+    deactivate ConfigPermisos
+    CtrlPermisos -> CtrlConfig : 15: habilitarFuncionalidad(tipoPermiso)
+    activate CtrlConfig
+    CtrlConfig --> CtrlPermisos : 16: ok
+    deactivate CtrlConfig
+    CtrlPermisos -> Historial : 17: registrarCambio(id, anterior, "permitido")
+    activate Historial
+    Historial --> CtrlPermisos : 18: registrado
+    deactivate Historial
+    CtrlPermisos -> Interfaz : 19: actualizarEstadoPermiso(id, "permitido")
+    Interfaz -> U : 20: mostrar cambio
+  else concedido == false
+    CtrlPermisos -> Interfaz : 13: mostrarExplicacionDenegacion(permiso)
+    Interfaz -> U : 14: mostrar explicaciÃ³n
+    CtrlPermisos -> Historial : 15: registrarCambio(id, anterior, "denegado_so")
+    activate Historial
+    Historial --> CtrlPermisos : 16: registrado
+    deactivate Historial
+  end
+  
+else nuevoEstado == "denegar"
+  CtrlPermisos -> ConfigPermisos : 9: actualizarEstado(id, "denegado")
+  activate ConfigPermisos
+  ConfigPermisos --> CtrlPermisos : 10: ok
+  deactivate ConfigPermisos
+  CtrlPermisos -> CtrlConfig : 11: deshabilitarFuncionalidad(tipoPermiso)
+  activate CtrlConfig
+  CtrlConfig --> CtrlPermisos : 12: ok
+  deactivate CtrlConfig
+  CtrlPermisos -> Interfaz : 13: mostrarAdvertenciaLimitacion(permiso)
+  Interfaz -> U : 14: mostrar advertencia
+  CtrlPermisos -> Historial : 15: registrarCambio(id, anterior, "denegado_usuario")
+  activate Historial
+  Historial --> CtrlPermisos : 16: registrado
+  deactivate Historial
+  CtrlPermisos -> Interfaz : 17: actualizarEstadoPermiso(id, "denegado")
+  Interfaz -> U : 18: mostrar cambio
+end
+
+deactivate CtrlPermisos	
+deactivate Interfaz
+@enduml
+ğŸ“ Bosquejo del Diagrama de Secuencia
+text
+Usuario   :InterfazPermisos   :CtrlPermisos   :ConfigPermisos   :CtrlSO   SO   :CtrlConfig   :Historial
+   â”?           â”?                 â”?               â”?             â”?      â”?       â”?            â”?
+   â”‚â”€navegarâ”€â”€â”€â–ºâ”‚                  â”?               â”?             â”?      â”?       â”?            â”?
+   â”?           â”‚â”€cargarEstado()â”€â–ºâ”‚                â”?             â”?      â”?       â”?            â”?
+   â”?           â”?                 â”‚â”€obtenerTodos()â”€â–ºâ”‚              â”?      â”?       â”?            â”?
+   â”?           â”?                 â”‚â—„â”€â”€listaPermisosâ”€â”€â”?             â”?      â”?       â”?            â”?
+   â”‚â—„â”€mostrar listaâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?               â”?             â”?      â”?       â”?            â”?
+   â”?           â”?                 â”?               â”?             â”?      â”?       â”?            â”?
+   â”‚â”€cambiar estado (otorgar)â”€â”€â”€â–ºâ”‚                  â”?             â”?      â”?       â”?            â”?
+   â”?           â”‚â”€cambiarEstado()â”€â–ºâ”‚                â”?             â”?      â”?       â”?            â”?
+   â”?           â”?                 â”‚â”€solicitarPermiso()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚       â”?       â”?            â”?
+   â”?           â”?                 â”?               â”?             â”‚â”€diÃ¡logoâ”€â–ºSO     â”?            â”?
+   â”?           â”?                 â”?               â”?             â”‚â—„â”€â”€resultadoâ”€â”€â”€â”?       â”?            â”?
+   â”?           â”?                 â”‚â—„â”€â”€concedido(true)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?      â”?       â”?            â”?
+   â”?           â”?                 â”?               â”?             â”?      â”?       â”?            â”?
+   â”?           â”?                 â”‚â”€actualizarEstado("permitido")â”€â–ºâ”‚       â”?       â”?            â”?
+   â”?           â”?                 â”‚â”€habilitarFuncionalidad()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚        â”?            â”?
+   â”?           â”?                 â”‚â”€registrarCambio()â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+   â”?           â”‚â—„â”€actualizarEstadoPermiso(id, "permitido")â”€â”?      â”?       â”?            â”?
+   â”‚â—„â”€mostrar cambioâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”?               â”?             â”?      â”?       â”?            â”?
+   â”?           â”?                 â”?               â”?             â”?      â”?       â”?            â”?
+   ... (flujo denegar similar con deshabilitar y advertencia) ...
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposiciÃ³n.
+
+
+
+

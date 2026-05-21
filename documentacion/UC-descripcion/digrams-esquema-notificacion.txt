@@ -1,0 +1,3264 @@
++------------+
+|   UC-009   |
++------------+
+
+Aquí tienes el análisis completo para el UC-009 Enviar Alarma a Contactos, desarrollado según la metodología del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales para facilitar su comprensión.
+
+🧩 Identificación de Clases de Análisis (Patrón ECB)
+Clase	Estereotipo	Responsabilidad
+ServicioMensajeriaExterno	A (Actor Secundario)	APIs externas de WhatsApp, Telegram, SMS que reciben y procesan los mensajes.
+ContactoEmergencia	A (Actor Secundario implícito)	Destinatario de los mensajes de alarma.
+InterfazNotificacionContactos	I (Interfaz)	Punto de entrada invocado por el UC-001 para iniciar el envío de notificaciones.
+ControlEnvioAlarmaContactos	C (Controlador)	Orquesta el proceso: recupera contactos, construye mensajes, selecciona canales, envía notificaciones y gestiona fallos.
+ControlCanalMensajeria	C (Controlador)	Maneja la comunicación específica con cada API externa (WhatsApp, Telegram, SMS directo).
+ControlReintentos	C (Controlador)	Delegado para manejar fallos de envío mediante el UC-011 (Gestor de Reintentos).
+GestorAlarma	C (Controlador)	Contexto de la alarma activa que proporciona datos como ubicación y timestamp.
+PerfilUsuario	E (Entidad)	Almacena la lista de contactos de emergencia y sus preferencias de canal.
+HistorialEnvios	E (Entidad)	Registra el estado de cada envío (exitoso, fallido, pendiente).
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Sistema|
+|ServicioExterno|
+start
+:Sistema recupera lista de contactos de emergencia del perfil;
+:Sistema verifica si hay contactos configurados;
+if (¿Hay contactos?) then (No)
+  stop
+else (Sí)
+  :Sistema itera sobre cada contacto;
+  :Sistema obtiene canal preferido del contacto;
+  if (¿Canal definido?) then (No)
+    :Sistema asigna SMS por defecto;
+  endif
+  :Sistema construye mensaje personalizado\n(nombre, mensaje predefinido, ubicación, hora);
+  :Sistema verifica conexión a internet;
+  if (¿Conexión disponible?) then (No)
+    :Sistema invoca UC-011 (modo falloCTO) en paralelo;
+  else (Sí)
+    if (¿Canal es SMS?) then (Sí)
+      :Sistema invoca UC-011 (modo falloCTO) en paralelo;
+    else (No)
+      :Sistema envía mensaje a través de API del servicio de mensajería;
+      if (¿API retorna error?) then (Sí)
+        :Sistema invoca UC-011 (modo falloCTO) en paralelo;
+      else (No)
+        :Sistema registra envío exitoso en historial;
+      endif
+    endif
+  endif
+  :Sistema verifica si hay más contactos;
+  if (¿Más contactos?) then (Sí)
+    -> vuelve a "Sistema itera sobre cada contacto";
+  endif
+  stop
+endif
+@enduml
+📝 Bosquejo del Diagrama de Actividad
+text
+INICIO
+  │
+  ▼
+[Recuperar lista de contactos de emergencia]
+  │
+  ├──[No hay contactos]──► FIN
+  │
+  └──[Hay contactos]──► [Iterar sobre cada contacto]
+                              │
+                              ▼
+                    [Obtener canal preferido]
+                              │
+                    ┌─────────┴─────────┐
+              [Canal definido]   [Canal no definido]
+                    │                   │
+                    └─────────┬─────────┘
+                              ▼
+               [Construir mensaje personalizado]
+                              │
+                              ▼
+                 [Verificar conexión a internet]
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+  [Sin conexión]      [Canal es SMS]        [Canal app (WA/TG)]
+        │                     │                     │
+        ▼                     ▼                     ▼
+[Invoca UC-011 en paralelo] [Invoca UC-011]   [Enviar vía API]
+        │                     │                     │
+        │                     │              ┌──────┴──────┐
+        │                     │        [Error API]   [Éxito API]
+        │                     │              │             │
+        │                     │              ▼             ▼
+        └─────────────────────┴──────► [Invoca UC-011] [Registrar éxito]
+                                              │
+                                              ▼
+                              [Verificar más contactos]
+                                      │
+                        ┌─────────────┴─────────────┐
+                  [Sí hay más]                [No hay más]
+                        │                           │
+                        └──► (vuelve a iterar)      ▼
+                                                   FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado del proceso de envío para un contacto individual.
+
+plantuml
+@startuml
+[*] --> Preparando
+
+state Preparando {
+  [*] --> RecuperandoContacto
+  RecuperandoContacto --> ConstruyendoMensaje : contactoObtenido()
+  ConstruyendoMensaje --> VerificandoConectividad : mensajeListo()
+}
+
+state VerificandoConectividad {
+  [*] --> EvaluandoConexion
+  EvaluandoConexion --> SinConexion : noInternet
+  EvaluandoConexion --> ConConexion : internetDisponible
+  SinConexion --> DelegandoReintento
+  ConConexion --> SeleccionandoCanal
+}
+
+state SeleccionandoCanal {
+  [*] --> CanalSMS : canal == SMS
+  [*] --> CanalApp : canal en {WhatsApp, Telegram}
+  CanalSMS --> DelegandoReintento
+  CanalApp --> EnviandoAPI
+}
+
+state EnviandoAPI {
+  [*] --> EsperandoRespuesta
+  EsperandoRespuesta --> EnvioExitoso : respuesta 200 OK
+  EsperandoRespuesta --> ErrorAPI : respuesta error
+  ErrorAPI --> DelegandoReintento
+}
+
+state DelegandoReintento {
+  [*] --> InvocandoUC011
+  InvocandoUC011 --> PendienteReintento : programado()
+  PendienteReintento --> [*]
+}
+
+state EnvioExitoso {
+  [*] --> RegistrandoHistorial
+  RegistrandoHistorial --> [*]
+}
+@enduml
+📝 Bosquejo del Diagrama de Estado
+text
+ESTADO: Preparando
+   ├─ RecuperandoContacto
+   └─ ConstruyendoMensaje ──► ESTADO: VerificandoConectividad
+                                  │
+                ┌─────────────────┴─────────────────┐
+                │                                   │
+          SinConexion                         ConConexion
+                │                                   │
+                ▼                                   ▼
+   DelegandoReintento                      ESTADO: SeleccionandoCanal
+         │                                   │
+         │                    ┌──────────────┴──────────────┐
+         │              CanalSMS                      CanalApp
+         │                    │                              │
+         └────────────────────┼──────────────────────────────┘
+                              ▼
+                    ESTADO: EnviandoAPI
+                              ├─ EsperandoRespuesta
+                              │      ├─[éxito]──► EnvioExitoso ──► RegistrandoHistorial ──► [*]
+                              │      └─[error]──► ErrorAPI ──► DelegandoReintento
+                              │
+                              └─ DelegandoReintento ──► InvocandoUC011 ──► PendienteReintento ──► [*]
+3. Diagrama de Clases de Análisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actores Secundarios
+actor "ServicioMensajeriaExterno" as Servicio <<A>>
+actor "ContactoEmergencia" as Contacto <<A>>
+
+' Interfaz
+class InterfazNotificacionContactos <<I>> {
+  +iniciarEnvioNotificaciones()
+}
+
+' Controladores
+class ControlEnvioAlarmaContactos <<C>> {
+  +enviarAlarmaAContactos()
+  +recuperarContactosEmergencia()
+  +construirMensaje(contacto: Contacto): String
+  +seleccionarCanal(contacto: Contacto): String
+  +manejarFalloEnvio(contacto: Contacto)
+}
+
+class ControlCanalMensajeria <<C>> {
+  +enviarWhatsApp(destino: String, mensaje: String)
+  +enviarTelegram(destino: String, mensaje: String)
+  +enviarSMS(destino: String, mensaje: String)
+}
+
+class ControlReintentos <<C>> {
+  +programarReintento(contacto: Contacto, mensaje: String, canal: String)
+}
+
+class GestorAlarma <<C>> {
+  +obtenerUbicacionActual(): String
+  +obtenerTimestamp(): DateTime
+}
+
+' Entidades
+class PerfilUsuario <<E>> {
+  -contactosEmergencia: List<Contacto>
+  +obtenerContactos(): List<Contacto>
+}
+
+class HistorialEnvios <<E>> {
+  +registrarEnvio(contacto: String, canal: String, estado: String)
+}
+
+' Relaciones
+InterfazNotificacionContactos --> ControlEnvioAlarmaContactos : "invoca"
+ControlEnvioAlarmaContactos --> PerfilUsuario : "consulta contactos"
+ControlEnvioAlarmaContactos --> GestorAlarma : "obtiene contexto"
+ControlEnvioAlarmaContactos --> ControlCanalMensajeria : "envía mensaje"
+ControlEnvioAlarmaContactos --> ControlReintentos : "delega reintento"
+ControlEnvioAlarmaContactos --> HistorialEnvios : "registra resultado"
+ControlCanalMensajeria --> Servicio : "usa API externa"
+@enduml
+📝 Bosquejo del Diagrama de Clases
+text
+Clases:
+- ServicioMensajeriaExterno <<A>>
+- ContactoEmergencia <<A>>
+- InterfazNotificacionContactos <<I>>
+- ControlEnvioAlarmaContactos <<C>>
+- ControlCanalMensajeria <<C>>
+- ControlReintentos <<C>>
+- GestorAlarma <<C>>
+- PerfilUsuario <<E>>
+- HistorialEnvios <<E>>
+
+Relaciones:
+InterfazNotificacionContactos ──► ControlEnvioAlarmaContactos
+ControlEnvioAlarmaContactos ──► PerfilUsuario
+ControlEnvioAlarmaContactos ──► GestorAlarma
+ControlEnvioAlarmaContactos ──► ControlCanalMensajeria
+ControlEnvioAlarmaContactos ──► ControlReintentos
+ControlEnvioAlarmaContactos ──► HistorialEnvios
+ControlCanalMensajeria ──► ServicioMensajeriaExterno
+4. Diagrama de Colaboración
+Formal (PlantUML)
+plantuml
+@startuml
+object ":InterfazNotificacionContactos" as interfaz <<I>>
+object ":ControlEnvioAlarmaContactos" as ctrlEnvio <<C>>
+object ":PerfilUsuario" as perfil <<E>>
+object ":GestorAlarma" as gestor <<C>>
+object ":ControlCanalMensajeria" as ctrlCanal <<C>>
+object "ServicioMensajeriaExterno" as servicio <<A>>
+object ":ControlReintentos" as ctrlReintentos <<C>>
+object ":HistorialEnvios" as historial <<E>>
+
+interfaz -> ctrlEnvio : 1: iniciarEnvioNotificaciones()
+ctrlEnvio -> perfil : 2: obtenerContactosEmergencia()
+perfil --> ctrlEnvio : 3: listaContactos
+
+loop para cada contacto
+  ctrlEnvio -> ctrlEnvio : 4: seleccionarCanal(contacto)
+  ctrlEnvio -> gestor : 5: obtenerUbicacionActual()
+  gestor --> ctrlEnvio : 6: ubicacion
+  ctrlEnvio -> gestor : 7: obtenerTimestamp()
+  gestor --> ctrlEnvio : 8: timestamp
+  ctrlEnvio -> ctrlEnvio : 9: construirMensaje(datos)
+  
+  alt canal == SMS o sinConexion
+    ctrlEnvio -> ctrlReintentos : 10: programarReintento(contacto, mensaje, canal)
+  else canal en {WhatsApp, Telegram}
+    ctrlEnvio -> ctrlCanal : 10: enviarPorAPI(canal, destino, mensaje)
+    ctrlCanal -> servicio : 11: POST /mensaje
+    servicio --> ctrlCanal : 12: respuesta
+    alt respuesta exitosa
+      ctrlCanal --> ctrlEnvio : 13: éxito
+      ctrlEnvio -> historial : 14: registrarEnvio(contacto, canal, "exitoso")
+    else respuesta error
+      ctrlCanal --> ctrlEnvio : 13: error
+      ctrlEnvio -> ctrlReintentos : 14: programarReintento(contacto, mensaje, canal)
+    end
+  end
+end
+@enduml
+📝 Bosquejo del Diagrama de Colaboración
+text
+Objetos:
+- :InterfazNotificacionContactos (I)
+- :ControlEnvioAlarmaContactos (C)
+- :PerfilUsuario (E)
+- :GestorAlarma (C)
+- :ControlCanalMensajeria (C)
+- :ServicioMensajeriaExterno (A)
+- :ControlReintentos (C)
+- :HistorialEnvios (E)
+
+Mensajes numerados:
+1. :InterfazNotificacionContactos ──(iniciarEnvioNotificaciones)──► :ControlEnvioAlarmaContactos
+2. :ControlEnvioAlarmaContactos ──(obtenerContactosEmergencia)──► :PerfilUsuario
+3. :PerfilUsuario ──(listaContactos)──► :ControlEnvioAlarmaContactos
+
+[Para cada contacto]
+4. :ControlEnvioAlarmaContactos ──(seleccionarCanal)──► :ControlEnvioAlarmaContactos (auto)
+5. :ControlEnvioAlarmaContactos ──(obtenerUbicacionActual)──► :GestorAlarma
+6. :GestorAlarma ──(ubicacion)──► :ControlEnvioAlarmaContactos
+7. :ControlEnvioAlarmaContactos ──(obtenerTimestamp)──► :GestorAlarma
+8. :GestorAlarma ──(timestamp)──► :ControlEnvioAlarmaContactos
+9. :ControlEnvioAlarmaContactos ──(construirMensaje)──► :ControlEnvioAlarmaContactos (auto)
+
+[Alternativas de envío]
+
+[Si canal SMS o sin conexión]
+10. :ControlEnvioAlarmaContactos ──(programarReintento)──► :ControlReintentos
+
+[Si canal WhatsApp/Telegram y hay conexión]
+10. :ControlEnvioAlarmaContactos ──(enviarPorAPI)──► :ControlCanalMensajeria
+11. :ControlCanalMensajeria ──(POST /mensaje)──► :ServicioMensajeriaExterno
+12. :ServicioMensajeriaExterno ──(respuesta)──► :ControlCanalMensajeria
+    [Si éxito]
+    13. :ControlCanalMensajeria ──(éxito)──► :ControlEnvioAlarmaContactos
+    14. :ControlEnvioAlarmaContactos ──(registrarEnvio)──► :HistorialEnvios
+    [Si error]
+    13. :ControlCanalMensajeria ──(error)──► :ControlEnvioAlarmaContactos
+    14. :ControlEnvioAlarmaContactos ──(programarReintento)──► :ControlReintentos
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+participant ":InterfazNotificacionContactos" as Interfaz <<I>>
+participant ":ControlEnvioAlarmaContactos" as CtrlEnvio <<C>>
+participant ":PerfilUsuario" as Perfil <<E>>
+participant ":GestorAlarma" as Gestor <<C>>
+participant ":ControlCanalMensajeria" as CtrlCanal <<C>>
+actor "ServicioMensajeriaExterno" as Servicio <<A>>
+participant ":ControlReintentos" as CtrlReintentos <<C>>
+participant ":HistorialEnvios" as Historial <<E>>
+
+Interfaz -> CtrlEnvio : 1: iniciarEnvioNotificaciones()
+activate CtrlEnvio
+
+CtrlEnvio -> Perfil : 2: obtenerContactosEmergencia()
+activate Perfil
+Perfil --> CtrlEnvio : 3: listaContactos
+deactivate Perfil
+
+loop para cada contacto en listaContactos
+  CtrlEnvio -> CtrlEnvio : 4: seleccionarCanal(contacto)
+  CtrlEnvio -> Gestor : 5: obtenerUbicacionActual()
+  activate Gestor
+  Gestor --> CtrlEnvio : 6: ubicacion
+  deactivate Gestor
+  CtrlEnvio -> Gestor : 7: obtenerTimestamp()
+  activate Gestor
+  Gestor --> CtrlEnvio : 8: timestamp
+  deactivate Gestor
+  
+  CtrlEnvio -> CtrlEnvio : 9: construirMensaje(contacto, ubicacion, timestamp)
+  
+  alt canal == "SMS" or not conexionInternet
+    CtrlEnvio -> CtrlReintentos : 10: programarReintento(contacto, mensaje, canal)
+    activate CtrlReintentos
+    CtrlReintentos --> CtrlEnvio : 11: programado
+    deactivate CtrlReintentos
+  else canal en {"WhatsApp", "Telegram"} and conexionInternet
+    CtrlEnvio -> CtrlCanal : 10: enviarPorAPI(canal, destino, mensaje)
+    activate CtrlCanal
+    CtrlCanal -> Servicio : 11: POST /mensaje
+    activate Servicio
+    Servicio --> CtrlCanal : 12: respuesta
+    deactivate Servicio
+    
+    alt respuesta.exitosa
+      CtrlCanal --> CtrlEnvio : 13: éxito
+      CtrlEnvio -> Historial : 14: registrarEnvio(contacto.id, canal, "exitoso")
+      activate Historial
+      Historial --> CtrlEnvio : 15: registrado
+      deactivate Historial
+    else respuesta.error
+      CtrlCanal --> CtrlEnvio : 13: error
+      CtrlEnvio -> CtrlReintentos : 14: programarReintento(contacto, mensaje, canal)
+      activate CtrlReintentos
+      CtrlReintentos --> CtrlEnvio : 15: programado
+      deactivate CtrlReintentos
+    end
+    deactivate CtrlCanal
+  end
+end
+
+deactivate CtrlEnvio
+@enduml
+📝 Bosquejo del Diagrama de Secuencia
+text
+:InterfazNotificacionContactos   :CtrlEnvioAlarmaContactos   :PerfilUsuario   :GestorAlarma   :CtrlCanalMensajeria   Servicio   :CtrlReintentos   :HistorialEnvios
+            │                              │                   │               │                  │               │            │                 │
+            │─iniciarEnvioNotificaciones()─►│                   │               │                  │               │            │                 │
+            │                              │─obtenerContactos()─►│               │                  │               │            │                 │
+            │                              │◄──listaContactos───│               │                  │               │            │                 │
+            │                              │                   │               │                  │               │            │                 │
+            │      [para cada contacto]    │                   │               │                  │               │            │                 │
+            │                              │─seleccionarCanal()│               │                  │               │            │                 │
+            │                              │─obtenerUbicacion()────────────────►│                  │               │            │                 │
+            │                              │◄────ubicacion─────────────────────│                  │               │            │                 │
+            │                              │─obtenerTimestamp()────────────────►│                  │               │            │                 │
+            │                              │◄────timestamp─────────────────────│                  │               │            │                 │
+            │                              │─construirMensaje()│               │                  │               │            │                 │
+            │                              │                   │               │                  │               │            │                 │
+            │ [si SMS o sin internet]      │                   │               │                  │               │            │                 │
+            │                              │─programarReintento()──────────────────────────────────────────────────►│                 │
+            │                              │◄─────programado───────────────────────────────────────────────────────│                 │
+            │                              │                   │               │                  │               │            │                 │
+            │ [si WA/TG y con internet]    │                   │               │                  │               │            │                 │
+            │                              │─enviarPorAPI()─────────────────────────►│               │            │                 │
+            │                              │                   │               │     │─POST /mensaje─►│            │                 │
+            │                              │                   │               │     │◄──respuesta───│            │                 │
+            │                              │                   │               │     │               │            │                 │
+            │                              │    [éxito]        │               │     │               │            │                 │
+            │                              │◄────éxito──────────────────────────│               │            │                 │
+            │                              │─registrarEnvio()────────────────────────────────────────────────────────────────►│
+            │                              │◄───registrado──────────────────────────────────────────────────────────────────│
+            │                              │                   │               │                  │               │            │                 │
+            │                              │    [error]        │               │                  │               │            │                 │
+            │                              │◄────error──────────────────────────│               │            │                 │
+            │                              │─programarReintento()──────────────────────────────────────────────────►│                 │
+            │                              │◄─────programado───────────────────────────────────────────────────────│                 │
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposición.
+
+
++------------+
+|   UC-010   |
++------------+
+
+🧩 Identificación de Clases de Análisis (Patrón ECB)
+Clase	Estereotipo	Responsabilidad
+ServicioNotificaciones	A (Actor Secundario)	Servidor del Centro de Monitoreo que recibe y procesa los datos de la alarma.
+InterfazTransmisionCdM	I (Interfaz)	Punto de entrada invocado por UC-001 para iniciar la transmisión al CdM.
+ControlTransmisionCdM	C (Controlador)	Orquesta el proceso: establece conexión, envía paquete inicial, gestiona transmisión periódica de ubicación y evidencias, maneja reconexiones y reintentos.
+ControlConexionCdM	C (Controlador)	Maneja la conexión de red con el servidor del CdM, timeouts y reconexiones.
+ControlBufferTransmision	C (Controlador)	Almacena en buffer local los datos cuando no hay conexión y los sincroniza al reconectar.
+ControlReintentos	C (Controlador)	Delegado para manejar fallos de conexión mediante el UC-011.
+GestorAlarma	C (Controlador)	Contexto de la alarma activa que proporciona datos del usuario, ubicación y estado.
+PerfilUsuario	E (Entidad)	Almacena los datos del usuario registrado (ID, nombre, contacto).
+ColaEvidencias	E (Entidad)	Gestiona la cola de evidencias (audio, fotos) pendientes de envío.
+ConfiguracionTransmision	E (Entidad)	Almacena parámetros de transmisión (intervalo de ubicación, timeout de reconexión).
+HistorialTransmisiones	E (Entidad)	Registra eventos de transmisión (conexiones, reconexiones, envíos exitosos).
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Sistema|
+|CdM|
+start
+:Sistema establece conexión con servidor del CdM;
+if (¿Conexión exitosa?) then (No)
+  :Sistema ejecuta UC-011 (modo falloCdM);
+  stop
+else (Sí)
+  if (¿Modo activación?) then (Sí)
+    :Sistema envía paquete inicial:\n- Datos del usuario\n- Ubicación actual\n- Timestamp\n- Método de activación;
+  else (No)
+    :Sistema envía paquete con:\n- ID de alarma\n- Estado\n- Ubicación\n- Timestamp;
+  endif
+  
+  :Sistema espera confirmación del CdM (timeout 5s);
+  if (¿Confirmación recibida?) then (No)
+    :Sistema incrementa contador de intentos;
+    if (¿Intentos <= 3?) then (Sí)
+      :Sistema espera 5 segundos;
+      -> vuelve a "Sistema envía paquete";
+    else (No)
+      :Sistema ejecuta UC-011 (modo falloCdM);
+      stop
+    endif
+  else (Sí)
+    :Sistema recibe ID de alarma, operador asignado e instrucciones;
+    :Sistema inicia transmisión periódica de ubicación (cada 30s);
+    :Sistema comienza a enviar evidencias de la cola pendiente;
+    
+    fork
+      :Sistema transmite ubicación periódicamente;
+      if (¿Pérdida de conexión?) then (Sí)
+        :Sistema almacena en buffer local;
+        :Sistema reintenta reconexión (5s, hasta 3 intentos);
+        if (¿Reconexión exitosa?) then (Sí)
+          :Sistema sincroniza datos pendientes;
+          -> vuelve a transmisión;
+        else (No)
+          :Sistema ejecuta UC-011 (modo falloGPS);
+          stop
+        endif
+      endif
+    fork again
+      :Sistema envía evidencias;
+      if (¿Pérdida de conexión?) then (Sí)
+        :Sistema almacena en buffer local;
+        :Sistema reintenta reconexión (5s, hasta 3 intentos);
+        if (¿Reconexión exitosa?) then (Sí)
+          :Sistema sincroniza evidencias pendientes;
+          -> vuelve a envío;
+        else (No)
+          :Sistema ejecuta UC-011 (modo falloEVD);
+          stop
+        endif
+      else (Sí)
+        :Sistema marca evidencias como enviadas;
+      endif
+    end fork
+    
+    :Sistema verifica estado de alarma;
+    if (¿Alarma finalizada?) then (Sí)
+      :Sistema cierra conexión con CdM;
+      stop
+    else (No)
+      -> vuelve a transmisión periódica;
+    endif
+  endif
+endif
+@enduml
+📝 Bosquejo del Diagrama de Actividad
+text
+INICIO
+  │
+  ▼
+[Establecer conexión con servidor CdM]
+  │
+  ├──[Fallo conexión]──► [Ejecutar UC-011 (falloCdM)] ──► FIN
+  │
+  └──[Conexión exitosa]──► [Determinar modo de llamada]
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+        [Modo activación]              [Modo actualización]
+              │                               │
+              ▼                               ▼
+   [Enviar paquete inicial]         [Enviar paquete con ID]
+   (datos usuario, ubicación)       (ID alarma, estado)
+              │                               │
+              └───────────────┬───────────────┘
+                              ▼
+                 [Esperar confirmación 5s]
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+        [No confirmación]              [Confirmación recibida]
+              │                               │
+              ▼                               ▼
+   [Incrementar intentos]         [Recibir ID alarma y operador]
+              │                               │
+    ┌─────────┴─────────┐                     ▼
+    │                   │           [Iniciar transmisión periódica (30s)]
+[intentos <= 3]   [intentos > 3]               │
+    │                   │                     ├─ [Transmitir ubicación]
+    ▼                   ▼                     │      └─[pérdida]──► buffer local ──► reconexión (≤3) ──► sincronizar o UC-011(falloGPS)]
+[Esperar 5s]    [UC-011(falloCdM)]            │
+    │                   │                     └─ [Enviar evidencias]
+    └─────────┬─────────┘                            └─[pérdida]──► buffer local ──► reconexión (≤3) ──► sincronizar o UC-011(falloEVD)]
+              │                                            │
+              └────────────────────────────────────────────┘
+                                                           ▼
+                                              [Verificar estado alarma]
+                                                           │
+                                            ┌──────────────┴──────────────┐
+                                            │                             │
+                                    [Alarma activa]              [Alarma finalizada]
+                                            │                             │
+                                            └──► (continúa transmisión)    ▼
+                                                                  [Cerrar conexión]
+                                                                          │
+                                                                          ▼
+                                                                         FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de la transmisión al Centro de Monitoreo.
+
+plantuml
+@startuml
+[*] --> Desconectado
+
+state Desconectado {
+  [*] --> IntentandoConexion
+  IntentandoConexion --> Conectado : conexionExitosa()
+  IntentandoConexion --> FalloConexion : intentos > 3
+  FalloConexion --> [*] : UC-011 falloCdM
+}
+
+state Conectado {
+  [*] --> EnviandoPaqueteInicial
+  EnviandoPaqueteInicial --> EsperandoConfirmacion : paqueteEnviado()
+  EsperandoConfirmacion --> ConfirmacionRecibida : ACK recibido
+  EsperandoConfirmacion --> ReintentandoConfirmacion : timeout (intentos <= 3)
+  EsperandoConfirmacion --> FalloConfirmacion : timeout (intentos > 3)
+  ReintentandoConfirmacion --> EnviandoPaqueteInicial
+  FalloConfirmacion --> [*] : UC-011 falloCdM
+  
+  ConfirmacionRecibida --> Transmitiendo : idAsignado()
+}
+
+state Transmitiendo {
+  [*] --> TransmisionActiva
+  TransmisionActiva --> TransmitiendoUbicacion : intervaloUbicacion()
+  TransmisionActiva --> TransmitiendoEvidencias : evidenciaPendiente()
+  
+  state TransmitiendoUbicacion {
+    [*] --> EnviandoUbicacion
+    EnviandoUbicacion --> UbicacionEnviada : éxito
+    EnviandoUbicacion --> BufferLocal : pérdidaConexion
+    BufferLocal --> Reconectando : intentoReconexion
+    Reconectando --> EnviandoUbicacion : reconexionExitosa (intentos <= 3)
+    Reconectando --> FalloGPS : reconexionFallida (intentos > 3)
+    FalloGPS --> [*] : UC-011 falloGPS
+  }
+  
+  state TransmitiendoEvidencias {
+    [*] --> EnviandoEvidencia
+    EnviandoEvidencia --> EvidenciaEnviada : éxito
+    EnviandoEvidencia --> BufferEvidencia : pérdidaConexion
+    BufferEvidencia --> ReconectandoEvidencia : intentoReconexion
+    ReconectandoEvidencia --> EnviandoEvidencia : reconexionExitosa (intentos <= 3)
+    ReconectandoEvidencia --> FalloEVD : reconexionFallida (intentos > 3)
+    FalloEVD --> [*] : UC-011 falloEVD
+  }
+}
+
+TransmitiendoUbicacion --> VerificandoEstado
+TransmitiendoEvidencias --> VerificandoEstado
+
+state VerificandoEstado {
+  [*] --> EvaluandoAlarma
+  EvaluandoAlarma --> TransmisionActiva : alarmaActiva
+  EvaluandoAlarma --> CerrandoConexion : alarmaFinalizada
+}
+
+CerrandoConexion --> Desconectado
+@enduml
+📝 Bosquejo del Diagrama de Estado
+text
+ESTADO: Desconectado
+   └─ IntentandoConexion
+        ├─[éxito]──► Conectado
+        └─[fallo (>3)]──► FalloConexion ──► [*] (UC-011)
+
+ESTADO: Conectado
+   ├─ EnviandoPaqueteInicial
+   ├─ EsperandoConfirmacion
+   │     ├─[ACK]──► ConfirmacionRecibida ──► Transmitiendo
+   │     ├─[timeout ≤3]──► ReintentandoConfirmacion ──► EnviandoPaqueteInicial
+   │     └─[timeout >3]──► FalloConfirmacion ──► [*] (UC-011)
+
+ESTADO: Transmitiendo
+   ├─ TransmisionActiva
+   │     ├─ TransmitiendoUbicacion
+   │     │     ├─ EnviandoUbicacion ──► [éxito] ──► UbicacionEnviada
+   │     │     └─ [pérdida] ──► BufferLocal ──► Reconectando
+   │     │                           ├─[éxito ≤3]──► EnviandoUbicacion
+   │     │                           └─[fallo >3]──► FalloGPS ──► [*] (UC-011)
+   │     │
+   │     └─ TransmitiendoEvidencias
+   │           ├─ EnviandoEvidencia ──► [éxito] ──► EvidenciaEnviada
+   │           └─ [pérdida] ──► BufferEvidencia ──► ReconectandoEvidencia
+   │                                 ├─[éxito ≤3]──► EnviandoEvidencia
+   │                                 └─[fallo >3]──► FalloEVD ──► [*] (UC-011)
+   │
+   └─ VerificandoEstado
+         ├─[alarmaActiva]──► TransmisionActiva
+         └─[alarmaFinalizada]──► CerrandoConexion ──► Desconectado
+3. Diagrama de Clases de Análisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actor Secundario
+actor "ServicioNotificaciones" as Servicio <<A>>
+
+' Interfaz
+class InterfazTransmisionCdM <<I>> {
+  +iniciarTransmision(modo: String)
+  +finalizarTransmision()
+}
+
+' Controladores
+class ControlTransmisionCdM <<C>> {
+  +establecerConexion()
+  +enviarPaqueteInicial(datos: PaqueteInicial)
+  +enviarPaqueteActualizacion(datos: PaqueteActualizacion)
+  +iniciarTransmisionPeriodica()
+  +enviarUbicacionPeriodica()
+  +enviarEvidenciasPendientes()
+  +verificarEstadoAlarma()
+  +cerrarConexion()
+}
+
+class ControlConexionCdM <<C>> {
+  +conectar(): Boolean
+  +desconectar()
+  +reintentarConexion(maxIntentos: int): Boolean
+  +estaConectado(): Boolean
+}
+
+class ControlBufferTransmision <<C>> {
+  +almacenarUbicacion(ubicacion: Ubicacion)
+  +almacenarEvidencia(evidencia: Evidencia)
+  +sincronizarPendientes()
+  +obtenerPendientes(): List
+}
+
+class ControlReintentos <<C>> {
+  +programarFallo(modo: String)
+}
+
+class GestorAlarma <<C>> {
+  +obtenerDatosUsuario(): DatosUsuario
+  +obtenerUbicacionActual(): Ubicacion
+  +obtenerEstadoAlarma(): String
+  +obtenerMetodoActivacion(): String
+  +obtenerTimestamp(): DateTime
+}
+
+' Entidades
+class PerfilUsuario <<E>> {
+  -idUsuario: String
+  -nombre: String
+  -contacto: String
+  +obtenerDatos(): DatosUsuario
+}
+
+class ColaEvidencias <<E>> {
+  -evidenciasPendientes: List<Evidencia>
+  +agregarEvidencia(evidencia: Evidencia)
+  +obtenerSiguiente(): Evidencia
+  +marcarComoEnviada(id: String)
+}
+
+class ConfiguracionTransmision <<E>> {
+  -intervaloUbicacion: int (30)
+  -timeoutConfirmacion: int (5)
+  -maxIntentosReconexion: int (3)
+  +obtenerConfiguracion(): Config
+}
+
+class HistorialTransmisiones <<E>> {
+  +registrarConexion(idAlarma: String)
+  +registrarEnvio(idAlarma: String, tipo: String)
+  +registrarReconexion(idAlarma: String)
+}
+
+' Relaciones
+InterfazTransmisionCdM --> ControlTransmisionCdM : "invoca"
+ControlTransmisionCdM --> ControlConexionCdM : "gestiona conexión"
+ControlTransmisionCdM --> GestorAlarma : "obtiene contexto"
+ControlTransmisionCdM --> ControlBufferTransmision : "maneja buffer"
+ControlTransmisionCdM --> ControlReintentos : "delega fallos"
+ControlTransmisionCdM --> ColaEvidencias : "consume evidencias"
+ControlTransmisionCdM --> ConfiguracionTransmision : "consulta parámetros"
+ControlTransmisionCdM --> HistorialTransmisiones : "registra eventos"
+ControlConexionCdM --> Servicio : "conecta a API"
+GestorAlarma --> PerfilUsuario : "obtiene datos usuario"
+@enduml
+📝 Bosquejo del Diagrama de Clases
+text
+Clases:
+- ServicioNotificaciones <<A>>
+- InterfazTransmisionCdM <<I>>
+- ControlTransmisionCdM <<C>>
+- ControlConexionCdM <<C>>
+- ControlBufferTransmision <<C>>
+- ControlReintentos <<C>>
+- GestorAlarma <<C>>
+- PerfilUsuario <<E>>
+- ColaEvidencias <<E>>
+- ConfiguracionTransmision <<E>>
+- HistorialTransmisiones <<E>>
+
+Relaciones:
+InterfazTransmisionCdM ──► ControlTransmisionCdM
+ControlTransmisionCdM ──► ControlConexionCdM
+ControlTransmisionCdM ──► GestorAlarma
+ControlTransmisionCdM ──► ControlBufferTransmision
+ControlTransmisionCdM ──► ControlReintentos
+ControlTransmisionCdM ──► ColaEvidencias
+ControlTransmisionCdM ──► ConfiguracionTransmision
+ControlTransmisionCdM ──► HistorialTransmisiones
+ControlConexionCdM ──► ServicioNotificaciones
+GestorAlarma ──► PerfilUsuario
+4. Diagrama de Colaboración
+Formal (PlantUML)
+plantuml
+@startuml
+object ":InterfazTransmisionCdM" as interfaz <<I>>
+object ":ControlTransmisionCdM" as ctrlTransmision <<C>>
+object ":ControlConexionCdM" as ctrlConexion <<C>>
+object "ServicioNotificaciones" as servicio <<A>>
+object ":GestorAlarma" as gestor <<C>>
+object ":PerfilUsuario" as perfil <<E>>
+object ":ConfiguracionTransmision" as config <<E>>
+object ":ColaEvidencias" as cola <<E>>
+object ":ControlBufferTransmision" as ctrlBuffer <<C>>
+object ":ControlReintentos" as ctrlReintentos <<C>>
+object ":HistorialTransmisiones" as historial <<E>>
+
+interfaz -> ctrlTransmision : 1: iniciarTransmision(modo)
+
+ctrlTransmision -> ctrlConexion : 2: conectar()
+ctrlConexion -> servicio : 3: establecerConexion()
+servicio --> ctrlConexion : 4: conexionEstablecida
+ctrlConexion --> ctrlTransmision : 5: conectado
+
+alt modo == "activacion"
+  ctrlTransmision -> gestor : 6: obtenerDatosUsuario()
+  gestor -> perfil : 7: obtenerDatos()
+  perfil --> gestor : 8: datosUsuario
+  gestor --> ctrlTransmision : 9: datosUsuario + ubicacion + timestamp
+  ctrlTransmision -> ctrlConexion : 10: enviarPaqueteInicial(datos)
+else modo == "actualizacion"
+  ctrlTransmision -> gestor : 6: obtenerEstadoAlarma()
+  gestor --> ctrlTransmision : 7: idAlarma + estado
+  ctrlTransmision -> ctrlConexion : 8: enviarPaqueteActualizacion(datos)
+end
+
+ctrlConexion -> servicio : 11: POST /alarma
+servicio --> ctrlConexion : 12: { idAlarma, operador, instrucciones }
+ctrlConexion --> ctrlTransmision : 13: confirmacion
+
+ctrlTransmision -> historial : 14: registrarConexion(idAlarma)
+ctrlTransmision -> config : 15: obtenerIntervaloUbicacion()
+config --> ctrlTransmision : 16: 30
+
+loop mientras alarmaActiva
+  ctrlTransmision -> ctrlTransmision : 17: esperarIntervalo(30s)
+  
+  ctrlTransmision -> gestor : 18: obtenerUbicacionActual()
+  gestor --> ctrlTransmision : 19: ubicacion
+  
+  alt conexionEstable
+    ctrlTransmision -> ctrlConexion : 20: enviarUbicacion(ubicacion)
+    ctrlConexion -> servicio : 21: POST /ubicacion
+    servicio --> ctrlConexion : 22: ok
+    ctrlConexion --> ctrlTransmision : 23: ubicacionEnviada
+  else sinConexion
+    ctrlTransmision -> ctrlBuffer : 20: almacenarUbicacion(ubicacion)
+    ctrlTransmision -> ctrlConexion : 21: reintentarConexion(3)
+    alt reconexionExitosa
+      ctrlTransmision -> ctrlBuffer : 22: sincronizarPendientes()
+      ctrlBuffer -> ctrlConexion : 23: enviarPendientes()
+    else reconexionFallida
+      ctrlTransmision -> ctrlReintentos : 22: programarFallo("falloGPS")
+    end
+  end
+  
+  ctrlTransmision -> cola : 24: obtenerSiguienteEvidencia()
+  cola --> ctrlTransmision : 25: evidencia
+  
+  alt hayEvidencia and conexionEstable
+    ctrlTransmision -> ctrlConexion : 26: enviarEvidencia(evidencia)
+    ctrlConexion -> servicio : 27: POST /evidencia
+    servicio --> ctrlConexion : 28: ok
+    ctrlTransmision -> cola : 29: marcarComoEnviada(evidencia.id)
+  else hayEvidencia and sinConexion
+    ctrlTransmision -> ctrlBuffer : 26: almacenarEvidencia(evidencia)
+    ctrlTransmision -> ctrlConexion : 27: reintentarConexion(3)
+    alt reconexionExitosa
+      ctrlTransmision -> ctrlBuffer : 28: sincronizarPendientes()
+    else reconexionFallida
+      ctrlTransmision -> ctrlReintentos : 28: programarFallo("falloEVD")
+    end
+  end
+end
+
+ctrlTransmision -> ctrlConexion : 30: cerrarConexion()
+@enduml
+📝 Bosquejo del Diagrama de Colaboración
+text
+Objetos:
+- :InterfazTransmisionCdM (I)
+- :ControlTransmisionCdM (C)
+- :ControlConexionCdM (C)
+- :ServicioNotificaciones (A)
+- :GestorAlarma (C)
+- :PerfilUsuario (E)
+- :ConfiguracionTransmision (E)
+- :ColaEvidencias (E)
+- :ControlBufferTransmision (C)
+- :ControlReintentos (C)
+- :HistorialTransmisiones (E)
+
+Mensajes numerados (flujo principal y alternativas):
+1. :InterfazTransmisionCdM ──(iniciarTransmision)──► :ControlTransmisionCdM
+2. :ControlTransmisionCdM ──(conectar)──► :ControlConexionCdM
+3. :ControlConexionCdM ──(establecerConexion)──► :ServicioNotificaciones
+4. :ServicioNotificaciones ──(conexionEstablecida)──► :ControlConexionCdM
+5. :ControlConexionCdM ──(conectado)──► :ControlTransmisionCdM
+
+[Alternativa modo]
+[activación] 6-9: obtener datos usuario y contexto
+[actualización] 6-8: obtener ID alarma y estado
+
+10-11: Enviar paquete al servidor
+12-13: Recibir confirmación con ID alarma
+14: Registrar conexión en historial
+15-16: Obtener intervalo de ubicación (30s)
+
+[Loop mientras alarma activa]
+17: Esperar intervalo
+18-19: Obtener ubicación actual
+
+[Alternativa ubicación]
+[con conexión] 20-23: Enviar ubicación vía API
+[sin conexión] 20: Almacenar en buffer → 21: Reintentar conexión (≤3)
+   [reconexión] 22-23: Sincronizar pendientes
+   [fallo] 22: Programar fallo GPS (UC-011)
+
+24-25: Obtener evidencia de cola
+
+[Alternativa evidencias]
+[con conexión] 26-29: Enviar evidencia y marcar enviada
+[sin conexión] 26: Almacenar en buffer → 27: Reintentar conexión (≤3)
+   [reconexión] 28: Sincronizar pendientes
+   [fallo] 28: Programar fallo EVD (UC-011)
+
+[Fin loop]
+30: Cerrar conexión
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+participant ":InterfazTransmisionCdM" as Interfaz <<I>>
+participant ":ControlTransmisionCdM" as CtrlTransmision <<C>>
+participant ":ControlConexionCdM" as CtrlConexion <<C>>
+actor "ServicioNotificaciones" as Servicio <<A>>
+participant ":GestorAlarma" as Gestor <<C>>
+participant ":PerfilUsuario" as Perfil <<E>>
+participant ":ConfiguracionTransmision" as Config <<E>>
+participant ":ControlBufferTransmision" as CtrlBuffer <<C>>
+participant ":ColaEvidencias" as Cola <<E>>
+participant ":ControlReintentos" as CtrlReintentos <<C>>
+participant ":HistorialTransmisiones" as Historial <<E>>
+
+Interfaz -> CtrlTransmision : 1: iniciarTransmision(modo)
+activate CtrlTransmision
+
+CtrlTransmision -> CtrlConexion : 2: conectar()
+activate CtrlConexion
+CtrlConexion -> Servicio : 3: establecerConexion()
+activate Servicio
+Servicio --> CtrlConexion : 4: conexionEstablecida
+deactivate Servicio
+CtrlConexion --> CtrlTransmision : 5: conectado
+deactivate CtrlConexion
+
+alt modo == "activacion"
+  CtrlTransmision -> Gestor : 6: obtenerDatosUsuario()
+  activate Gestor
+  Gestor -> Perfil : 7: obtenerDatos()
+  activate Perfil
+  Perfil --> Gestor : 8: datosUsuario
+  deactivate Perfil
+  Gestor --> CtrlTransmision : 9: datosUsuario + ubicacion + timestamp
+  deactivate Gestor
+  CtrlTransmision -> CtrlConexion : 10: enviarPaqueteInicial(datos)
+else modo == "actualizacion"
+  CtrlTransmision -> Gestor : 6: obtenerEstadoAlarma()
+  activate Gestor
+  Gestor --> CtrlTransmision : 7: idAlarma + estado
+  deactivate Gestor
+  CtrlTransmision -> CtrlConexion : 8: enviarPaqueteActualizacion(datos)
+end
+
+activate CtrlConexion
+CtrlConexion -> Servicio : 11: POST /alarma
+activate Servicio
+Servicio --> CtrlConexion : 12: { idAlarma, operador, instrucciones }
+deactivate Servicio
+CtrlConexion --> CtrlTransmision : 13: confirmacion (idAlarma)
+deactivate CtrlConexion
+
+CtrlTransmision -> Historial : 14: registrarConexion(idAlarma)
+activate Historial
+Historial --> CtrlTransmision : 15: registrado
+deactivate Historial
+
+CtrlTransmision -> Config : 16: obtenerIntervaloUbicacion()
+activate Config
+Config --> CtrlTransmision : 17: 30
+deactivate Config
+
+loop mientras alarmaActiva
+  CtrlTransmision -> CtrlTransmision : 18: esperarIntervalo(30s)
+  
+  CtrlTransmision -> Gestor : 19: obtenerUbicacionActual()
+  activate Gestor
+  Gestor --> CtrlTransmision : 20: ubicacion
+  deactivate Gestor
+  
+  alt conexionEstable
+    CtrlTransmision -> CtrlConexion : 21: enviarUbicacion(ubicacion)
+    activate CtrlConexion
+    CtrlConexion -> Servicio : 22: POST /ubicacion
+    activate Servicio
+    Servicio --> CtrlConexion : 23: ok
+    deactivate Servicio
+    CtrlConexion --> CtrlTransmision : 24: ubicacionEnviada
+    deactivate CtrlConexion
+  else sinConexion
+    CtrlTransmision -> CtrlBuffer : 21: almacenarUbicacion(ubicacion)
+    activate CtrlBuffer
+    CtrlBuffer --> CtrlTransmision : 22: almacenada
+    deactivate CtrlBuffer
+    
+    CtrlTransmision -> CtrlConexion : 23: reintentarConexion(3)
+    activate CtrlConexion
+    alt reconexionExitosa
+      CtrlConexion --> CtrlTransmision : 24: reconectado
+      CtrlTransmision -> CtrlBuffer : 25: sincronizarPendientes()
+      activate CtrlBuffer
+      CtrlBuffer -> CtrlConexion : 26: enviarPendientes()
+      CtrlBuffer --> CtrlTransmision : 27: sincronizado
+      deactivate CtrlBuffer
+    else reconexionFallida
+      CtrlConexion --> CtrlTransmision : 24: falloReconexion
+      CtrlTransmision -> CtrlReintentos : 25: programarFallo("falloGPS")
+      activate CtrlReintentos
+      CtrlReintentos --> CtrlTransmision : 26: programado
+      deactivate CtrlReintentos
+    end
+    deactivate CtrlConexion
+  end
+  
+  CtrlTransmision -> Cola : 27: obtenerSiguienteEvidencia()
+  activate Cola
+  Cola --> CtrlTransmision : 28: evidencia
+  deactivate Cola
+  
+  alt hayEvidencia and conexionEstable
+    CtrlTransmision -> CtrlConexion : 29: enviarEvidencia(evidencia)
+    activate CtrlConexion
+    CtrlConexion -> Servicio : 30: POST /evidencia
+    activate Servicio
+    Servicio --> CtrlConexion : 31: ok
+    deactivate Servicio
+    CtrlConexion --> CtrlTransmision : 32: evidenciaEnviada
+    deactivate CtrlConexion
+    CtrlTransmision -> Cola : 33: marcarComoEnviada(evidencia.id)
+    activate Cola
+    Cola --> CtrlTransmision : 34: marcada
+    deactivate Cola
+  else hayEvidencia and sinConexion
+    CtrlTransmision -> CtrlBuffer : 29: almacenarEvidencia(evidencia)
+    activate CtrlBuffer
+    CtrlBuffer --> CtrlTransmision : 30: almacenada
+    deactivate CtrlBuffer
+    
+    CtrlTransmision -> CtrlConexion : 31: reintentarConexion(3)
+    activate CtrlConexion
+    alt reconexionExitosa
+      CtrlConexion --> CtrlTransmision : 32: reconectado
+      CtrlTransmision -> CtrlBuffer : 33: sincronizarPendientes()
+      activate CtrlBuffer
+      CtrlBuffer --> CtrlTransmision : 34: sincronizado
+      deactivate CtrlBuffer
+    else reconexionFallida
+      CtrlConexion --> CtrlTransmision : 32: falloReconexion
+      CtrlTransmision -> CtrlReintentos : 33: programarFallo("falloEVD")
+      activate CtrlReintentos
+      CtrlReintentos --> CtrlTransmision : 34: programado
+      deactivate CtrlReintentos
+    end
+    deactivate CtrlConexion
+  end
+  
+  CtrlTransmision -> Gestor : 35: verificarEstadoAlarma()
+  activate Gestor
+  Gestor --> CtrlTransmision : 36: estado
+  deactivate Gestor
+end
+
+CtrlTransmision -> CtrlConexion : 37: cerrarConexion()
+activate CtrlConexion
+CtrlConexion -> Servicio : 38: cerrarConexion()
+activate Servicio
+Servicio --> CtrlConexion : 39: ok
+deactivate Servicio
+CtrlConexion --> CtrlTransmision : 40: desconectado
+deactivate CtrlConexion
+
+deactivate CtrlTransmision
+@enduml
+📝 Bosquejo del Diagrama de Secuencia
+text
+:Interfaz   :CtrlTransmision   :CtrlConexion   Servicio   :Gestor   :Perfil   :Config   :CtrlBuffer   :Cola   :CtrlReintentos   :Historial
+    │              │                 │             │          │         │         │           │           │           │              │
+    │─iniciar─────►│                 │             │          │         │         │           │           │           │              │
+    │              │─conectar()─────►│             │          │         │         │           │           │           │              │
+    │              │                 │─establecer─►│          │         │         │           │           │           │              │
+    │              │                 │◄────ok──────│          │         │         │           │           │           │              │
+    │              │◄──conectado─────│             │          │         │         │           │           │           │              │
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │ [modo activación]             │          │         │         │           │           │           │              │
+    │              │─obtenerDatosUsuario()────────►│          │         │         │           │           │           │              │
+    │              │                 │             │─obtenerDatos()─────►│         │           │           │           │              │
+    │              │                 │             │◄───datosUsuario────│         │           │           │           │              │
+    │              │◄──datos+ubicacion+timestamp──│          │         │         │           │           │           │              │
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │ [modo actualización]          │          │         │         │           │           │           │              │
+    │              │─obtenerEstadoAlarma()────────►│          │         │         │           │           │           │              │
+    │              │◄──idAlarma+estado────────────│          │         │         │           │           │           │              │
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │─enviarPaquete─►│             │          │         │         │           │           │           │              │
+    │              │                 │─POST /alarma─►│          │         │         │           │           │           │              │
+    │              │                 │◄──{idAlarma}──│          │         │         │           │           │           │              │
+    │              │◄──confirmacion──│             │          │         │         │           │           │           │              │
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │─registrarConexion()───────────────────────────────────────────────────────────────────────────►│
+    │              │◄──registrado──────────────────────────────────────────────────────────────────────────────────│
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │─obtenerIntervalo()───────────────────────────────────►│         │           │           │              │
+    │              │◄──────30────────────────────────────────────────────│         │           │           │              │
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │ [loop mientras alarmaActiva]  │          │         │         │           │           │           │              │
+    │              │─esperarIntervalo(30s)         │          │         │         │           │           │           │              │
+    │              │─obtenerUbicacionActual()─────►│          │         │         │           │           │           │              │
+    │              │◄──────ubicacion──────────────│          │         │         │           │           │           │              │
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │ [con conexión]  │             │          │         │         │           │           │           │              │
+    │              │─enviarUbicacion─►│             │          │         │         │           │           │           │              │
+    │              │                 │─POST /ubicacion─►│          │         │         │           │           │           │              │
+    │              │                 │◄──────ok──────│          │         │         │           │           │           │              │
+    │              │◄─ubicacionEnviada─│             │          │         │         │           │           │           │              │
+    │              │                 │             │          │         │         │           │           │           │              │
+    │              │ [sin conexión]  │             │          │         │         │           │           │           │              │
+    │              │─almacenarUbicacion()──────────────────────────────►│         │           │           │              │
+    │              │◄──almacenada──────────────────────────────────────│         │           │           │              │
+    │              │─reintentarConexion(3)─►│             │          │         │           │           │           │              │
+    │              │   [reconexión]   │             │          │         │           │           │           │              │
+    │              │◄──reconectado────│             │          │         │           │           │           │              │
+    │              │─sincronizarPendientes()──────────────────►│         │           │           │           │              │
+    │              │                 │─enviarPendientes()───►│         │           │           │           │              │
+    │              │   [fallo]        │             │          │         │           │           │           │              │
+    │              │◄──falloReconexion─│             │          │         │           │           │           │              │
+    │              │─programarFallo("falloGPS")──────────────────────────────────────────────────►│              │
+    │              │                 │             │          │         │           │           │           │              │
+    │              │─obtenerSiguienteEvidencia()─────────────────────────────────────────────────────►│           │              │
+    │              │◄──────evidencia────────────────────────────────────────────────────────────────│           │              │
+    │              │                 │             │          │         │           │           │           │              │
+    │              │ [con conexión]  │             │          │         │           │           │           │              │
+    │              │─enviarEvidencia─►│             │          │         │           │           │           │              │
+    │              │                 │─POST /evidencia─►│          │         │           │           │           │              │
+    │              │                 │◄──────ok──────│          │         │           │           │           │              │
+    │              │◄─evidenciaEnviada─│             │          │         │           │           │           │              │
+    │              │─marcarComoEnviada()────────────────────────────────────────────────────────────►│           │              │
+    │              │                 │             │          │         │           │           │           │              │
+    │              │ [sin conexión]  │             │          │         │           │           │           │              │
+    │              │─almacenarEvidencia()───────────────────────────────►│           │           │           │              │
+    │              │─reintentarConexion(3)─►│             │          │           │           │           │              │
+    │              │   [similar a ubicación]│             │          │           │           │           │              │
+    │              │                 │             │          │         │           │           │           │              │
+    │              │─verificarEstadoAlarma()──►│          │         │           │           │           │              │
+    │              │◄──────estado─────────────│          │         │           │           │           │              │
+    │              │                 │             │          │         │           │           │           │              │
+    │              │ [fin loop]      │             │          │         │           │           │           │              │
+    │              │                 │             │          │         │           │           │           │              │
+    │              │─cerrarConexion()─►│             │          │         │           │           │           │              │
+    │              │                 │─cerrarConexion()──►│          │         │           │           │           │              │
+    │              │                 │◄──────ok──────│          │         │           │           │           │              │
+    │              │◄──desconectado───│             │          │         │           │           │           │              │
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposición.
+
+
++------------+
+|   UC-011   |
++------------+
+
+Aquí tienes el análisis completo para el UC-011 Gestionar Comunicaciones Offline, desarrollado según la metodología del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+🧩 Identificación de Clases de Análisis (Patrón ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor Secundario)	Receptor final de los mensajes SMS (contactos de emergencia, autoridades).
+InterfazComunicacionesOffline	I (Interfaz)	Punto de entrada invocado por otros casos de uso (UC-009, UC-010) en modo fallo.
+ControlComunicacionesOffline	C (Controlador)	Orquesta el flujo según el modo de fallo (falloCdM, falloCTO, falloGPS, falloEVD). Gestiona el envío de SMS, contacto con autoridades y monitoreo de reconexión.
+ControlEnvioSMS	C (Controlador)	Envía mensajes SMS a través de la red celular. Maneja fallos de cobertura.
+ControlLocalizacionAutoridades	C (Controlador)	Busca el número de contacto de las autoridades locales más cercanas a la última ubicación conocida (UC-013).
+ControlMonitoreoConectividad	C (Controlador)	Monitorea periódicamente el estado de la conexión (internet y red celular) para reintentar comunicaciones pendientes.
+ControlPersistenciaOffline	C (Controlador)	Guarda y recupera mensajes pendientes en almacenamiento local cuando no hay conectividad (UC-037).
+GestorAlarma	C (Controlador)	Contexto de la alarma que proporciona datos del usuario, ubicación y mensaje predefinido.
+ConfiguracionOffline	E (Entidad)	Almacena parámetros de reintento (intervalo de monitoreo de 60 segundos).
+MensajePendiente	E (Entidad)	Representa un mensaje que no pudo ser enviado y debe ser almacenado para reintento.
+AlmacenLocal	E (Entidad)	Persistencia de mensajes pendientes (relación con UC-037).
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Sistema|
+start
+:Sistema recibe invocación con modo de ejecución;
+
+if (¿Modo?) then (falloCdM)
+  :Sistema envía mensaje original por SMS al contacto (UC-012);
+  if (¿Envío SMS exitoso?) then (No)
+    :Sistema guarda mensaje localmente (UC-037);
+    :Sistema monitorea reconexión periódica (cada 60s);
+    if (¿Vuelve internet antes que celular?) then (Sí)
+      :Sistema reintenta envío por canal original;
+    else (Sí: vuelve celular)
+      :Sistema reintenta envío por SMS (UC-012);
+    endif
+  endif
+  :Sistema busca autoridades cercanas (UC-013);
+  :Sistema envía SMS a autoridades con datos de usuario y ubicación (UC-012);
+  if (¿Envío SMS exitoso?) then (No)
+    :Sistema guarda mensaje localmente (UC-037);
+    :Sistema monitorea reconexión periódica;
+    if (¿Vuelve internet?) then (Sí)
+      :Sistema cancela envío SMS (CdM se encarga);
+    else (Sí: vuelve celular)
+      :Sistema reintenta envío por SMS (UC-012);
+    endif
+  endif
+  :Sistema monitorea conexión cada 60s hasta completar envíos;
+  
+elseif (falloCTO)
+  :Sistema envía mensaje original por SMS al contacto (UC-012);
+  if (¿Envío SMS exitoso?) then (No)
+    :Sistema guarda mensaje localmente (UC-037);
+    :Sistema monitorea reconexión periódica;
+    if (¿Vuelve internet antes que celular?) then (Sí)
+      :Sistema reintenta envío por canal original;
+    else (Sí: vuelve celular)
+      :Sistema reintenta envío por SMS (UC-012);
+    endif
+  endif
+  :Sistema monitorea conexión cada 60s hasta completar envíos;
+  
+elseif (falloGPS)
+  :Sistema busca autoridades cercanas (UC-013);
+  :Sistema envía SMS a autoridades (UC-012);
+  if (¿Envío SMS exitoso?) then (No)
+    :Sistema guarda mensaje localmente (UC-037);
+    :Sistema monitorea reconexión periódica;
+    if (¿Vuelve internet?) then (Sí)
+      :Sistema cancela envío SMS (CdM se encarga);
+    else (Sí: vuelve celular)
+      :Sistema reintenta envío por SMS (UC-012);
+    endif
+  endif
+  :Sistema monitorea conexión cada 60s hasta completar envíos;
+  
+elseif (falloEVD)
+  :Sistema finaliza sin acciones adicionales;
+endif
+
+stop
+@enduml
+📝 Bosquejo del Diagrama de Actividad
+text
+INICIO
+  │
+  ▼
+[Recibir invocación con modo]
+  │
+  ├──[falloCdM]──► [Enviar SMS al contacto (UC-012)]
+  │                    │
+  │                    ├──[fallo envío]──► [Guardar local (UC-037)] ──► [Monitorear reconexión]
+  │                    │                         │
+  │                    │              ┌──────────┴──────────┐
+  │                    │              │                     │
+  │                    │        [vuelve internet]    [vuelve celular]
+  │                    │              │                     │
+  │                    │              ▼                     ▼
+  │                    │     [Reintentar canal orig]  [Reintentar SMS]
+  │                    │
+  │                    ▼
+  │               [Buscar autoridades (UC-013)]
+  │                    │
+  │                    ▼
+  │               [Enviar SMS a autoridades (UC-012)]
+  │                    │
+  │                    ├──[fallo]──► [Guardar local] ──► [Monitorear]
+  │                    │                    │
+  │                    │         ┌──────────┴──────────┐
+  │                    │         │                     │
+  │                    │   [vuelve internet]    [vuelve celular]
+  │                    │         │                     │
+  │                    │         ▼                     ▼
+  │                    │  [Cancelar SMS (CdM)]   [Reintentar SMS]
+  │                    │
+  │                    └──► [Monitorear cada 60s hasta completar]
+  │
+  ├──[falloCTO]──► [Enviar SMS al contacto (UC-012)]
+  │                    │
+  │                    └──► (similar flujo de fallo y reintento)
+  │
+  ├──[falloGPS]──► [Buscar autoridades y enviar SMS]
+  │
+  └──[falloEVD]──► FIN
+
+FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de la gestión offline según el modo de fallo.
+
+plantuml
+@startuml
+[*] --> DetectandoModo
+
+state DetectandoModo {
+  [*] --> ModoCdM : modo == falloCdM
+  [*] --> ModoCTO : modo == falloCTO
+  [*] --> ModoGPS : modo == falloGPS
+  [*] --> ModoEVD : modo == falloEVD
+}
+
+state ModoCdM {
+  [*] --> EnviandoSMSContacto
+  EnviandoSMSContacto --> EnviandoSMSCdM : contacto enviado o pendiente
+  EnviandoSMSCdM --> Monitoreando : autoridades notificadas o pendiente
+}
+
+state ModoCTO {
+  [*] --> EnviandoSMSContacto
+  EnviandoSMSContacto --> Monitoreando : enviado o pendiente
+}
+
+state ModoGPS {
+  [*] --> BuscandoAutoridades
+  BuscandoAutoridades --> EnviandoSMSCdM : autoridades encontradas
+  EnviandoSMSCdM --> Monitoreando : enviado o pendiente
+}
+
+state ModoEVD --> [*]
+
+state Monitoreando {
+  [*] --> VerificandoConectividad
+  VerificandoConectividad --> ReintentandoEnvio : conectividadRestaurada (internet o celular)
+  VerificandoConectividad --> Esperando : sinConectividad
+  Esperando --> VerificandoConectividad : timeout 60s
+  ReintentandoEnvio --> VerificandoConectividad : reintento completado o pendiente
+}
+
+state PendienteLocal {
+  [*] --> Almacenado
+  Almacenado --> ReintentandoEnvio : conectividadRestaurada
+}
+
+EnviandoSMSContacto --> PendienteLocal : falloEnvio
+EnviandoSMSCdM --> PendienteLocal : falloEnvio
+@enduml
+📝 Bosquejo del Diagrama de Estado
+text
+ESTADO: DetectandoModo
+   ├─ [falloCdM]──► ModoCdM
+   ├─ [falloCTO]──► ModoCTO
+   ├─ [falloGPS]──► ModoGPS
+   └─ [falloEVD]──► [*]
+
+ESTADO: ModoCdM
+   ├─ EnviandoSMSContacto ──► EnviandoSMSCdM ──► Monitoreando
+   └─ (puede transitar a PendienteLocal si fallo)
+
+ESTADO: ModoCTO
+   └─ EnviandoSMSContacto ──► Monitoreando
+
+ESTADO: ModoGPS
+   └─ BuscandoAutoridades ──► EnviandoSMSCdM ──► Monitoreando
+
+ESTADO: PendienteLocal
+   └─ Almacenado ──► ReintentandoEnvio (al restaurarse conectividad)
+
+ESTADO: Monitoreando
+   ├─ VerificandoConectividad
+   │     ├─[sin conexión]──► Esperando (60s) ──► VerificandoConectividad
+   │     └─[conexión restaurada]──► ReintentandoEnvio
+3. Diagrama de Clases de Análisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actor Secundario
+actor Usuario as "Usuario" <<A>>
+
+' Interfaz
+class InterfazComunicacionesOffline <<I>> {
+  +gestionarFallo(modo: String, datos: DatosContexto)
+}
+
+' Controladores
+class ControlComunicacionesOffline <<C>> {
+  +procesarModoFallo(modo: String, contexto: DatosContexto)
+  +enviarSMSContacto(destino: String, mensaje: String)
+  +notificarAutoridades(ubicacion: Ubicacion)
+  +iniciarMonitoreo()
+}
+
+class ControlEnvioSMS <<C>> {
+  +enviarSMS(numero: String, texto: String): Boolean
+  +reintentarEnvioSMS(mensajePendiente: MensajePendiente): Boolean
+}
+
+class ControlLocalizacionAutoridades <<C>> {
+  +buscarAutoridadesCercanas(ubicacion: Ubicacion): String
+}
+
+class ControlMonitoreoConectividad <<C>> {
+  +iniciarMonitoreo(intervaloSegundos: int)
+  +verificarConectividad(): EstadoConectividad
+  +notificarReconexion(tipo: String)
+}
+
+class ControlPersistenciaOffline <<C>> {
+  +guardarMensajePendiente(mensaje: MensajePendiente)
+  +obtenerMensajesPendientes(): List<MensajePendiente>
+  +eliminarMensajePendiente(id: String)
+}
+
+class GestorAlarma <<C>> {
+  +obtenerDatosUsuario(): DatosUsuario
+  +obtenerUltimaUbicacion(): Ubicacion
+  +obtenerMensajePredefinido(): String
+  +obtenerContactosEmergencia(): List<Contacto>
+}
+
+' Entidades
+class ConfiguracionOffline <<E>> {
+  -intervaloMonitoreo: int (60)
+  +obtenerIntervaloMonitoreo(): int
+}
+
+class MensajePendiente <<E>> {
+  -id: String
+  -destino: String
+  -texto: String
+  -canalOriginal: String
+  -timestamp: DateTime
+}
+
+class AlmacenLocal <<E>> {
+  +guardar(mensaje: MensajePendiente)
+  +recuperarPendientes(): List<MensajePendiente>
+  +eliminar(id: String)
+}
+
+' Relaciones
+InterfazComunicacionesOffline --> ControlComunicacionesOffline : "invoca"
+ControlComunicacionesOffline --> ControlEnvioSMS : "envía SMS"
+ControlComunicacionesOffline --> ControlLocalizacionAutoridades : "busca autoridades"
+ControlComunicacionesOffline --> ControlMonitoreoConectividad : "inicia monitoreo"
+ControlComunicacionesOffline --> ControlPersistenciaOffline : "gestiona persistencia"
+ControlComunicacionesOffline --> GestorAlarma : "obtiene contexto"
+ControlEnvioSMS --> Usuario : "envía mensaje"
+ControlPersistenciaOffline --> AlmacenLocal : "accede a almacenamiento"
+ControlMonitoreoConectividad --> ConfiguracionOffline : "consulta intervalo"
+@enduml
+📝 Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- InterfazComunicacionesOffline <<I>>
+- ControlComunicacionesOffline <<C>>
+- ControlEnvioSMS <<C>>
+- ControlLocalizacionAutoridades <<C>>
+- ControlMonitoreoConectividad <<C>>
+- ControlPersistenciaOffline <<C>>
+- GestorAlarma <<C>>
+- ConfiguracionOffline <<E>>
+- MensajePendiente <<E>>
+- AlmacenLocal <<E>>
+
+Relaciones:
+InterfazComunicacionesOffline ──► ControlComunicacionesOffline
+ControlComunicacionesOffline ──► ControlEnvioSMS
+ControlComunicacionesOffline ──► ControlLocalizacionAutoridades
+ControlComunicacionesOffline ──► ControlMonitoreoConectividad
+ControlComunicacionesOffline ──► ControlPersistenciaOffline
+ControlComunicacionesOffline ──► GestorAlarma
+ControlEnvioSMS ──► Usuario
+ControlPersistenciaOffline ──► AlmacenLocal
+ControlMonitoreoConectividad ──► ConfiguracionOffline
+4. Diagrama de Colaboración
+Formal (PlantUML)
+plantuml
+@startuml
+object ":InterfazComunicacionesOffline" as interfaz <<I>>
+object ":ControlComunicacionesOffline" as ctrlOffline <<C>>
+object ":GestorAlarma" as gestor <<C>>
+object ":ControlEnvioSMS" as ctrlSMS <<C>>
+object ":ControlLocalizacionAutoridades" as ctrlAutoridades <<C>>
+object ":ControlPersistenciaOffline" as ctrlPersistencia <<C>>
+object ":AlmacenLocal" as almacen <<E>>
+object ":ControlMonitoreoConectividad" as ctrlMonitoreo <<C>>
+object ":ConfiguracionOffline" as config <<E>>
+object "Usuario" as usuario <<A>>
+
+interfaz -> ctrlOffline : 1: gestionarFallo(modo, contexto)
+
+ctrlOffline -> gestor : 2: obtenerDatosUsuario() / obtenerContactos() / obtenerUltimaUbicacion()
+gestor --> ctrlOffline : 3: datos
+
+alt modo == falloCdM or modo == falloCTO
+  ctrlOffline -> ctrlSMS : 4: enviarSMS(contacto, mensaje)
+  ctrlSMS -> usuario : 5: enviar SMS
+  alt falloEnvio
+    ctrlSMS --> ctrlOffline : 6: error
+    ctrlOffline -> ctrlPersistencia : 7: guardarMensajePendiente(mensaje)
+    ctrlPersistencia -> almacen : 8: guardar(mensaje)
+    almacen --> ctrlPersistencia : 9: ok
+    ctrlPersistencia --> ctrlOffline : 10: guardado
+  else exito
+    ctrlSMS --> ctrlOffline : 6: enviado
+  end
+end
+
+alt modo == falloCdM or modo == falloGPS
+  ctrlOffline -> ctrlAutoridades : 11: buscarAutoridadesCercanas(ubicacion)
+  ctrlAutoridades --> ctrlOffline : 12: numeroAutoridades
+  ctrlOffline -> ctrlSMS : 13: enviarSMS(numeroAutoridades, mensajeEmergencia)
+  alt falloEnvio
+    ctrlSMS --> ctrlOffline : 14: error
+    ctrlOffline -> ctrlPersistencia : 15: guardarMensajePendiente(mensajeAutoridades)
+  end
+end
+
+ctrlOffline -> ctrlMonitoreo : 16: iniciarMonitoreo()
+ctrlMonitoreo -> config : 17: obtenerIntervaloMonitoreo()
+config --> ctrlMonitoreo : 18: 60
+
+loop cada 60s mientras haya pendientes o no conectividad
+  ctrlMonitoreo -> ctrlMonitoreo : 19: verificarConectividad()
+  alt conectividadRestaurada
+    ctrlMonitoreo -> ctrlOffline : 20: notificarReconexion(tipo)
+    ctrlOffline -> ctrlPersistencia : 21: obtenerMensajesPendientes()
+    ctrlPersistencia -> almacen : 22: recuperarPendientes()
+    almacen --> ctrlPersistencia : 23: listaMensajes
+    ctrlPersistencia --> ctrlOffline : 24: mensajes
+    
+    loop para cada mensaje pendiente
+      alt canalOriginal == internet y tipoReconexion == internet
+        ctrlOffline -> ctrlOffline : 25: reintentarCanalOriginal()
+      else tipoReconexion == celular
+        ctrlOffline -> ctrlSMS : 25: enviarSMS(destino, texto)
+      end
+      alt reintento exitoso
+        ctrlOffline -> ctrlPersistencia : 26: eliminarMensajePendiente(id)
+        ctrlPersistencia -> almacen : 27: eliminar(id)
+      end
+    end
+  end
+end
+@enduml
+📝 Bosquejo del Diagrama de Colaboración
+text
+Objetos:
+- :InterfazComunicacionesOffline (I)
+- :ControlComunicacionesOffline (C)
+- :GestorAlarma (C)
+- :ControlEnvioSMS (C)
+- :ControlLocalizacionAutoridades (C)
+- :ControlPersistenciaOffline (C)
+- :AlmacenLocal (E)
+- :ControlMonitoreoConectividad (C)
+- :ConfiguracionOffline (E)
+- :Usuario (A)
+
+Mensajes numerados:
+1. :InterfazComunicacionesOffline ──(gestionarFallo)──► :ControlComunicacionesOffline
+2-3. Obtener datos de contexto desde GestorAlarma.
+
+[Modos falloCdM/falloCTO]
+4. :ControlComunicacionesOffline ──(enviarSMS contacto)──► :ControlEnvioSMS
+5. :ControlEnvioSMS ──(enviar SMS)──► Usuario
+   [Si fallo] 6-10: Guardar mensaje pendiente vía ControlPersistenciaOffline y AlmacenLocal.
+
+[Modos falloCdM/falloGPS]
+11. :ControlComunicacionesOffline ──(buscarAutoridadesCercanas)──► :ControlLocalizacionAutoridades
+12. :ControlLocalizacionAutoridades ──(numero)──► :ControlComunicacionesOffline
+13. Enviar SMS a autoridades.
+   [Si fallo] 14-15: Guardar mensaje pendiente.
+
+16. :ControlComunicacionesOffline ──(iniciarMonitoreo)──► :ControlMonitoreoConectividad
+17-18. Obtener intervalo de 60s de ConfiguracionOffline.
+
+[Loop monitoreo]
+19. Verificar conectividad.
+20. Si restaurada, notificar.
+21-24. Recuperar mensajes pendientes del almacenamiento.
+25. Reintentar envío según canal y tipo de reconexión.
+26-27. Eliminar mensaje pendiente si éxito.
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+participant ":InterfazComunicacionesOffline" as Interfaz <<I>>
+participant ":ControlComunicacionesOffline" as CtrlOffline <<C>>
+participant ":GestorAlarma" as Gestor <<C>>
+participant ":ControlEnvioSMS" as CtrlSMS <<C>>
+participant ":ControlLocalizacionAutoridades" as CtrlAutoridades <<C>>
+participant ":ControlPersistenciaOffline" as CtrlPersistencia <<C>>
+participant ":AlmacenLocal" as Almacen <<E>>
+participant ":ControlMonitoreoConectividad" as CtrlMonitoreo <<C>>
+participant ":ConfiguracionOffline" as Config <<E>>
+actor "Usuario" as Usuario <<A>>
+
+Interfaz -> CtrlOffline : 1: gestionarFallo(modo, contexto)
+activate CtrlOffline
+
+CtrlOffline -> Gestor : 2: obtenerDatosContexto()
+activate Gestor
+Gestor --> CtrlOffline : 3: datosUsuario, contactos, ubicacion, mensaje
+deactivate Gestor
+
+alt modo == "falloCdM" or modo == "falloCTO"
+  CtrlOffline -> CtrlSMS : 4: enviarSMS(contacto, mensaje)
+  activate CtrlSMS
+  CtrlSMS -> Usuario : 5: enviar SMS
+  alt falloEnvio
+    CtrlSMS --> CtrlOffline : 6: error
+    CtrlOffline -> CtrlPersistencia : 7: guardarMensajePendiente(mensaje)
+    activate CtrlPersistencia
+    CtrlPersistencia -> Almacen : 8: guardar(mensaje)
+    activate Almacen
+    Almacen --> CtrlPersistencia : 9: ok
+    deactivate Almacen
+    CtrlPersistencia --> CtrlOffline : 10: guardado
+    deactivate CtrlPersistencia
+  else exito
+    CtrlSMS --> CtrlOffline : 6: enviado
+  end
+  deactivate CtrlSMS
+end
+
+alt modo == "falloCdM" or modo == "falloGPS"
+  CtrlOffline -> CtrlAutoridades : 11: buscarAutoridadesCercanas(ubicacion)
+  activate CtrlAutoridades
+  CtrlAutoridades --> CtrlOffline : 12: numeroAutoridades
+  deactivate CtrlAutoridades
+  CtrlOffline -> CtrlSMS : 13: enviarSMS(numeroAutoridades, mensajeEmergencia)
+  activate CtrlSMS
+  CtrlSMS -> Usuario : 14: enviar SMS autoridades
+  alt falloEnvio
+    CtrlSMS --> CtrlOffline : 15: error
+    CtrlOffline -> CtrlPersistencia : 16: guardarMensajePendiente(mensajeAutoridades)
+    activate CtrlPersistencia
+    CtrlPersistencia -> Almacen : 17: guardar(mensaje)
+    activate Almacen
+    Almacen --> CtrlPersistencia : 18: ok
+    deactivate Almacen
+    CtrlPersistencia --> CtrlOffline : 19: guardado
+    deactivate CtrlPersistencia
+  else exito
+    CtrlSMS --> CtrlOffline : 15: enviado
+  end
+  deactivate CtrlSMS
+end
+
+CtrlOffline -> CtrlMonitoreo : 20: iniciarMonitoreo()
+activate CtrlMonitoreo
+CtrlMonitoreo -> Config : 21: obtenerIntervaloMonitoreo()
+activate Config
+Config --> CtrlMonitoreo : 22: 60
+deactivate Config
+
+loop cada 60s mientras pendientes o sin conexión
+  CtrlMonitoreo -> CtrlMonitoreo : 23: verificarConectividad()
+  alt conectividadRestaurada
+    CtrlMonitoreo -> CtrlOffline : 24: notificarReconexion(tipo)
+    CtrlOffline -> CtrlPersistencia : 25: obtenerMensajesPendientes()
+    activate CtrlPersistencia
+    CtrlPersistencia -> Almacen : 26: recuperarPendientes()
+    activate Almacen
+    Almacen --> CtrlPersistencia : 27: listaMensajes
+    deactivate Almacen
+    CtrlPersistencia --> CtrlOffline : 28: mensajes
+    deactivate CtrlPersistencia
+    
+    loop para cada mensaje pendiente
+      alt (canalOriginal == internet and tipoReconexion == "internet") or (canalOriginal == "app")
+        CtrlOffline -> CtrlOffline : 29: reintentarCanalOriginal()
+        note right: En caso de falloCdM, el CdM\nse encarga de autoridades
+      else tipoReconexion == "celular"
+        CtrlOffline -> CtrlSMS : 29: enviarSMS(destino, texto)
+        activate CtrlSMS
+        CtrlSMS -> Usuario : 30: enviar SMS
+        CtrlSMS --> CtrlOffline : 31: resultado
+        deactivate CtrlSMS
+      end
+      alt reintentoExitoso
+        CtrlOffline -> CtrlPersistencia : 32: eliminarMensajePendiente(id)
+        activate CtrlPersistencia
+        CtrlPersistencia -> Almacen : 33: eliminar(id)
+        activate Almacen
+        Almacen --> CtrlPersistencia : 34: ok
+        deactivate Almacen
+        CtrlPersistencia --> CtrlOffline : 35: eliminado
+        deactivate CtrlPersistencia
+      end
+    end
+  end
+end
+
+deactivate CtrlMonitoreo
+deactivate CtrlOffline
+@enduml
+📝 Bosquejo del Diagrama de Secuencia
+text
+:Interfaz   :CtrlOffline   :Gestor   :CtrlSMS   :CtrlAutoridades   :CtrlPersistencia   :Almacen   :CtrlMonitoreo   :Config   Usuario
+    │            │             │          │            │                  │                │            │             │          │
+    │─gestionar─►│             │          │            │                  │                │            │             │          │
+    │            │─obtenerDatos─►│          │            │                  │                │            │             │          │
+    │            │◄────datos────│          │            │                  │                │            │             │          │
+    │            │             │          │            │                  │                │            │             │          │
+    │ [falloCdM/CTO]           │          │            │                  │                │            │             │          │
+    │            │─enviarSMS(contacto)──►│            │                  │                │            │             │          │
+    │            │             │          │─enviar SMS───────────────────────────────────────────────────────────►│          │
+    │            │             │          │            │                  │                │            │             │          │
+    │            │  [si fallo] │          │            │                  │                │            │             │          │
+    │            │◄───error────│          │            │                  │                │            │             │          │
+    │            │─guardarMensajePendiente()───────────►│                  │                │            │             │          │
+    │            │             │          │            │─guardar(mensaje)─►│                │            │             │          │
+    │            │             │          │            │◄──────ok────────│                │            │             │          │
+    │            │             │          │            │                  │                │            │             │          │
+    │ [falloCdM/GPS]           │          │            │                  │                │            │             │          │
+    │            │─buscarAutoridades(ubicacion)────────►│                  │                │            │             │          │
+    │            │◄───numero──────────────────────────│                  │                │            │             │          │
+    │            │─enviarSMS(numero, msg)───►│            │                  │                │            │             │          │
+    │            │             │          │─enviar SMS───────────────────────────────────────────────────────────►│          │
+    │            │             │          │            │                  │                │            │             │          │
+    │            │─iniciarMonitoreo()──────────────────────────────────────────────────►│            │             │          │
+    │            │             │          │            │                  │                │            │─obtenerIntervalo()─►│
+    │            │             │          │            │                  │                │            │◄──────60──────────│
+    │            │             │          │            │                  │                │            │             │          │
+    │            │             │          │            │                  │                │            │ [loop monitoreo]        │
+    │            │             │          │            │                  │                │            │─verificarConectividad()│
+    │            │             │          │            │                  │                │            │             │          │
+    │            │◄──notificarReconexion(tipo)───────────────────────────────────────────│             │          │
+    │            │─obtenerMensajesPendientes()─────────────►│                │            │             │          │
+    │            │             │          │            │─recuperarPendientes()─►│            │             │          │
+    │            │             │          │            │◄───listaMensajes─────│            │             │          │
+    │            │             │          │            │                  │                │            │             │          │
+    │            │ [reintentar según tipo]              │                  │                │            │             │          │
+    │            │             │─enviarSMS()──►│            │                  │                │            │             │          │
+    │            │             │          │─enviar SMS───────────────────────────────────────────────────────────►│          │
+    │            │─eliminarMensajePendiente(id)───────────►│                  │                │            │             │          │
+    │            │             │          │            │─eliminar(id)──────►│                │            │             │          │
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposición.
+
+
+
+-----
+nueva version
+-----
+
+A continuación, los diagramas solicitados en PlantUML, basados en el Proceso Unificado y el caso de uso UC-011.
+
+1. Diagrama de Actividad
+Refleja el flujo del caso de uso con las decisiones y acciones del sistema.
+
+plantuml
+@startuml
+start
+:El sistema detecta falta de conectividad;
+:Invocar UC-011 con modo por defecto falloCdM;
+
+if (¿Modo de ejecución?) then (falloCdM)
+  :Armar mensaje para CdM\nllamar UC-012 (enviar SMS backup);
+  if (¿Envío exitoso?) then (no)
+    :Llamar UC-037\nGuardar mensaje localmente;
+  else (sí)
+  endif
+  :Buscar número de Autoridades Locales\nllamar UC-013;
+  :Enviar SMS a autoridades\nllamar UC-012;
+  if (¿Envío exitoso?) then (no)
+    :Llamar UC-037\nGuardar mensaje localmente;
+  else (sí)
+  endif
+  :Buscar lista de contactos del usuario;
+  repeat
+    :Enviar SMS a contacto\nllamar UC-012;
+    if (¿Envío exitoso?) then (no)
+      :Llamar UC-037\nGuardar mensaje localmente;
+    else (sí)
+    endif
+  repeat while (¿Más contactos?) is (sí)
+  ->no;
+  :Fin (paso 9);
+  stop
+
+elseif (falloCTO)
+  :Buscar lista de contactos del usuario;
+  repeat
+    :Enviar SMS a contacto\nllamar UC-012;
+    if (¿Envío exitoso?) then (no)
+      :Llamar UC-037\nGuardar mensaje localmente;
+    else (sí)
+    endif
+  repeat while (¿Más contactos?) is (sí)
+  ->no;
+  :Fin (paso 9);
+  stop
+
+else (otro / falloCDM)
+  if (¿Subtipo de fallo?) then (falloGPS)
+    :Llamar UC-037\nGuardar ubicación localmente;
+  else (falloEVD)
+    :Comprimir evidencias;
+    :Llamar UC-037\nGuardar evidencias localmente;
+  endif
+  :Fin (paso 9);
+  stop
+endif
+@enduml
+2. Diagrama de Estados
+Modela los estados por los que pasa el proceso de gestión offline.
+
+plantuml
+@startuml
+[*] --> VerificandoModo : faltaConectividad
+
+state VerificandoModo {
+  [*] --> EvaluarModo
+  EvaluarModo --> EnviandoSMS_CdM : [modo = falloCdM]
+  EvaluarModo --> EnviandoContactos : [modo = falloCTO]
+  EvaluarModo --> AlmacenandoLocal : [modo = otro]
+}
+
+state EnviandoSMS_CdM {
+  [*] --> ArmadoMensaje
+  ArmadoMensaje --> EnvioSMS : enviar(UC-012)
+  EnvioSMS --> [*] : éxito
+  EnvioSMS --> GuardarMensaje : fallo envío
+  GuardarMensaje --> [*] : UC-037
+}
+
+EnviandoSMS_CdM --> BuscandoAutoridades : UC-013
+BuscandoAutoridades --> EnviandoSMS_Autoridades : UC-012
+EnviandoSMS_Autoridades --> EnviandoContactos : éxito
+EnviandoSMS_Autoridades --> GuardarMensaje : fallo envío -> UC-037
+
+state EnviandoContactos {
+  [*] --> ObtenerListaContactos
+  ObtenerListaContactos --> EnvioContacto : por cada contacto
+  EnvioContacto --> GuardarMensaje : fallo envío -> UC-037
+  EnvioContacto --> VerificarMas : éxito
+  VerificarMas --> EnvioContacto : [más contactos]
+  VerificarMas --> [*] : [no más contactos]
+}
+
+EnviandoContactos --> [*] : modo = falloCdM o falloCTO
+
+state AlmacenandoLocal {
+  [*] --> EvaluarSubtipo
+  EvaluarSubtipo --> GuardarUbicacion : [falloGPS]
+  EvaluarSubtipo --> ComprimirEvidencias : [falloEVD]
+  GuardarUbicacion --> [*] : UC-037
+  ComprimirEvidencias --> GuardarEvidencias : UC-037
+  GuardarEvidencias --> [*]
+}
+
+AlmacenandoLocal --> [*]
+
+GuardarMensaje --> [*]
+[*] --> Finalizado
+@enduml
+3. Diagrama de Clases de Análisis
+Identifica las clases con estereotipos del Proceso Unificado:
+
+A (Actor)
+
+I (Interfaz – Boundary)
+
+C (Controlador)
+
+E (Entidad)
+
+plantuml
+@startuml
+' Actor
+class Usuario <<A>> {
+}
+
+' Interfaces (Boundary)
+class IEnvioSMS <<I>> {
+  + enviarSMS(destino, texto, datos)
+}
+
+class IAlmacenamientoLocal <<I>> {
+  + guardarMensaje(mensaje)
+  + guardarUbicacion(ubicacion)
+  + guardarEvidencia(evidencia)
+}
+
+class IBusquedaContactos <<I>> {
+  + obtenerListaContactos() : List<Contacto>
+}
+
+class IBusquedaAutoridades <<I>> {
+  + obtenerAutoridadCercana(ubicacion) : AutoridadLocal
+}
+
+class ICompresion <<I>> {
+  + comprimir(evidencia) : Evidencia
+}
+
+' Controlador
+class CGestorOffline <<C>> {
+  + iniciarGestion(modo)
+  + procesarModoFallCdm()
+  + procesarModoFallCto()
+  + procesarModoFallCdmOtp()
+}
+
+' Entidades
+class Mensaje <<E>> {
+  + datosUsuario
+  + datosDispositivo
+  + ultimaUbicacion
+  + texto
+  + timestamp
+}
+
+class Contacto <<E>> {
+  + nombre
+  + numeroTelefono
+}
+
+class AutoridadLocal <<E>> {
+  + nombre
+  + numeroTelefono
+  + jurisdiccion
+}
+
+class Ubicacion <<E>> {
+  + latitud
+  + longitud
+  + precision
+  + timestamp
+}
+
+class Evidencia <<E>> {
+  + tipo
+  + datos
+  + tamaño
+}
+
+class ConfiguracionModo <<E>> {
+  + modoEjecucion
+  + alarmActiva
+}
+
+' Relaciones
+Usuario        --> IBusquedaContactos : utiliza
+CGestorOffline --> IEnvioSMS
+CGestorOffline --> IAlmacenamientoLocal
+CGestorOffline --> IBusquedaContactos
+CGestorOffline --> IBusquedaAutoridades
+CGestorOffline --> ICompresion
+CGestorOffline --> Mensaje : crea/usa
+CGestorOffline --> Ubicacion : usa
+CGestorOffline --> Evidencia : usa
+CGestorOffline --> ConfiguracionModo : consulta
+IEnvioSMS      --> Mensaje : envía
+IAlmacenamientoLocal --> Mensaje : guarda
+IAlmacenamientoLocal --> Ubicacion : guarda
+IAlmacenamientoLocal --> Evidencia : guarda
+IBusquedaContactos --> Contacto
+IBusquedaAutoridades --> AutoridadLocal
+@enduml
+4. Diagrama de Colaboración (Comunicación)
+Muestra las instancias de las clases de análisis y los mensajes numerados para el escenario principal falloCdM (con envíos SMS exitosos).
+
+plantuml
+@startuml
+object ":CGestorOffline" as ctrl
+object ":IEnvioSMS" as sms
+object ":IAlmacenamientoLocal" as store
+object ":IBusquedaAutoridades" as auth
+object ":IBusquedaContactos" as contacts
+object ":ConfiguracionModo" as conf
+object mensaje ":Mensaje"
+object ubicacion ":Ubicacion"
+object contacto ":Contacto"
+
+ctrl -> conf : 1. obtenerModo() → falloCdM
+ctrl -> mensaje : 2. crear(datosUsuario, dispositivo, ultimaUbicacion)
+ctrl -> sms : 3. enviarSMS(numeroCdM, mensaje)
+sms --> ctrl : éxito
+ctrl -> auth : 4. obtenerAutoridadCercana(ubicacion)
+auth --> ctrl : autoridadLocal
+ctrl -> sms : 5. enviarSMS(autoridadLocal.numero, mensaje)
+sms --> ctrl : éxito
+ctrl -> contacts : 6. obtenerListaContactos()
+contacts --> ctrl : listaContactos
+loop para cada contacto
+  ctrl -> sms : 7. enviarSMS(contacto.numero, mensaje)
+  sms --> ctrl : éxito
+end
+ctrl -> conf : 8. esModo(falloCdM) → true
+ctrl -> ctrl : 9. finalizar()
+@enduml
+(Nota: en flujos alternativos con fallo de envío se agregarían mensajes al objeto :IAlmacenamientoLocal, por ejemplo guardarMensaje(mensaje).)
+
+5. Diagrama de Secuencia (Interacción)
+Representa la comunicación secuencial entre las clases de análisis, incluyendo ciclo de vida con fragmentos combinados para los distintos modos.
+
+plantuml
+@startuml
+participant ":Interfaz Comunicacion Offline" as ICO
+participant ":Gestor Comunicacion Offline" as GCO
+participant ":Gestor Envio SMS" as GEB
+participant ":Gestor Alarma" as GAL
+participant ":Usuario" as EUS
+participant ":Ubicacion" as EUB
+participant ":Gestor Almacenamiento" as GAM
+participant ":Gestor Autoridades" as GAU
+participant ":Autoridad" as EAU
+participant ":Gestor Contactos" as GCT
+participant ":Contacto" as ECO
+participant ":Gestor Evidencias" as GEV
+participant ":Evidencia" as EEV
+participant ":Interfaz Compresion" as ICX
+
+activate ICO
+ICO -> GCO : iniciarGestion(modo)
+activate GCO
+deactivate ICO
+alt modo == falloCdM
+  activate GAL
+  GCO ->  GAL : obtenerDatosUsuario()
+  activate EUS
+  GAL ->  EUS : obtenerNombre()
+  EUS --> GAL : retorno(nombre)
+  deactivate EUS
+  GAL ->  GAL : obtenerUltimaUbicacion()
+  GAL ->  EUB : obtenerUbicacion()
+  GAL ->  EUB : obtenerUbicacion()
+  Ctrl -> Ctrl : armarMensaje()
+  Ctrl -> SMS : enviarSMS(numCdM, mensaje)
+  activate SMS
+  SMS --> Ctrl : ok
+  deactivate SMS
+  opt fallo de envío
+    Ctrl -> Store : guardarMensaje(mensaje)
+    activate Store
+    Store --> Ctrl : confirmado
+    deactivate Store
+  end
+
+  Ctrl -> Auth : obtenerAutoridadCercana(ubicacion)
+  activate Auth
+  Auth --> Ctrl : autoridad
+  deactivate Auth
+  Ctrl -> SMS : enviarSMS(autoridad.numero, mensaje)
+  activate SMS
+  SMS --> Ctrl : ok
+  deactivate SMS
+  opt fallo de envío
+    Ctrl -> Store : guardarMensaje(mensaje)
+    activate Store
+    Store --> Ctrl : confirmado
+    deactivate Store
+  end
+
+  Ctrl -> Contacts : obtenerListaContactos()
+  activate Contacts
+  Contacts --> Ctrl : listaContactos
+  deactivate Contacts
+  loop para cada contacto
+    Ctrl -> SMS : enviarSMS(contacto.numero, mensaje)
+    activate SMS
+    SMS --> Ctrl : ok
+    deactivate SMS
+    opt fallo de envío
+      Ctrl -> Store : guardarMensaje(mensaje)
+      activate Store
+      Store --> Ctrl : confirmado
+      deactivate Store
+    end
+  end
+  Ctrl -> Ctrl : fin UC
+
+else modo == falloCTO
+  Ctrl -> Contacts : obtenerListaContactos()
+  activate Contacts
+  Contacts --> Ctrl : listaContactos
+  deactivate Contacts
+  loop para cada contacto
+    Ctrl -> SMS : enviarSMS(contacto.numero, mensaje)
+    activate SMS
+    SMS --> Ctrl : ok
+    deactivate SMS
+    opt fallo de envío
+      Ctrl -> Store : guardarMensaje(mensaje)
+      activate Store
+      Store --> Ctrl : confirmado
+      deactivate Store
+    end
+  end
+  Ctrl -> Ctrl : fin UC
+
+else otro (falloCDM)
+  alt falloGPS
+    Ctrl -> Store : guardarUbicacion(ubicacion)
+    activate Store
+    Store --> Ctrl : confirmado
+    deactivate Store
+  else falloEVD
+    Ctrl -> Comp : comprimir(evidencia)
+    activate Comp
+    Comp --> Ctrl : evidenciaComprimida
+    deactivate Comp
+    Ctrl -> Store : guardarEvidencia(evidenciaComprimida)
+    activate Store
+    Store --> Ctrl : confirmado
+    deactivate Store
+  end
+  Ctrl -> Ctrl : fin UC
+end
+
+deactivate Ctrl
+@enduml
+Estos diagramas cubren los distintos aspectos del análisis según el Proceso Unificado: flujo de acciones, estados del proceso, estructura estática de clases de análisis y las interacciones dinámicas (colaboración y secuencia) entre ellas.
+
+
+
++------------+
+|   UC-012   |
++------------+
+
+Aquí tienes el análisis completo para el UC-012 Enviar SMS Backup, desarrollado según la metodología del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+🧩 Identificación de Clases de Análisis (Patrón ECB)
+Clase	Estereotipo	Responsabilidad
+ServicioSMS	A (Actor Secundario)	API nativa del sistema operativo que envía los mensajes SMS.
+AutoridadesLocales / ContactosEmergencia	A (Actor Secundario implícito)	Destinatarios finales de los mensajes SMS.
+InterfazSMSBackup	I (Interfaz)	Punto de entrada invocado por UC-011 (Gestión Offline) o UC-031.
+ControlEnvioSMS	C (Controlador)	Orquesta el envío de SMS: valida parámetros, construye mensajes, gestiona división de SMS largos, envía y maneja errores.
+ControlConstruccionMensaje	C (Controlador)	Construye el mensaje SMS cuando no se recibe texto, usando datos de usuario y ubicación. Ajusta formato para mantener info crítica en primer SMS.
+ControlPersistenciaSMS	C (Controlador)	Almacena mensajes en cola local cuando falla el envío (sin crédito, sin cobertura).
+GestorAlarma	C (Controlador)	Proporciona contexto: nombre de usuario, ubicación, timestamp.
+ConfiguracionSMS	E (Entidad)	Almacena límite de caracteres (160), formato de mensaje predefinido.
+ColaSMS	E (Entidad)	Almacena mensajes SMS pendientes de envío con prioridad alta.
+HistorialSMS	E (Entidad)	Registra cada envío de SMS con hora y estado (éxito, fallo, causa).
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Sistema|
+|ServicioSMS|
+start
+:Sistema recibe solicitud de envío SMS (número, mensaje opcional);
+if (¿Número de contacto válido?) then (No)
+  :Sistema registra error y finaliza;
+  stop
+else (Sí)
+  if (¿Mensaje proporcionado?) then (No)
+    :Sistema construye mensaje predefinido\n(nombre, ubicación, hora);
+  else (Sí)
+    if (¿Mensaje supera 160 caracteres?) then (Sí)
+      :Sistema divide mensaje en múltiples SMS concatenados;
+      :Sistema ajusta formato para mantener\ninformación crítica en primer SMS;
+    endif
+  endif
+  
+  :Sistema intenta enviar SMS usando API nativa;
+  if (¿Error de envío?) then (Sí: sin crédito / sin servicio)
+    :Sistema almacena mensaje en cola local con prioridad alta;
+    :Sistema notifica fallo con causa;
+    stop
+  else (No: envío exitoso)
+    :Sistema espera confirmación del SO;
+    :Sistema registra envío exitoso en historial;
+    :Sistema notifica resultado exitoso;
+    stop
+  endif
+endif
+@enduml
+📝 Bosquejo del Diagrama de Actividad
+text
+INICIO
+  │
+  ▼
+[Recibir número de contacto y mensaje opcional]
+  │
+  ├──[Número inválido]──► [Registrar error] ──► FIN
+  │
+  └──[Número válido]──► [Verificar si hay mensaje]
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+        [Mensaje vacío]                [Mensaje presente]
+              │                               │
+              ▼                               ▼
+   [Construir mensaje predefinido]    [Verificar longitud]
+   (nombre, ubicación, hora)                 │
+              │                    ┌──────────┴──────────┐
+              │              [≤ 160 chars]       [> 160 chars]
+              │                    │                    │
+              └────────┬───────────┘                    ▼
+                       │                    [Dividir en múltiples SMS]
+                       │                    [Ajustar formato: info crítica en 1°]
+                       │                              │
+                       └──────────────┬───────────────┘
+                                      ▼
+                         [Enviar SMS vía API nativa]
+                                      │
+                       ┌──────────────┴──────────────┐
+                       │                             │
+                 [Éxito]                       [Error]
+                       │                             │
+                       ▼                             ▼
+         [Esperar confirmación SO]      [Almacenar en cola local]
+                       │                   (prioridad alta)
+                       ▼                             │
+      [Registrar éxito en historial]                 ▼
+                       │                [Notificar fallo con causa]
+                       ▼                             │
+         [Notificar resultado exitoso]               ▼
+                       │                            FIN
+                       ▼
+                      FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado del proceso de envío de un SMS individual.
+
+plantuml
+@startuml
+[*] --> Preparando
+
+state Preparando {
+  [*] --> ValidandoParametros
+  ValidandoParametros --> ConstruyendoMensaje : numeroValido and sinMensaje
+  ValidandoParametros --> VerificandoLongitud : numeroValido and mensajeRecibido
+  ValidandoParametros --> ErrorValidacion : numeroInvalido
+  ConstruyendoMensaje --> VerificandoLongitud : mensajeConstruido()
+  ErrorValidacion --> [*]
+}
+
+state VerificandoLongitud {
+  [*] --> MensajeCorto : longitud <= 160
+  [*] --> DividiendoMensaje : longitud > 160
+  DividiendoMensaje --> MensajesConcatenados : divisionCompleta()
+}
+
+state MensajeCorto --> Enviando
+state MensajesConcatenados --> EnviandoSecuencia
+
+state Enviando {
+  [*] --> EsperandoConfirmacion
+  EsperandoConfirmacion --> EnvioExitoso : confirmacion SO (OK)
+  EsperandoConfirmacion --> ErrorEnvio : error SO (sin crédito/servicio)
+}
+
+state EnviandoSecuencia {
+  [*] --> EnviandoPartes
+  EnviandoPartes --> TodasEnviadas : todas partes OK
+  EnviandoPartes --> ErrorEnvio : error en alguna parte
+}
+
+state ErrorEnvio {
+  [*] --> AlmacenandoCola
+  AlmacenandoCola --> NotificandoFallo : mensajeGuardado()
+  NotificandoFallo --> [*]
+}
+
+state EnvioExitoso {
+  [*] --> RegistrandoHistorial
+  RegistrandoHistorial --> NotificandoExito : registroCompletado()
+  NotificandoExito --> [*]
+}
+
+TodasEnviadas --> EnvioExitoso
+@enduml
+📝 Bosquejo del Diagrama de Estado
+text
+ESTADO: Preparando
+   ├─ ValidandoParametros
+   │     ├─[numero inválido]──► ErrorValidacion ──► [*]
+   │     ├─[sin mensaje]──► ConstruyendoMensaje ──► VerificandoLongitud
+   │     └─[con mensaje]──► VerificandoLongitud
+   │
+   └─ VerificandoLongitud
+         ├─[≤160]──► MensajeCorto ──► Enviando
+         └─[>160]──► DividiendoMensaje ──► MensajesConcatenados ──► EnviandoSecuencia
+
+ESTADO: Enviando
+   └─ EsperandoConfirmacion
+         ├─[OK]──► EnvioExitoso ──► RegistrandoHistorial ──► NotificandoExito ──► [*]
+         └─[Error]──► ErrorEnvio ──► AlmacenandoCola ──► NotificandoFallo ──► [*]
+
+ESTADO: EnviandoSecuencia
+   └─ EnviandoPartes
+         ├─[todas OK]──► TodasEnviadas ──► EnvioExitoso
+         └─[error]──► ErrorEnvio
+3. Diagrama de Clases de Análisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actores Secundarios
+actor "ServicioSMS" as Servicio <<A>>
+actor "ContactosEmergencia" as Contacto <<A>>
+actor "AutoridadesLocales" as Autoridad <<A>>
+
+' Interfaz
+class InterfazSMSBackup <<I>> {
+  +enviarSMSBackup(numero: String, mensaje: String)
+}
+
+' Controladores
+class ControlEnvioSMS <<C>> {
+  +enviarSMS(numero: String, mensaje: String): ResultadoEnvio
+  +validarNumero(numero: String): Boolean
+  +verificarLongitud(mensaje: String): Boolean
+  +dividirMensaje(mensaje: String): List<String>
+  +manejarErrorEnvio(error: Error)
+}
+
+class ControlConstruccionMensaje <<C>> {
+  +construirMensajePredefinido(): String
+  +ajustarFormatoCritico(partes: List<String>): List<String>
+}
+
+class ControlPersistenciaSMS <<C>> {
+  +almacenarEnCola(numero: String, mensaje: String, prioridad: String)
+  +obtenerMensajesPendientes(): List<MensajePendiente>
+}
+
+class GestorAlarma <<C>> {
+  +obtenerNombreUsuario(): String
+  +obtenerUltimaUbicacion(): String
+  +obtenerTimestamp(): DateTime
+}
+
+' Entidades
+class ConfiguracionSMS <<E>> {
+  -limiteCaracteres: int (160)
+  -plantillaMensaje: String
+  +obtenerLimiteCaracteres(): int
+  +obtenerPlantilla(): String
+}
+
+class ColaSMS <<E>> {
+  -mensajesPendientes: List<Mensaje>
+  +agregarMensaje(mensaje: Mensaje)
+  +obtenerSiguiente(): Mensaje
+  +eliminarMensaje(id: String)
+}
+
+class HistorialSMS <<E>> {
+  +registrarEnvio(numero: String, estado: String, causa: String)
+}
+
+' Relaciones
+InterfazSMSBackup --> ControlEnvioSMS : "invoca"
+ControlEnvioSMS --> ControlConstruccionMensaje : "construye mensaje"
+ControlEnvioSMS --> ControlPersistenciaSMS : "almacena en cola si error"
+ControlEnvioSMS --> GestorAlarma : "obtiene contexto"
+ControlEnvioSMS --> ConfiguracionSMS : "consulta límites"
+ControlEnvioSMS --> HistorialSMS : "registra resultado"
+ControlEnvioSMS --> ServicioSMS : "usa API nativa"
+ControlConstruccionMensaje --> GestorAlarma : "obtiene datos"
+ControlPersistenciaSMS --> ColaSMS : "gestiona cola"
+ServicioSMS --> Contacto : "envía SMS"
+ServicioSMS --> Autoridad : "envía SMS"
+@enduml
+📝 Bosquejo del Diagrama de Clases
+text
+Clases:
+- ServicioSMS <<A>>
+- ContactosEmergencia <<A>>
+- AutoridadesLocales <<A>>
+- InterfazSMSBackup <<I>>
+- ControlEnvioSMS <<C>>
+- ControlConstruccionMensaje <<C>>
+- ControlPersistenciaSMS <<C>>
+- GestorAlarma <<C>>
+- ConfiguracionSMS <<E>>
+- ColaSMS <<E>>
+- HistorialSMS <<E>>
+
+Relaciones:
+InterfazSMSBackup ──► ControlEnvioSMS
+ControlEnvioSMS ──► ControlConstruccionMensaje
+ControlEnvioSMS ──► ControlPersistenciaSMS
+ControlEnvioSMS ──► GestorAlarma
+ControlEnvioSMS ──► ConfiguracionSMS
+ControlEnvioSMS ──► HistorialSMS
+ControlEnvioSMS ──► ServicioSMS
+ControlConstruccionMensaje ──► GestorAlarma
+ControlPersistenciaSMS ──► ColaSMS
+ServicioSMS ──► ContactosEmergencia
+ServicioSMS ──► AutoridadesLocales
+4. Diagrama de Colaboración
+Formal (PlantUML)
+plantuml
+@startuml
+object ":InterfazSMSBackup" as interfaz <<I>>
+object ":ControlEnvioSMS" as ctrlSMS <<C>>
+object ":GestorAlarma" as gestor <<C>>
+object ":ControlConstruccionMensaje" as ctrlConstruccion <<C>>
+object ":ConfiguracionSMS" as config <<E>>
+object "ServicioSMS" as servicio <<A>>
+object ":ControlPersistenciaSMS" as ctrlPersistencia <<C>>
+object ":ColaSMS" as cola <<E>>
+object ":HistorialSMS" as historial <<E>>
+
+interfaz -> ctrlSMS : 1: enviarSMSBackup(numero, mensaje)
+
+ctrlSMS -> ctrlSMS : 2: validarNumero(numero)
+
+alt numeroValido
+  alt mensaje == null
+    ctrlSMS -> ctrlConstruccion : 3: construirMensajePredefinido()
+    ctrlConstruccion -> gestor : 4: obtenerNombreUsuario(), obtenerUltimaUbicacion(), obtenerTimestamp()
+    gestor --> ctrlConstruccion : 5: datos
+    ctrlConstruccion -> config : 6: obtenerPlantilla()
+    config --> ctrlConstruccion : 7: plantilla
+    ctrlConstruccion --> ctrlSMS : 8: mensajeConstruido
+  else mensaje != null
+    ctrlSMS -> config : 3: obtenerLimiteCaracteres()
+    config --> ctrlSMS : 4: 160
+    alt mensaje.length() > 160
+      ctrlSMS -> ctrlSMS : 5: dividirMensaje(mensaje)
+      ctrlSMS -> ctrlConstruccion : 6: ajustarFormatoCritico(partes)
+      ctrlConstruccion --> ctrlSMS : 7: partesAjustadas
+    end
+  end
+  
+  ctrlSMS -> servicio : 8: enviarSMS(numero, mensajeFinal)
+  servicio --> ctrlSMS : 9: resultado
+  
+  alt resultado == OK
+    ctrlSMS -> historial : 10: registrarEnvio(numero, "exitoso", null)
+    ctrlSMS --> interfaz : 11: notificarExito
+  else resultado == ERROR
+    ctrlSMS -> ctrlPersistencia : 10: almacenarEnCola(numero, mensaje, "alta")
+    ctrlPersistencia -> cola : 11: agregarMensaje(mensaje)
+    cola --> ctrlPersistencia : 12: ok
+    ctrlPersistencia --> ctrlSMS : 13: almacenado
+    ctrlSMS -> historial : 14: registrarEnvio(numero, "fallo", causa)
+    ctrlSMS --> interfaz : 15: notificarFallo(causa)
+  end
+else numeroInvalido
+  ctrlSMS -> historial : 3: registrarEnvio(numero, "error_validacion", "numero invalido")
+  ctrlSMS --> interfaz : 4: notificarErrorValidacion
+end
+@enduml
+📝 Bosquejo del Diagrama de Colaboración
+text
+Objetos:
+- :InterfazSMSBackup (I)
+- :ControlEnvioSMS (C)
+- :GestorAlarma (C)
+- :ControlConstruccionMensaje (C)
+- :ConfiguracionSMS (E)
+- :ServicioSMS (A)
+- :ControlPersistenciaSMS (C)
+- :ColaSMS (E)
+- :HistorialSMS (E)
+
+Mensajes numerados:
+1. :InterfazSMSBackup ──(enviarSMSBackup)──► :ControlEnvioSMS
+2. :ControlEnvioSMS ──(validarNumero)──► :ControlEnvioSMS (auto)
+
+[Si número válido]
+  [Si mensaje nulo]
+    3-5. Obtener datos de usuario desde GestorAlarma.
+    6-7. Obtener plantilla de ConfiguracionSMS.
+    8. Construir mensaje predefinido.
+  [Si mensaje presente]
+    3-4. Obtener límite 160 de ConfiguracionSMS.
+    5-7. Dividir mensaje y ajustar formato si >160.
+
+8. :ControlEnvioSMS ──(enviarSMS)──► :ServicioSMS
+9. :ServicioSMS ──(resultado)──► :ControlEnvioSMS
+
+  [Si éxito]
+    10. Registrar en HistorialSMS.
+    11. Notificar éxito a la interfaz.
+
+  [Si error]
+    10-13. Almacenar en cola vía ControlPersistenciaSMS y ColaSMS.
+    14. Registrar fallo en HistorialSMS.
+    15. Notificar fallo con causa.
+
+[Si número inválido]
+  3. Registrar error en HistorialSMS.
+  4. Notificar error de validación.
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+participant ":InterfazSMSBackup" as Interfaz <<I>>
+participant ":ControlEnvioSMS" as CtrlSMS <<C>>
+participant ":GestorAlarma" as Gestor <<C>>
+participant ":ControlConstruccionMensaje" as CtrlConstruccion <<C>>
+participant ":ConfiguracionSMS" as Config <<E>>
+actor "ServicioSMS" as Servicio <<A>>
+participant ":ControlPersistenciaSMS" as CtrlPersistencia <<C>>
+participant ":ColaSMS" as Cola <<E>>
+participant ":HistorialSMS" as Historial <<E>>
+
+Interfaz -> CtrlSMS : 1: enviarSMSBackup(numero, mensaje)
+activate CtrlSMS
+
+CtrlSMS -> CtrlSMS : 2: validarNumero(numero)
+
+alt numeroValido
+  alt mensaje == null
+    CtrlSMS -> CtrlConstruccion : 3: construirMensajePredefinido()
+    activate CtrlConstruccion
+    CtrlConstruccion -> Gestor : 4: obtenerNombreUsuario()
+    activate Gestor
+    Gestor --> CtrlConstruccion : 5: nombre
+    deactivate Gestor
+    CtrlConstruccion -> Gestor : 6: obtenerUltimaUbicacion()
+    activate Gestor
+    Gestor --> CtrlConstruccion : 7: ubicacion
+    deactivate Gestor
+    CtrlConstruccion -> Gestor : 8: obtenerTimestamp()
+    activate Gestor
+    Gestor --> CtrlConstruccion : 9: timestamp
+    deactivate Gestor
+    CtrlConstruccion -> Config : 10: obtenerPlantilla()
+    activate Config
+    Config --> CtrlConstruccion : 11: plantilla
+    deactivate Config
+    CtrlConstruccion -> CtrlConstruccion : 12: formatearMensaje(datos, plantilla)
+    CtrlConstruccion --> CtrlSMS : 13: mensajeConstruido
+    deactivate CtrlConstruccion
+  else mensaje != null
+    CtrlSMS -> Config : 3: obtenerLimiteCaracteres()
+    activate Config
+    Config --> CtrlSMS : 4: 160
+    deactivate Config
+    alt mensaje.length() > 160
+      CtrlSMS -> CtrlSMS : 5: dividirMensaje(mensaje)
+      CtrlSMS -> CtrlConstruccion : 6: ajustarFormatoCritico(partes)
+      activate CtrlConstruccion
+      CtrlConstruccion --> CtrlSMS : 7: partesAjustadas
+      deactivate CtrlConstruccion
+    end
+  end
+  
+  CtrlSMS -> Servicio : 14: enviarSMS(numero, mensajeFinal)
+  activate Servicio
+  Servicio --> CtrlSMS : 15: resultado
+  deactivate Servicio
+  
+  alt resultado == "OK"
+    CtrlSMS -> Historial : 16: registrarEnvio(numero, "exitoso", null)
+    activate Historial
+    Historial --> CtrlSMS : 17: registrado
+    deactivate Historial
+    CtrlSMS --> Interfaz : 18: notificarExito
+  else resultado == "ERROR"
+    CtrlSMS -> CtrlPersistencia : 16: almacenarEnCola(numero, mensaje, "alta")
+    activate CtrlPersistencia
+    CtrlPersistencia -> Cola : 17: agregarMensaje(mensaje)
+    activate Cola
+    Cola --> CtrlPersistencia : 18: ok
+    deactivate Cola
+    CtrlPersistencia --> CtrlSMS : 19: almacenado
+    deactivate CtrlPersistencia
+    CtrlSMS -> Historial : 20: registrarEnvio(numero, "fallo", causa)
+    activate Historial
+    Historial --> CtrlSMS : 21: registrado
+    deactivate Historial
+    CtrlSMS --> Interfaz : 22: notificarFallo(causa)
+  end
+else numeroInvalido
+  CtrlSMS -> Historial : 3: registrarEnvio(numero, "error_validacion", "numero invalido")
+  activate Historial
+  Historial --> CtrlSMS : 4: registrado
+  deactivate Historial
+  CtrlSMS --> Interfaz : 5: notificarErrorValidacion
+end
+
+deactivate CtrlSMS
+@enduml
+📝 Bosquejo del Diagrama de Secuencia
+text
+:Interfaz   :CtrlEnvioSMS   :Gestor   :CtrlConstruccion   :Config   ServicioSMS   :CtrlPersistencia   :Cola   :Historial
+    │            │             │            │               │            │               │                │          │
+    │─enviarSMS─►│             │            │               │            │               │                │          │
+    │            │─validarNumero            │               │            │               │                │          │
+    │            │             │            │               │            │               │                │          │
+    │ [número válido]           │            │               │            │               │                │          │
+    │            │             │            │               │            │               │                │          │
+    │            │ [sin mensaje]│            │               │            │               │                │          │
+    │            │─construirMensajePredefinido()─►│               │            │               │                │          │
+    │            │             │◄─obtenerDatos()─│               │            │               │                │          │
+    │            │             │─────datos─────►│               │            │               │                │          │
+    │            │             │            │─obtenerPlantilla()─►│            │               │                │          │
+    │            │             │            │◄───plantilla──────│            │               │                │          │
+    │            │◄──mensajeConstruido──────│               │            │               │                │          │
+    │            │             │            │               │            │               │                │          │
+    │            │ [con mensaje >160]       │               │            │               │                │          │
+    │            │─dividirMensaje()         │               │            │               │                │          │
+    │            │─ajustarFormatoCritico()─►│               │            │               │                │          │
+    │            │◄──partesAjustadas───────│               │            │               │                │          │
+    │            │             │            │               │            │               │                │          │
+    │            │─enviarSMS(numero, mensajeFinal)─────────────────────►│               │                │          │
+    │            │◄────────────resultado────────────────────────────────│               │                │          │
+    │            │             │            │               │            │               │                │          │
+    │            │ [éxito]     │            │               │            │               │                │          │
+    │            │─registrarEnvio(exitoso)─────────────────────────────────────────────────────────────►│
+    │◄─notificarExito─│             │            │               │            │               │                │          │
+    │            │             │            │               │            │               │                │          │
+    │            │ [error]     │            │               │            │               │                │          │
+    │            │─almacenarEnCola(alta)──────────────────────────────►│               │                │          │
+    │            │             │            │               │            │            │─agregarMensaje()─►│          │
+    │            │             │            │               │            │            │◄──────ok─────────│          │
+    │            │◄────────almacenado──────────────────────────────────│               │                │          │
+    │            │─registrarEnvio(fallo)─────────────────────────────────────────────────────────────────►│
+    │◄─notificarFallo(causa)─│             │            │               │            │               │                │          │
+    │            │             │            │               │            │               │                │          │
+    │ [número inválido]        │            │               │            │               │                │          │
+    │            │─registrarEnvio(error_validacion)───────────────────────────────────────────────────────►│
+    │◄─notificarErrorValidacion─│            │               │            │               │                │          │
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposición.
+
+
++------------+
+|   UC-013   |
++------------+
+
+Aquí tienes el análisis completo para el UC-013 Buscar Autoridades Cercanas, desarrollado según la metodología del Proceso Unificado de Jacobson, Booch y Rumbaugh. Se incluyen los diagramas en formato PlantUML y sus correspondientes bosquejos textuales.
+
+🧩 Identificación de Clases de Análisis (Patrón ECB)
+Clase	Estereotipo	Responsabilidad
+Usuario	A (Actor Secundario implícito)	Destinatario final de la información de autoridades (vía SMS u otros medios).
+InterfazBusquedaAutoridades	I (Interfaz)	Punto de entrada invocado por UC-011 (Gestión Offline) o UC-032 (otras notificaciones).
+ControlBusquedaAutoridades	C (Controlador)	Orquesta la búsqueda: recibe coordenadas, consulta API online o base local, filtra, ordena y maneja fallos y reintentos.
+ControlUbicacion	C (Controlador)	Obtiene la ubicación actual mediante UC-034 si no se reciben coordenadas.
+ControlCacheAutoridades	C (Controlador)	Gestiona la caché local de resultados de búsqueda de autoridades, verificando antigüedad y actualizando.
+ControlConectividad	C (Controlador)	Evalúa el estado de la conexión a internet para decidir entre API online o datos locales.
+ServicioAPIAutoridades	A (Actor Secundario)	API externa que proporciona información de autoridades por ubicación.
+ConfiguracionBusqueda	E (Entidad)	Almacena parámetros: radio por defecto (5km), radio máximo (200km), número máximo de resultados (5), antigüedad máxima de caché (3 meses).
+CacheAutoridades	E (Entidad)	Almacena resultados de búsquedas anteriores para uso offline.
+HistorialBusquedas	E (Entidad)	Registra cada búsqueda y su resultado (éxito, fallo, origen de datos).
+DatosEmergenciaGenericos	E (Entidad)	Contiene números de emergencia genéricos (911, 112) como fallback absoluto.
+1. Diagrama de Actividad
+Formal (PlantUML)
+plantuml
+@startuml
+|Sistema|
+|ServicioExterno|
+start
+:Sistema recibe solicitud de búsqueda de autoridades\n(con coordenadas opcionales);
+if (¿Coordenadas proporcionadas?) then (No)
+  :Sistema intenta obtener ubicación actual (UC-034);
+  if (¿Ubicación obtenida?) then (No)
+    :Sistema registra error de ubicación;
+    :Sistema usa números de emergencia genéricos;
+    stop
+  endif
+endif
+
+:Sistema intenta consultar API online de autoridades;
+if (¿API disponible y responde?) then (Sí)
+  :Sistema obtiene lista de autoridades desde API;
+  :Sistema almacena/cachea resultados localmente;
+else (No)
+  :Sistema consulta caché local de autoridades;
+  if (¿Caché disponible?) then (Sí)
+    if (¿Caché desactualizada (>3 meses)?) then (Sí)
+      :Sistema reintenta API (hasta 3 veces);
+      if (¿API responde en reintentos?) then (Sí)
+        :Sistema actualiza caché y usa datos API;
+      else (No)
+        :Sistema usa caché desactualizada con advertencia;
+      endif
+    else (No)
+      :Sistema usa datos de caché;
+    endif
+  else (No)
+    :Sistema usa números de emergencia genéricos;
+    stop
+  endif
+endif
+
+:Sistema filtra resultados por:\n- Ciudad/región\n- Distancia (default 5km)\n- Tipo de autoridad\n- Horario;
+if (¿Resultados en radio configurado?) then (No)
+  :Sistema amplía radio progresivamente hasta 200km;
+  if (¿Resultados encontrados?) then (No)
+    :Sistema usa números de emergencia genéricos;
+    stop
+  endif
+endif
+
+:Sistema ordena resultados por proximidad y relevancia;
+:Sistema devuelve lista (máx 5) con:\n- Nombre, dirección, teléfono\n- Distancia, ETA;
+:Sistema registra búsqueda en historial local;
+stop
+@enduml
+📝 Bosquejo del Diagrama de Actividad
+text
+INICIO
+  │
+  ▼
+[Recibir solicitud con coordenadas opcionales]
+  │
+  ├──[Sin coordenadas]──► [Obtener ubicación (UC-034)]
+  │                           │
+  │                           ├──[Éxito]──► Continuar
+  │                           └──[Fallo]──► [Usar números genéricos] ──► FIN
+  │
+  └──[Con coordenadas]──► [Intentar API online]
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+        [API disponible]                [API no disponible]
+              │                               │
+              ▼                               ▼
+   [Obtener lista de API]          [Consultar caché local]
+              │                               │
+              │                    ┌──────────┴──────────┐
+              │              [Caché existe]       [Sin caché]
+              │                    │                    │
+              │         ┌──────────┴──────────┐         │
+              │   [Actualizada]    [Desactualizada (>3m)]│
+              │         │               │              │
+              │         │               ▼              │
+              │         │      [Reintentar API (≤3)]   │
+              │         │               │              │
+              │         │    ┌──────────┴──────────┐    │
+              │         │ [Éxito]            [Fallo]   │
+              │         │    │                  │      │
+              │         └────┼──────────────────┼──────┘
+              │              │                  │
+              └──────────────┼──────────────────┘
+                             ▼
+              [Filtrar por distancia, tipo, horario]
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+        [Resultados en radio]         [Sin resultados]
+              │                             │
+              │                             ▼
+              │               [Ampliar radio hasta 200km]
+              │                             │
+              │                  ┌──────────┴──────────┐
+              │            [Encuentra]           [No encuentra]
+              │                  │                    │
+              └──────────┬───────┘                    ▼
+                         │                  [Usar números genéricos]
+                         ▼                            │
+       [Ordenar por proximidad/relevancia]            │
+                         │                            │
+                         ▼                            │
+       [Devolver lista máx 5 con detalles]            │
+                         │                            │
+                         ▼                            ▼
+            [Registrar en historial] ←────────────────┘
+                         │
+                         ▼
+                        FIN
+2. Diagrama de Estado
+Formal (PlantUML)
+Enfocado en el estado de la búsqueda de autoridades.
+
+plantuml
+@startuml
+[*] --> RecibiendoSolicitud
+
+state RecibiendoSolicitud {
+  [*] --> VerificandoCoordenadas
+  VerificandoCoordenadas --> ObteniendoUbicacion : sinCoordenadas
+  VerificandoCoordenadas --> BuscandoOnline : conCoordenadas
+  ObteniendoUbicacion --> BuscandoOnline : ubicacionOK
+  ObteniendoUbicacion --> FalloUbicacion : errorUbicacion
+  FalloUbicacion --> UsandoGenericos : usarFallback
+}
+
+state BuscandoOnline {
+  [*] --> ConsultandoAPI
+  ConsultandoAPI --> ResultadosAPI : respuestaExitosa
+  ConsultandoAPI --> FalloAPI : timeout/error
+  
+  FalloAPI --> VerificandoCache
+  VerificandoCache --> CacheDisponible : cacheExiste
+  VerificandoCache --> UsandoGenericos : sinCache
+  
+  CacheDisponible --> VerificandoAntiguedad
+  VerificandoAntiguedad --> UsandoCache : cacheReciente (<3m)
+  VerificandoAntiguedad --> CacheDesactualizada : cacheVieja (>3m)
+  
+  CacheDesactualizada --> ReintentandoAPI : intentos < 3
+  ReintentandoAPI --> ConsultandoAPI
+  CacheDesactualizada --> UsandoCacheAdvertencia : intentosAgotados
+}
+
+state FiltrandoResultados {
+  [*] --> AplicandoFiltros
+  AplicandoFiltros --> ResultadosFiltrados : hayResultados
+  AplicandoFiltros --> AmpliandoRadio : sinResultados
+  AmpliandoRadio --> AplicandoFiltros : nuevoRadio <= 200km
+  AmpliandoRadio --> UsandoGenericos : radioMaximoAlcanzado
+}
+
+state ResultadosFiltrados {
+  [*] --> Ordenando
+  Ordenando --> DevolviendoLista : listaOrdenada()
+  DevolviendoLista --> RegistrandoHistorial : resultadosDevueltos()
+}
+
+state UsandoGenericos {
+  [*] --> DevolviendoGenericos
+  DevolviendoGenericos --> RegistrandoHistorial
+}
+
+RegistrandoHistorial --> [*]
+UsandoCacheAdvertencia --> FiltrandoResultados
+ResultadosAPI --> FiltrandoResultados
+UsandoCache --> FiltrandoResultados
+@enduml
+📝 Bosquejo del Diagrama de Estado
+text
+ESTADO: RecibiendoSolicitud
+   ├─ VerificandoCoordenadas
+   │     ├─[sin coordenadas]──► ObteniendoUbicacion ──► [éxito]──► BuscandoOnline
+   │     ├─[con coordenadas]──► BuscandoOnline
+   │     └─[error ubicación]──► FalloUbicacion ──► UsandoGenericos
+   │
+   └─ BuscandoOnline
+         ├─ ConsultandoAPI
+         │     ├─[éxito]──► ResultadosAPI ──► FiltrandoResultados
+         │     └─[fallo]──► FalloAPI ──► VerificandoCache
+         │                        ├─[sin cache]──► UsandoGenericos
+         │                        └─[cache existe]──► CacheDisponible ──► VerificandoAntiguedad
+         │                              ├─[<3m]──► UsandoCache ──► FiltrandoResultados
+         │                              └─[>3m]──► CacheDesactualizada
+         │                                    ├─[reintento ≤3]──► ReintentandoAPI ──► ConsultandoAPI
+         │                                    └─[sin reintentos]──► UsandoCacheAdvertencia ──► FiltrandoResultados
+
+ESTADO: FiltrandoResultados
+   ├─ AplicandoFiltros
+   │     ├─[hay resultados]──► ResultadosFiltrados
+   │     └─[sin resultados]──► AmpliandoRadio
+   │                              ├─[radio ≤200km]──► AplicandoFiltros
+   │                              └─[radio >200km]──► UsandoGenericos
+   │
+   └─ ResultadosFiltrados
+         └─ Ordenando ──► DevolviendoLista ──► RegistrandoHistorial ──► [*]
+
+ESTADO: UsandoGenericos
+   └─ DevolviendoGenericos ──► RegistrandoHistorial ──► [*]
+3. Diagrama de Clases de Análisis
+Formal (PlantUML)
+plantuml
+@startuml
+' Actores Secundarios
+actor "Usuario" as Usuario <<A>>
+actor "ServicioAPIAutoridades" as API <<A>>
+
+' Interfaz
+class InterfazBusquedaAutoridades <<I>> {
+  +buscarAutoridadesCercanas(coordenadas: Coordenadas)
+}
+
+' Controladores
+class ControlBusquedaAutoridades <<C>> {
+  +buscar(coordenadas: Coordenadas): List<Autoridad>
+  +filtrarPorDistancia(lista: List, centro: Coordenadas, radio: float): List
+  +filtrarPorTipo(lista: List, tipoEmergencia: String): List
+  +ordenarPorProximidad(lista: List, centro: Coordenadas): List
+  +ampliarRadio(radioActual: float): float
+  +usarFallbackGenerico(): List<Autoridad>
+}
+
+class ControlUbicacion <<C>> {
+  +obtenerUbicacionActual(): Coordenadas
+}
+
+class ControlCacheAutoridades <<C>> {
+  +obtenerCache(ubicacion: Coordenadas): List<Autoridad>
+  +guardarCache(ubicacion: Coordenadas, resultados: List<Autoridad>)
+  +verificarAntiguedad(cache: CacheEntry): Boolean
+}
+
+class ControlConectividad <<C>> {
+  +tieneInternet(): Boolean
+  +reintentarConexion(maxIntentos: int): Boolean
+}
+
+' Entidades
+class ConfiguracionBusqueda <<E>> {
+  -radioDefault: float (5km)
+  -radioMaximo: float (200km)
+  -maxResultados: int (5)
+  -antiguedadMaximaCache: int (90 días)
+  +obtenerConfiguracion(): Config
+}
+
+class CacheAutoridades <<E>> {
+  -entradas: List<CacheEntry>
+  +buscar(ubicacion: Coordenadas): List<Autoridad>
+  +guardar(ubicacion: Coordenadas, resultados: List<Autoridad>, timestamp: DateTime)
+}
+
+class HistorialBusquedas <<E>> {
+  +registrarBusqueda(ubicacion: Coordenadas, origen: String, exito: Boolean, resultados: int)
+}
+
+class DatosEmergenciaGenericos <<E>> {
+  -numeros: List<String>
+  +obtenerNumerosGenericos(): List<Autoridad>
+}
+
+' Relaciones
+InterfazBusquedaAutoridades --> ControlBusquedaAutoridades : "invoca"
+ControlBusquedaAutoridades --> ControlUbicacion : "obtiene ubicación si no hay"
+ControlBusquedaAutoridades --> ControlCacheAutoridades : "consulta/actualiza caché"
+ControlBusquedaAutoridades --> ControlConectividad : "verifica conectividad"
+ControlBusquedaAutoridades --> ConfiguracionBusqueda : "consulta parámetros"
+ControlBusquedaAutoridades --> API : "consulta API online"
+ControlBusquedaAutoridades --> HistorialBusquedas : "registra búsqueda"
+ControlBusquedaAutoridades --> DatosEmergenciaGenericos : "usa fallback"
+ControlCacheAutoridades --> CacheAutoridades : "gestiona almacenamiento"
+ControlUbicacion --> Usuario : "obtiene ubicación del dispositivo"
+@enduml
+📝 Bosquejo del Diagrama de Clases
+text
+Clases:
+- Usuario <<A>>
+- ServicioAPIAutoridades <<A>>
+- InterfazBusquedaAutoridades <<I>>
+- ControlBusquedaAutoridades <<C>>
+- ControlUbicacion <<C>>
+- ControlCacheAutoridades <<C>>
+- ControlConectividad <<C>>
+- ConfiguracionBusqueda <<E>>
+- CacheAutoridades <<E>>
+- HistorialBusquedas <<E>>
+- DatosEmergenciaGenericos <<E>>
+
+Relaciones:
+InterfazBusquedaAutoridades ──► ControlBusquedaAutoridades
+ControlBusquedaAutoridades ──► ControlUbicacion
+ControlBusquedaAutoridades ──► ControlCacheAutoridades
+ControlBusquedaAutoridades ──► ControlConectividad
+ControlBusquedaAutoridades ──► ConfiguracionBusqueda
+ControlBusquedaAutoridades ──► ServicioAPIAutoridades
+ControlBusquedaAutoridades ──► HistorialBusquedas
+ControlBusquedaAutoridades ──► DatosEmergenciaGenericos
+ControlCacheAutoridades ──► CacheAutoridades
+ControlUbicacion ──► Usuario
+4. Diagrama de Colaboración
+Formal (PlantUML)
+plantuml
+@startuml
+object ":InterfazBusquedaAutoridades" as interfaz <<I>>
+object ":ControlBusquedaAutoridades" as ctrlBusqueda <<C>>
+object ":ControlUbicacion" as ctrlUbicacion <<C>>
+object ":ControlConectividad" as ctrlConectividad <<C>>
+object ":ConfiguracionBusqueda" as config <<E>>
+object "ServicioAPIAutoridades" as api <<A>>
+object ":ControlCacheAutoridades" as ctrlCache <<C>>
+object ":CacheAutoridades" as cache <<E>>
+object ":DatosEmergenciaGenericos" as genericos <<E>>
+object ":HistorialBusquedas" as historial <<E>>
+
+interfaz -> ctrlBusqueda : 1: buscarAutoridadesCercanas(coordenadas)
+
+alt coordenadas == null
+  ctrlBusqueda -> ctrlUbicacion : 2: obtenerUbicacionActual()
+  ctrlUbicacion --> ctrlBusqueda : 3: coordenadas
+  alt coordenadas == null
+    ctrlBusqueda -> genericos : 4: obtenerNumerosGenericos()
+    genericos --> ctrlBusqueda : 5: listaGenerica
+    ctrlBusqueda -> historial : 6: registrarBusqueda(null, "fallback", false, 0)
+    ctrlBusqueda --> interfaz : 7: listaGenerica
+  end
+end
+
+ctrlBusqueda -> ctrlConectividad : 8: tieneInternet()
+ctrlConectividad --> ctrlBusqueda : 9: conectado
+
+alt conectado
+  ctrlBusqueda -> api : 10: consultarAutoridades(coordenadas, radio)
+  api --> ctrlBusqueda : 11: resultadosAPI
+  ctrlBusqueda -> ctrlCache : 12: guardarCache(coordenadas, resultadosAPI)
+  ctrlCache -> cache : 13: guardar(entrada)
+  cache --> ctrlCache : 14: ok
+else noConectado or errorAPI
+  ctrlBusqueda -> ctrlCache : 10: obtenerCache(coordenadas)
+  ctrlCache -> cache : 11: buscar(coordenadas)
+  cache --> ctrlCache : 12: resultadosCache
+  ctrlCache --> ctrlBusqueda : 13: resultadosCache (con antigüedad)
+  
+  alt resultadosCache == null
+    ctrlBusqueda -> genericos : 14: obtenerNumerosGenericos()
+    genericos --> ctrlBusqueda : 15: listaGenerica
+  else antiguedad > 90 días
+    ctrlBusqueda -> ctrlConectividad : 14: reintentarConexion(3)
+    alt reconexionExitosa
+      ctrlBusqueda -> api : 15: consultarAutoridades(coordenadas, radio)
+      api --> ctrlBusqueda : 16: resultadosAPI
+    else sinReconexion
+      ctrlBusqueda -> ctrlBusqueda : 15: marcarCacheDesactualizada()
+    end
+  end
+end
+
+ctrlBusqueda -> config : 17: obtenerConfiguracion()
+config --> ctrlBusqueda : 18: {radioDefault: 5, radioMax: 200, maxResultados: 5}
+
+ctrlBusqueda -> ctrlBusqueda : 19: filtrarPorDistancia(resultados, coordenadas, radio)
+ctrlBusqueda -> ctrlBusqueda : 20: filtrarPorTipo(resultados, tipoEmergencia)
+
+alt resultadosFiltrados.isEmpty() and radio < 200
+  loop mientras radio < 200 y resultados vacíos
+    ctrlBusqueda -> ctrlBusqueda : 21: ampliarRadio(radio)
+    ctrlBusqueda -> ctrlBusqueda : 22: filtrarPorDistancia(resultados, coordenadas, radio)
+  end
+end
+
+alt resultadosFiltrados.isEmpty()
+  ctrlBusqueda -> genericos : 23: obtenerNumerosGenericos()
+  genericos --> ctrlBusqueda : 24: listaGenerica
+else
+  ctrlBusqueda -> ctrlBusqueda : 23: ordenarPorProximidad(resultados, coordenadas)
+  ctrlBusqueda -> ctrlBusqueda : 24: limitarResultados(maxResultados)
+end
+
+ctrlBusqueda -> historial : 25: registrarBusqueda(coordenadas, origenDatos, exito, cantidad)
+ctrlBusqueda --> interfaz : 26: listaFinal
+@enduml
+📝 Bosquejo del Diagrama de Colaboración
+text
+Objetos:
+- :InterfazBusquedaAutoridades (I)
+- :ControlBusquedaAutoridades (C)
+- :ControlUbicacion (C)
+- :ControlConectividad (C)
+- :ConfiguracionBusqueda (E)
+- :ServicioAPIAutoridades (A)
+- :ControlCacheAutoridades (C)
+- :CacheAutoridades (E)
+- :DatosEmergenciaGenericos (E)
+- :HistorialBusquedas (E)
+
+Mensajes numerados:
+1. Interfaz ──(buscar)──► ControlBusqueda
+
+[Si sin coordenadas]
+2-3. Obtener ubicación actual vía ControlUbicacion.
+4-7. Si falla ubicación, usar números genéricos y registrar.
+
+8-9. Verificar conectividad a internet.
+
+[Conectado]
+10-11. Consultar API externa.
+12-14. Guardar resultados en caché.
+
+[No conectado o error API]
+10-13. Obtener resultados de caché.
+14-16. Si no hay caché, usar genéricos. Si caché desactualizada, reintentar API (≤3) y actualizar.
+
+17-18. Obtener configuración de búsqueda (radios, máximo resultados).
+
+19-20. Filtrar por distancia y tipo.
+21-22. Si no hay resultados, ampliar radio hasta 200km y repetir filtro.
+
+[Si aún sin resultados]
+23-24. Usar números genéricos.
+
+[Si hay resultados]
+23-24. Ordenar por proximidad y limitar a máximo 5.
+
+25. Registrar búsqueda en historial.
+26. Devolver lista final a la interfaz.
+5. Diagrama de Secuencia
+Formal (PlantUML)
+plantuml
+@startuml
+participant ":InterfazBusquedaAutoridades" as Interfaz <<I>>
+participant ":ControlBusquedaAutoridades" as CtrlBusqueda <<C>>
+participant ":ControlUbicacion" as CtrlUbicacion <<C>>
+participant ":ControlConectividad" as CtrlConectividad <<C>>
+participant ":ConfiguracionBusqueda" as Config <<E>>
+actor "ServicioAPIAutoridades" as API <<A>>
+participant ":ControlCacheAutoridades" as CtrlCache <<C>>
+participant ":CacheAutoridades" as Cache <<E>>
+participant ":DatosEmergenciaGenericos" as Genericos <<E>>
+participant ":HistorialBusquedas" as Historial <<E>>
+
+Interfaz -> CtrlBusqueda : 1: buscarAutoridadesCercanas(coordenadas)
+activate CtrlBusqueda
+
+alt coordenadas == null
+  CtrlBusqueda -> CtrlUbicacion : 2: obtenerUbicacionActual()
+  activate CtrlUbicacion
+  CtrlUbicacion --> CtrlBusqueda : 3: coordenadas
+  deactivate CtrlUbicacion
+  alt coordenadas == null
+    CtrlBusqueda -> Genericos : 4: obtenerNumerosGenericos()
+    activate Genericos
+    Genericos --> CtrlBusqueda : 5: listaGenerica
+    deactivate Genericos
+    CtrlBusqueda -> Historial : 6: registrarBusqueda(null, "fallback", false, 0)
+    activate Historial
+    Historial --> CtrlBusqueda : 7: registrado
+    deactivate Historial
+    CtrlBusqueda --> Interfaz : 8: listaGenerica
+    stop
+  end
+end
+
+CtrlBusqueda -> CtrlConectividad : 9: tieneInternet()
+activate CtrlConectividad
+CtrlConectividad --> CtrlBusqueda : 10: conectado
+deactivate CtrlConectividad
+
+alt conectado
+  CtrlBusqueda -> API : 11: consultarAutoridades(coordenadas, radio)
+  activate API
+  API --> CtrlBusqueda : 12: resultadosAPI
+  deactivate API
+  CtrlBusqueda -> CtrlCache : 13: guardarCache(coordenadas, resultadosAPI)
+  activate CtrlCache
+  CtrlCache -> Cache : 14: guardar(entrada)
+  activate Cache
+  Cache --> CtrlCache : 15: ok
+  deactivate Cache
+  deactivate CtrlCache
+else noConectado or errorAPI
+  CtrlBusqueda -> CtrlCache : 11: obtenerCache(coordenadas)
+  activate CtrlCache
+  CtrlCache -> Cache : 12: buscar(coordenadas)
+  activate Cache
+  Cache --> CtrlCache : 13: resultadosCache (con timestamp)
+  deactivate Cache
+  CtrlCache --> CtrlBusqueda : 14: resultadosCache
+  deactivate CtrlCache
+  
+  alt resultadosCache == null
+    CtrlBusqueda -> Genericos : 15: obtenerNumerosGenericos()
+    activate Genericos
+    Genericos --> CtrlBusqueda : 16: listaGenerica
+    deactivate Genericos
+    CtrlBusqueda -> Historial : 17: registrarBusqueda(coordenadas, "fallback", false, 0)
+    activate Historial
+    Historial --> CtrlBusqueda : 18: registrado
+    deactivate Historial
+    CtrlBusqueda --> Interfaz : 19: listaGenerica
+    stop
+  else antiguedad > 90 días
+    CtrlBusqueda -> CtrlConectividad : 15: reintentarConexion(3)
+    activate CtrlConectividad
+    CtrlConectividad --> CtrlBusqueda : 16: reconexionExitosa
+    deactivate CtrlConectividad
+    alt reconexionExitosa
+      CtrlBusqueda -> API : 17: consultarAutoridades(coordenadas, radio)
+      activate API
+      API --> CtrlBusqueda : 18: resultadosAPI
+      deactivate API
+      CtrlBusqueda -> CtrlCache : 19: guardarCache(coordenadas, resultadosAPI)
+      activate CtrlCache
+      CtrlCache -> Cache : 20: guardar(entrada)
+      Cache --> CtrlCache : 21: ok
+      deactivate CtrlCache
+    else sinReconexion
+      CtrlBusqueda -> CtrlBusqueda : 17: usarCacheDesactualizada()
+    end
+  end
+end
+
+CtrlBusqueda -> Config : 22: obtenerConfiguracion()
+activate Config
+Config --> CtrlBusqueda : 23: {radioDefault: 5, radioMax: 200, maxResultados: 5}
+deactivate Config
+
+CtrlBusqueda -> CtrlBusqueda : 24: filtrarPorDistancia(resultados, coordenadas, radioDefault)
+CtrlBusqueda -> CtrlBusqueda : 25: filtrarPorTipo(resultados, tipoEmergencia)
+
+alt resultadosFiltrados.isEmpty() and radioDefault < 200
+  loop mientras radio < 200 y resultados vacíos
+    CtrlBusqueda -> CtrlBusqueda : 26: ampliarRadio(radio)
+    CtrlBusqueda -> CtrlBusqueda : 27: filtrarPorDistancia(resultados, coordenadas, radio)
+  end
+end
+
+alt resultadosFiltrados.isEmpty()
+  CtrlBusqueda -> Genericos : 28: obtenerNumerosGenericos()
+  activate Genericos
+  Genericos --> CtrlBusqueda : 29: listaGenerica
+  deactivate Genericos
+else
+  CtrlBusqueda -> CtrlBusqueda : 28: ordenarPorProximidad(resultados, coordenadas)
+  CtrlBusqueda -> CtrlBusqueda : 29: limitarResultados(maxResultados)
+end
+
+CtrlBusqueda -> Historial : 30: registrarBusqueda(coordenadas, origenDatos, exito, cantidad)
+activate Historial
+Historial --> CtrlBusqueda : 31: registrado
+deactivate Historial
+
+CtrlBusqueda --> Interfaz : 32: listaFinal
+deactivate CtrlBusqueda
+@enduml
+📝 Bosquejo del Diagrama de Secuencia
+text
+:Interfaz   :CtrlBusqueda   :CtrlUbicacion   :CtrlConectividad   :Config   API   :CtrlCache   :Cache   :Genericos   :Historial
+    │            │                │                  │              │       │         │          │          │            │
+    │─buscar───►│                │                  │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [sin coord]│                │                  │              │       │         │          │          │            │
+    │            │─obtenerUbicacion()─►│                  │              │       │         │          │          │            │
+    │            │◄──coordenadas───│                  │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │            │ [si null]      │                  │              │       │         │          │          │            │
+    │            │─obtenerNumerosGenericos()───────────────────────────────────────────────►│          │            │
+    │            │◄──listaGenerica────────────────────────────────────────────────────────│          │            │
+    │            │─registrarBusqueda(fallback)───────────────────────────────────────────────────────────────────►│
+    │◄─listaGenérica─│                │                  │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │            │─tieneInternet()──►│                  │              │       │         │          │          │            │
+    │            │◄──conectado────│                  │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [conectado]│                │                  │              │       │         │          │          │            │
+    │            │─consultarAutoridades(coordenadas)─────────────────►│       │         │          │          │            │
+    │            │◄──resultadosAPI────────────────────────────────────│       │         │          │          │            │
+    │            │─guardarCache()──────────────────────────────►│       │         │          │          │            │
+    │            │                │                  │              │       │         │─guardar()─►│          │            │
+    │            │                │                  │              │       │         │◄──ok─────│          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [no conectado]              │                  │              │       │         │          │          │            │
+    │            │─obtenerCache()──────────────────────────────►│       │         │          │          │            │
+    │            │                │                  │              │       │         │─buscar()─►│          │            │
+    │            │                │                  │              │       │         │◄─resultados─│          │            │
+    │            │◄──resultadosCache──────────────────────────────│       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [sin cache] │                │                  │              │       │         │          │          │            │
+    │            │─obtenerNumerosGenericos()───────────────────────────────────────────────────────────────►│            │
+    │            │─registrarBusqueda(fallback)───────────────────────────────────────────────────────────────────►│
+    │◄─listaGenérica─│                │                  │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [cache vieja]               │                  │              │       │         │          │          │            │
+    │            │─reintentarConexion(3)─►│                  │              │       │         │          │          │            │
+    │            │◄──reconexionExitosa─│                  │              │       │         │          │          │            │
+    │            │─consultarAutoridades()──────────────────────────────►│       │         │          │          │            │
+    │            │◄──resultadosAPI──────────────────────────────────────│       │         │          │          │            │
+    │            │─guardarCache()────────────────────────────────►│       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │            │─obtenerConfiguracion()───────────────────────►│       │         │          │          │            │
+    │            │◄──{radios, max}───────────────────────────────│       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │            │─filtrarPorDistancia()            │              │       │         │          │          │            │
+    │            │─filtrarPorTipo()                │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [sin resultados]            │                  │              │       │         │          │          │            │
+    │            │─ampliarRadio() loop hasta 200km   │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [aún sin resultados]        │                  │              │       │         │          │          │            │
+    │            │─obtenerNumerosGenericos()───────────────────────────────────────────────────────────────►│            │
+    │            │                │                  │              │       │         │          │          │            │
+    │ [con resultados]            │                  │              │       │         │          │          │            │
+    │            │─ordenarPorProximidad()            │              │       │         │          │          │            │
+    │            │─limitarResultados(5)             │              │       │         │          │          │            │
+    │            │                │                  │              │       │         │          │          │            │
+    │            │─registrarBusqueda()─────────────────────────────────────────────────────────────────────────►│
+    │◄──listaFinal──│                │                  │              │       │         │          │          │            │
+Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposición.
+

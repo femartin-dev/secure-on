@@ -1,0 +1,55 @@
+prompt caso de uso
+
++------------+
+|   UC-000   |
++------------+
+
+Hola, dado el caso de uso que te paso a continuacion, necesito que hagas lo siguiente (plantUML y bosquejos)
+Basandote ne el libro El proceso unificado de desarrollo de softawre (PUDS) de Jacobson, Booch y Rumbaugh
+ -Diagrama de Actividad (muy parecido al de estados pero centrado en las acciones del sistema y los actores, replicando el flujo del UC)
+ -Diagrama de Estado
+ -Diagrama de Clases de Analisis (identificar las clases, su estereotipio (A-Actor, I-Interfaz, C-Controlador, E-Entidad), y sus relaciones)
+ -Diagrama de Colaboracion (idem clases de analisis pero incorpora los mensajes que se mandan las clases de analisis entre ellas) 
+ -Diagrama de Secuencia o Ineteraccion (muestra como se comunican las clases en forma secuencial, mostrando tambien su ciclo de vida)
+
+UC-012	Enviar SMS Backup
+Descripción	Envía mensajes SMS de emergencia cuando no hay conectividad a internet, dirigidos a contactos, autoridades cercanas y/o Centro de Monitoreo. Funciona como canal de respaldo crítico.
+Objetivo	Proporcionar notificación básica alternativa cuando fallan todos los canales de internet, utilizando la red celular básica.
+Actor 	n/a	Actores Sec.	Servicio SMS, Autoridades locales, Contactos de emergencia
+Complejidad	Media	Prioridad	Alta
+Usa	No	Extiende	No
+Pre-condiciones	Modo offline ha sido activado 
+Existe cobertura de red celular 
+Hay números de teléfono configurados para notificación por SMS
+El dispositivo tiene crédito o plan de SMS activo 
+Permisos de SMS están concedidos en el dispositivo
+Post-condiciones	Se han enviado SMS a todos los destinatarios configurados para modo offline
+Se registra el envío en el historial local con hora y estado
+Se notifica al UC-011 del resultado de la operación
+Flujo Principal	Flujo Alternativo
+1. El sistema verifica que recibe el número de contacto 	1.A.1. El sistema no recibe el número de contacto, registra el error y continua en el paso 6
+2. El sistema verifica que recibe el mensaje a enviar  	2.A.1. El sistema no recibe el mensaje a enviar o el mensaje supera el máximo de caracteres permitidos
+2.A.2. El sistema arma un mensaje predefinido de máximo de 160 caracteres con el nombre y la ubicación del usuario, y la hora del evento
+3. El sistema envía mensaje SMS utilizando la API nativa del SO del dispositivo	3.A.1. El sistema detecta error de servicio no disponible, o de que se quedó sin crédito para enviar mensajes
+3.A.2. El sistema notifica que el envio no fue correcto e informa causa de error y continua en el paso 5
+4. El sistema recibe confirmación de envio de la API del SO del dispositivo, dentro de la ventana de espera (15 segundos)	4.A.1. El sistema no recibe confirmación de envio dentro de la ventana de espera 
+4.A.2. El sistema incrementa el contador de intentos 
+4.A.3.A.1. El sistema verifica que el intento es menor o igual a 3 y continua en el paso 3 
+4.A.3.B.1. El sistema verifica que el intento es mayor a 3
+4.A.3.B.2. El sistema marca el mensaje como no enviado y continua con el paso 5
+5. El sistema envía exitosamente el mensaje y notifica resultado de éxito 	5.A.1. El sistema no logra enviar el mensaje y notifica la causa del fallo
+6. Fin del UC 	
+Comentarios	Manejar permisos de SMS 
+Considerar costos de SMS en diferentes regiones
+Autor	Fernando Martin	Versión	1.0
+
+
+
+
+
+
+
+
+
+
+

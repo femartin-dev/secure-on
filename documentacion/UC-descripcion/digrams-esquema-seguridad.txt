@@ -1,0 +1,2752 @@
+
+
++------------+
+|   UC-020   |
++------------+
+
+A continuación, se presentan los diagramas en PlantUML (código ejecutable) y los bosquejos en texto ASCII para los casos de uso UC-020, UC-021 y UC-022, siguiendo la metodología del Proceso Unificado de Desarrollo de Software.
+
+UC-020: Registrar Usuario
+1. Diagrama de Actividad (PlantUML)
+plantuml
+@startuml
+|Usuario|
+start
+:Selecciona "Crear cuenta";
+|Sistema|
+:Mostrar formulario con campos obligatorios,
+opcionales y términos;
+|Usuario|
+:Completa campos y acepta términos;
+|Sistema|
+:Validar datos obligatorios y formato;
+if (¿Datos válidos?) then (Sí)
+  :Habilitar botón Registrar;
+  |Usuario|
+  :Presiona "Registrar";
+  |Sistema|
+  :Verificar si email o teléfono ya registrados;
+  if (¿Ya registrado?) then (Sí)
+    if (Email registrado?) then (Sí)
+      :Notificar error y ofrecer corregir email o recuperar contraseña;
+      |Usuario|
+      if (Usuario elige?) then (Cambiar email)
+        :Cambia email;
+        -->|Vuelve a verificar| "Verificar si email o teléfono ya registrados";
+      else (Recuperar contraseña)
+        :Ejecutar UC-025;
+        stop
+      endif
+    else (Teléfono registrado)
+      :Notificar error y ofrecer corregir teléfono o desvincular;
+      |Usuario|
+      if (Usuario elige?) then (Cambiar teléfono)
+        :Cambia teléfono;
+        -->|Vuelve a verificar| "Verificar si email o teléfono ya registrados";
+      else (Desvincular teléfono)
+        :Ejecutar UC-026;
+        if (Desvinculación exitosa?) then (Sí)
+          |Sistema|
+          :Guardar datos transitoriamente (pendiente);
+        else (No)
+          :Mostrar error;
+          stop
+        endif
+      endif
+    endif
+  else (No registrado)
+    :Guardar datos transitoriamente (pendiente);
+    :Enviar código de verificación por email;
+    :Mostrar campo para código y opción reenviar;
+    |Usuario|
+    :Introduce código recibido;
+    |Sistema|
+    :Validar código;
+    if (Código correcto?) then (Sí)
+      :Cambiar estado cuenta a "activa";
+      :Ejecutar UC-026 (registrar teléfono);
+      :Ejecutar UC-017 (configuraciones iniciales);
+      :Fin;
+      stop
+    else (No)
+      :Notificar error;
+      -->|Volver a mostrar campo código| "Mostrar campo para código y opción reenviar";
+    endif
+  endif
+else (No)
+  :Mostrar mensajes de error por campo;
+  -->|Vuelve al formulario| "Mostrar formulario...";
+endif
+@enduml
+Bosquejo ASCII del Diagrama de Actividad (UC-020)
+text
+| Usuario          | | Sistema                          |
+| Inicio           |                                    |
+|   v              |                                    |
+| Selecc. "Crear   |                                    |
+| cuenta"          |                                    |
+|   |------------->| Mostrar formulario               |
+|                  |   v                              |
+|                  | Validar datos obligatorios       |
+|                  |   v                              |
+|                  | ¿Formato correcto?               |
+|         No       |   | Sí                           |
+|   <---------------   |                              |
+|   (error campo)     Habilitar botón Registrar      |
+|                  |   v                              |
+|   (usuario)       |                                |
+|   Presiona Reg    |                                |
+|   |------------->| Verificar email/teléfono      |
+|                  |   v                              |
+|                  | ¿Ya registrado?                 |
+|         Sí       |   | No                           |
+|   (flujo alterno)   |                              |
+|                  | Guardar datos transitoriamente  |
+|                  | Enviar código                   |
+|                  | Mostrar campo código            |
+|   |<-------------|                                |
+|   Introduce código|                               |
+|   |------------->| Validar código                 |
+|                  |   v                              |
+|                  | ¿Correcto?                     |
+|         No       |   | Sí                           |
+|   <---------------   |                              |
+|                  | Activar cuenta                  |
+|                  | Ejecutar UC-026, UC-017         |
+|                  | Fin                             |
+2. Diagrama de Estado (PlantUML)
+plantuml
+@startuml
+[*] --> NoIniciado : Primera ejecución o "Crear cuenta"
+NoIniciado --> PendienteVerificacion : Datos válidos y no duplicados\n(guardar transitoriamente)
+PendienteVerificacion --> Activa : Código verificación correcto
+PendienteVerificacion --> PendienteVerificacion : Reenviar código
+PendienteVerificacion --> Cancelado : Usuario cancela
+Activa --> [*]
+Cancelado --> [*]
+@enduml
+Bosquejo ASCII del Diagrama de Estado (UC-020)
+text
+[*] --> NoIniciado
+NoIniciado --> PendienteVerificacion (datos válidos)
+PendienteVerificacion --> Activa (código correcto)
+PendienteVerificacion --> Cancelado (cancelación)
+Activa --> [*]
+Cancelado --> [*]
+3. Diagrama de Clases de Análisis (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+
+interface PantallaRegistro as I1
+interface PantallaVerificacionCodigo as I2
+
+controlador ControladorRegistro as C1
+controlador ServicioEmail as C3
+
+entidad CuentaUsuario as E1
+entidad CodigoVerificacion as E2
+
+A --> I1
+A --> I2
+I1 --> C1
+I2 --> C1
+C1 --> C3 : enviar email
+C1 --> E1 : crear/actualizar
+C1 --> E2 : generar/validar
+E1 "1" --> "1" E2 : tiene
+@enduml
+Bosquejo ASCII de Clases de Análisis (UC-020)
+text
+<<A>> Usuario
+   |
+   v
+<<I>> PantallaRegistro  -----> <<C>> ControladorRegistro
+<<I>> PantallaVerifCodigo ---/       |        |
+                                     |        v
+                                     |    <<C>> ServicioEmail
+                                     v
+                                <<E>> CuentaUsuario
+                                     |
+                                     | 1
+                                     v
+                                <<E>> CodigoVerificacion
+4. Diagrama de Colaboración (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+interface PantallaRegistro as I1
+interface PantallaVerificacionCodigo as I2
+controlador ControladorRegistro as C
+entidad CuentaUsuario as E1
+entidad CodigoVerificacion as E2
+controlador ServicioEmail as S
+
+A -> I1 : 1: llenar form
+I1 -> C : 2: registrar(datos)
+C -> C : 3: validarFormato()
+C -> E1 : 4: buscar(email,tel)
+E1 --> C : 5: no existe
+C -> E1 : 6: crearTransitorio()
+C -> E2 : 7: generarCodigo()
+E2 --> C : 8: codigo
+C -> S : 9: enviarEmail(codigo)
+S --> C : 10: ok
+C -> I1 : 11: mostrarPantallaCodigo()
+I1 -> I2 : 12: transición
+A -> I2 : 13: ingresar codigo
+I2 -> C : 14: verificarCodigo(cod)
+C -> E2 : 15: validar(cod)
+E2 --> C : 16: correcto
+C -> E1 : 17: actualizarEstado("activa")
+C -> E1 : 18: asociarTelefono() (UC-026)
+C -> I2 : 19: ejecutarUC017()
+I2 --> A : 20: fin
+@enduml
+Bosquejo ASCII Colaboración (UC-020)
+text
+1: form -> PantallaRegistro
+2: registrar(datos) -> ControladorRegistro
+3: validarFormato()
+4: buscar() -> CuentaUsuario
+5: no existe
+6: crearTransitorio()
+7: generarCodigo() -> CodigoVerificacion
+8: codigo
+9: enviarEmail() -> ServicioEmail
+10: ok
+11: mostrarPantallaCodigo() -> PantallaRegistro
+12: mostrar() -> PantallaVerifCodigo
+13: ingresar codigo
+14: verificarCodigo() -> ControladorRegistro
+15: validar() -> CodigoVerificacion
+16: correcto
+17: actualizarEstado()
+18: asociarTelefono()
+19: configuracionesIniciales()
+20: fin
+5. Diagrama de Secuencia (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+participant "PantallaRegistro" as I1
+participant "ControladorRegistro" as C
+participant "CuentaUsuario" as E1
+participant "CodigoVerificacion" as E2
+participant "ServicioEmail" as S
+participant "PantallaVerificacionCodigo" as I2
+
+A -> I1 : llenar form y aceptar términos
+activate I1
+I1 -> C : registrar(datos)
+activate C
+C -> C : validarFormato()
+C -> E1 : buscarPorEmailTel(datos)
+activate E1
+E1 --> C : null
+deactivate E1
+C -> E1 : crearTransitoriamente(datos, "pendiente")
+activate E1
+E1 --> C : ok
+deactivate E1
+C -> E2 : generarCodigo()
+activate E2
+E2 --> C : codigo
+deactivate E2
+C -> S : enviarEmail(codigo, email)
+activate S
+S --> C : enviado
+deactivate S
+C -> I1 : mostrarPantallaCodigo()
+I1 -> I2 : mostrar()
+activate I2
+deactivate I1
+A -> I2 : ingresar codigo
+I2 -> C : verificarCodigo(codigo)
+C -> E2 : validar(codigo)
+activate E2
+E2 --> C : correcto
+deactivate E2
+C -> E1 : actualizarEstado("activa")
+activate E1
+E1 --> C : ok
+deactivate E1
+C -> E1 : registrarTelefono()  [UC-026]
+activate E1
+E1 --> C : ok
+deactivate E1
+C -> I2 : ejecutarConfiguracionesIniciales() [UC-017]
+deactivate C
+I2 --> A : cuenta creada
+deactivate I2
+@enduml
+Bosquejo ASCII Secuencia (UC-020)
+text
+Usuario PantReg   CtrlReg   Cuenta   CodVerif   ServEmail   PantVerif
+  |         |         |        |         |           |          |
+  |--form-->|         |        |         |           |          |
+  |         |--reg-->|         |        |           |          |
+  |         |         |--validarFormato()            |          |
+  |         |         |--buscar()-->|        |           |          |
+  |         |         |<--null-----|        |           |          |
+  |         |         |--crearTrans()-->|        |           |          |
+  |         |         |<--ok--------|        |           |          |
+  |         |         |--generarCod()------->|           |          |
+  |         |         |<--codigo-----|        |           |          |
+  |         |         |--enviarEmail()---------------->|          |
+  |         |         |<--ok------------------|          |
+  |         |<--mostrarPantCodigo|        |           |          |
+  |         |--mostrar()-------------------------------->|          |
+  |<-----------------------------------------------------|          |
+  |--ingresa codigo------------------------------------->|          |
+  |         |         |<--verificarCod(cod)-----|           |          |
+  |         |         |--validar()----------->|           |          |
+  |         |         |<--correcto----|        |           |          |
+  |         |         |--actualizarEstado()-->|           |          |
+  |         |         |--registrarTel()----->|           |          |
+  |         |         |--configInicial()------------------->|          |
+  |<--------------------------------------------------------| mensaje  |
+
+
++------------+
+|   UC-021   |
++------------+
+
+UC-021: Iniciar Sesión Usuario
+1. Diagrama de Actividad (PlantUML)
+plantuml
+@startuml
+|Usuario|
+start
+:Abre la app (no autenticado);
+|Sistema|
+:Mostrar formulario login;
+|Usuario|
+:Ingresa credenciales y pulsa "Iniciar Sesión";
+|Sistema|
+:Validaciones básicas de formato;
+if (Formato correcto?) then (No)
+  :Mostrar error, aumentar contador fallos;
+  if (Contador >= 3?) then (Sí)
+    :Bloquear 3 minutos;
+  endif
+  -->|Volver a mostrar formulario| "Mostrar formulario login";
+else (Sí)
+  :Verificar existencia de cuenta;
+  if (Cuenta existe?) then (No)
+    :Mostrar error, aumentar contador fallos;
+    if (Contador >= 3?) then (Sí)
+      :Bloquear 3 minutos;
+    endif
+    -->|Volver a mostrar formulario| "Mostrar formulario login";
+  else (Sí)
+    :Llamar a Servicio de Autenticación;
+    if (Credenciales válidas?) then (No)
+      :Mostrar error, aumentar contador fallos;
+      if (Contador >= 3?) then (Sí)
+        :Bloquear 3 minutos;
+      endif
+      -->|Volver a mostrar formulario| "Mostrar formulario login";
+    else (Sí)
+      :Recibir token y datos perfil;
+      :Guardar token cifrado;
+      :Sincronizar configuración dispositivo;
+      if (Dispositivo ya vinculado?) then (No)
+        :Ejecutar UC-024 (registrar dispositivo);
+      endif
+      :Cerrar interfaz login;
+      :Redirigir a pantalla principal;
+      stop
+    endif
+  endif
+endif
+@enduml
+Bosquejo ASCII Actividad (UC-021)
+text
+|Usuario|            |Sistema/ServicioAuth|
+ Inicio               |
+   v                  |
+ Abre app -----------> Mostrar formulario
+   v                  |
+ Ingresa creds y      |
+ pulsa "Iniciar"-----> Validaciones formato
+                        |--No--> error, contador, bloqueo? -> volver
+                        |--Sí--> ¿Cuenta existe?
+                                   |--No--> error, contador, bloqueo -> volver
+                                   |--Sí--> Llamar a Servicio Auth
+                                              |--No válidas--> error, contador, bloqueo -> volver
+                                              |--Válidas--> token, datos
+                                                           guardar token
+                                                           sincronizar
+                                                           vincular dispositivo (UC-024)
+                                                           redirigir a pantalla principal
+                                                           Fin
+2. Diagrama de Estado (PlantUML)
+plantuml
+@startuml
+[*] --> NoAutenticado
+NoAutenticado --> Autenticando : Enviar credenciales
+Autenticando --> SesionActiva : Autenticación exitosa
+Autenticando --> Fallo : Credenciales inválidas
+Fallo --> NoAutenticado : Reintentar (contador < 3)
+Fallo --> Bloqueado : Contador >= 3
+Bloqueado --> NoAutenticado : Transcurren 3 minutos
+SesionActiva --> [*] : Cierre de sesión (UC-022)
+@enduml
+Bosquejo ASCII Estado (UC-021)
+text
+[*] -> NoAutenticado
+NoAutenticado -> Autenticando (login)
+Autenticando -> SesionActiva (éxito)
+Autenticando -> Fallo (error)
+Fallo -> NoAutenticado (reintento)
+Fallo -> Bloqueado (3 fallos)
+Bloqueado -> NoAutenticado (tras 3 min)
+SesionActiva -> [*] (cerrar sesión)
+3. Diagrama de Clases de Análisis (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+actor ServicioAutenticacion as ASec
+
+interface PantallaLogin as I1
+interface PantallaPrincipal as I2
+
+controlador ControladorLogin as C1
+controlador GestorSesion as C2
+
+entidad CuentaUsuario as E1
+entidad Dispositivo as E2
+entidad TokenSesion as E3
+
+A --> I1
+A --> I2
+I1 --> C1
+C1 --> ASec
+C1 --> C2
+C1 --> E1
+C1 --> E2
+C2 --> E3
+@enduml
+Bosquejo ASCII Clases (UC-021)
+text
+<<A>> Usuario          <<A>> ServicioAuth
+   |                         ^
+   v                         |
+<<I>> PantallaLogin -------> <<C>> ControladorLogin
+   |                         |   |
+   |                         |   v
+   |                         |  <<C>> GestorSesion
+   v                         |      |
+<<I>> PantallaPrincipal <----+      v
+                                 <<E>> TokenSesion
+<<C>> ControladorLogin también usa <<E>> CuentaUsuario y <<E>> Dispositivo
+4. Diagrama de Colaboración (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+interface PantallaLogin as I1
+controlador ControladorLogin as C
+entidad CuentaUsuario as E1
+actor ServicioAutenticacion as S
+controlador GestorSesion as G
+entidad TokenSesion as T
+interface PantallaPrincipal as I2
+
+A -> I1 : 1: abrir app
+I1 -> C : 2: mostrarFormulario()
+C --> I1 : 3: formulario
+A -> I1 : 4: ingresar credenciales
+I1 -> C : 5: login(user, pass)
+C -> C : 6: validarFormato()
+C -> E1 : 7: existeCuenta(user)
+E1 --> C : 8: true
+C -> S : 9: autenticar(user, pass)
+S --> C : 10: token, perfil
+C -> G : 11: guardarToken(token)
+G -> T : 12: almacenar()
+T --> G : 13: ok
+G --> C : 14: ok
+C -> C : 15: sincronizarConfig()
+C -> I2 : 16: mostrarPantallaPrincipal()
+I2 --> A : 17: sesión iniciada
+@enduml
+Bosquejo ASCII Colaboración (UC-021)
+text
+1: abrir app -> PantallaLogin
+2: mostrarFormulario() -> ControladorLogin
+3: formulario
+4: ingresar creds -> PantallaLogin
+5: login() -> ControladorLogin
+6: validarFormato()
+7: existeCuenta() -> CuentaUsuario
+8: true
+9: autenticar() -> ServicioAuth
+10: token, perfil
+11: guardarToken() -> GestorSesion
+12: almacenar() -> TokenSesion
+13: ok
+14: ok
+15: sincronizarConfig()
+16: mostrarPantallaPrincipal() -> PantallaPrincipal
+17: sesión iniciada
+5. Diagrama de Secuencia (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+participant "PantallaLogin" as I1
+participant "ControladorLogin" as C
+participant "CuentaUsuario" as E1
+participant "ServicioAutenticacion" as S
+participant "GestorSesion" as G
+participant "TokenSesion" as T
+participant "PantallaPrincipal" as I2
+
+A -> I1 : abrir app
+activate I1
+I1 -> C : mostrarFormulario()
+activate C
+C --> I1 : formulario
+deactivate C
+A -> I1 : ingresar credenciales
+I1 -> C : login(user, pass)
+activate C
+C -> C : validarFormato()
+C -> E1 : existeCuenta(user)
+activate E1
+E1 --> C : true
+deactivate E1
+C -> S : autenticar(user, pass)
+activate S
+S --> C : token, perfil
+deactivate S
+C -> G : guardarToken(token)
+activate G
+G -> T : almacenar()
+activate T
+T --> G : ok
+deactivate T
+G --> C : ok
+deactivate G
+C -> C : sincronizarConfig()
+C -> I2 : mostrarPantallaPrincipal()
+activate I2
+deactivate C
+I2 --> A : sesión iniciada
+deactivate I2
+deactivate I1
+@enduml
+Bosquejo ASCII Secuencia (UC-021)
+text
+A       PantLogin   CtrlLogin   Cuenta   ServAuth   GestorSes   Token   PantPrinc
+|          |           |          |         |          |         |         |
+|--abrir-->|           |          |         |          |         |         |
+|          |--mostrar->|          |         |          |         |         |
+|          |<--formulario-|       |         |          |         |         |
+|--creds-->|           |          |         |          |         |         |
+|          |--login()->|          |         |          |         |         |
+|          |           |--validar()         |          |         |         |
+|          |           |--existe()-->|       |          |         |         |
+|          |           |<--true-----|       |          |         |         |
+|          |           |--autenticar()------------>|          |         |         |
+|          |           |<--token+datos-------------|          |         |         |
+|          |           |--guardarToken()-------->|          |         |         |
+|          |           |            |         |--almacenar()------->|         |
+|          |           |            |         |<--ok----------------|         |
+|          |           |<--ok-------|         |          |         |         |
+|          |           |--sincronizar()        |          |         |         |
+|          |           |--mostrarPrincipal()------------------------>|         |
+|          |           |            |         |          |         |--mostrar->|
+|<--------------------------------------------------------------------------|   |
+
+
++------------+
+|   UC-022   |
++------------+
+
+UC-022: Cerrar Sesión Usuario
+1. Diagrama de Actividad (PlantUML)
+plantuml
+@startuml
+|Usuario|
+start
+:Accede a menú de perfil y selecciona "Cerrar Sesión";
+|Sistema|
+:Mostrar diálogo de confirmación;
+|Usuario|
+if (Opción elegida?) then (Cancelar)
+  |Sistema|
+  :Volver a perfil;
+  stop
+else if (Cerrar sesión normal)
+  |Usuario|
+  :Confirma "Cerrar sesión";
+  |Sistema|
+  :Enviar solicitud de invalidación al servicio de autenticación;
+  :Eliminar token local del almacenamiento;
+  :Limpiar datos sensibles de memoria;
+  :Redirigir a pantalla de inicio de sesión;
+  :Mostrar mensaje de confirmación;
+  stop
+else (Cerrar en todos los dispositivos)
+  |Usuario|
+  :Selecciona "Cerrar en todos los dispositivos";
+  |Sistema|
+  :Buscar todos los dispositivos vinculados a la cuenta;
+  :Para cada dispositivo, enviar invalidación al servicio de autenticación;
+  :Eliminar token local;
+  :Limpiar datos sensibles;
+  :Redirigir a login;
+  :Mostrar mensaje;
+  stop
+endif
+@enduml
+Bosquejo ASCII Actividad (UC-022)
+text
+|Usuario|                 |Sistema/ServicioAuth|
+ Inicio                    |
+   v                       |
+ Selecciona "Cerrar Sesión"|
+   |---------------------->| Mostrar diálogo
+   v                       |
+ Elige opción              |
+   |                       |
+   +--Cancelar ----------->| Volver a perfil -> Fin
+   |                       |
+   +--Cerrar sesión normal |
+   |         |------------>| Enviar invalidación
+   |                       | Eliminar token local
+   |                       | Limpiar datos sensibles
+   |                       | Redirigir a login
+   |                       | Mostrar mensaje -> Fin
+   |                       |
+   +--Cerrar todos disp.   |
+             |------------>| Buscar dispositivos vinculados
+                           | Para cada dispositivo: invalidar
+                           | Eliminar token local
+                           | Limpiar datos
+                           | Redirigir a login -> Fin
+2. Diagrama de Estado (PlantUML)
+plantuml
+@startuml
+[*] --> SesionActiva
+SesionActiva --> CerrandoSesion : Selecciona "Cerrar Sesión"
+CerrandoSesion --> Cancelado : Usuario cancela
+Cancelado --> SesionActiva
+CerrandoSesion --> InvalidandoToken : Confirma cierre normal
+InvalidandoToken --> TokenInvalidado : Invalidación exitosa
+TokenInvalidado --> NoAutenticado : Limpieza local
+NoAutenticado --> [*]
+CerrandoSesion --> InvalidandoTodos : Elige cerrar en todos dispositivos
+InvalidandoTodos --> TokenInvalidado : Todas las invalidaciones ok
+@enduml
+Bosquejo ASCII Estado (UC-022)
+text
+[*] -> SesionActiva
+SesionActiva -> CerrandoSesion (clic en cerrar)
+CerrandoSesion -> Cancelado (cancelar) -> SesionActiva
+CerrandoSesion -> InvalidandoToken (confirmar)
+InvalidandoToken -> TokenInvalidado (ok)
+TokenInvalidado -> NoAutenticado (limpiar)
+NoAutenticado -> [*]
+CerrandoSesion -> InvalidandoTodos (cerrar todos)
+InvalidandoTodos -> TokenInvalidado (ok)
+3. Diagrama de Clases de Análisis (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+actor ServicioAutenticacion as ASec
+
+interface PantallaPerfil as I1
+interface DialogoConfirmacion as I2
+interface PantallaLogin as I3
+
+controlador ControladorCerrarSesion as C1
+controlador GestorSesion as C2
+
+entidad CuentaUsuario as E1
+entidad Dispositivo as E2
+entidad TokenSesion as E3
+
+A --> I1
+A --> I2
+I1 --> C1
+I2 --> C1
+C1 --> ASec
+C1 --> C2
+C1 --> E1
+C2 --> E3
+E1 "1" --> "*" E2
+@enduml
+Bosquejo ASCII Clases (UC-022)
+text
+<<A>> Usuario          <<A>> ServicioAuth
+   |                         ^
+   v                         |
+<<I>> PantallaPerfil ----> <<C>> ControladorCerrarSesion
+   |                         |   |
+   v                         |   v
+<<I>> DialogoConfirmacion -->|   <<C>> GestorSesion
+   |                         |      |
+   |                         |      v
+   |                         |   <<E>> TokenSesion
+   |                         v
+   |                      <<E>> CuentaUsuario
+   |                         |
+   |                         v
+   |                      <<E>> Dispositivo
+   v
+<<I>> PantallaLogin <-------+
+4. Diagrama de Colaboración (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+interface PantallaPerfil as I1
+interface DialogoConfirmacion as I2
+controlador ControladorCerrarSesion as C
+actor ServicioAutenticacion as S
+controlador GestorSesion as G
+entidad TokenSesion as T
+entidad CuentaUsuario as E
+entidad Dispositivo as D
+interface PantallaLogin as I3
+
+A -> I1 : 1: selecciona "Cerrar Sesión"
+I1 -> C : 2: iniciarCierre()
+C -> I2 : 3: mostrarDialogo()
+I2 --> A : 4: opciones
+A -> I2 : 5: elige opción
+alt Normal
+  I2 -> C : 6: confirmarCierre()
+  C -> S : 7: invalidarToken()
+  S --> C : 8: ok
+  C -> G : 9: eliminarTokenLocal()
+  G -> T : 10: destruir()
+  T --> G : 11: ok
+  G --> C : 12: ok
+  C -> C : 13: limpiarDatosSensibles()
+  C -> I3 : 14: redirigirALogin()
+  I3 --> A : 15: mensaje
+else CerrarTodos
+  I2 -> C : 6b: cerrarTodos()
+  C -> E : 7b: obtenerDispositivos()
+  E --> C : 8b: lista de D
+  loop por cada D
+    C -> S : 9b: invalidarToken(dispositivo)
+    S --> C : 10b: ok
+  end
+  C -> G : 11b: eliminarTokenLocal()
+  G -> T : 12b: destruir()
+  T --> G : 13b: ok
+  G --> C : 14b: ok
+  C -> C : 15b: limpiarDatos()
+  C -> I3 : 16b: redirigirALogin()
+  I3 --> A : 17b: mensaje
+end
+@enduml
+Bosquejo ASCII Colaboración (UC-022)
+text
+1: "Cerrar Sesión" -> PantallaPerfil
+2: iniciarCierre() -> ControladorCerrarSesion
+3: mostrarDialogo() -> DialogoConfirmacion
+4: opciones
+5: elige opción
+[Caso normal]
+6: confirmarCierre()
+7: invalidarToken() -> ServicioAuth
+8: ok
+9: eliminarTokenLocal() -> GestorSesion
+10: destruir() -> TokenSesion
+11: ok
+12: ok
+13: limpiarDatosSensibles()
+14: redirigirALogin() -> PantallaLogin
+15: mensaje
+[Caso todos dispositivos]
+6b: cerrarTodos()
+7b: obtenerDispositivos() -> CuentaUsuario
+8b: lista Dispositivos
+9b: invalidarToken(disp) -> ServicioAuth (por cada uno)
+10b: ok
+11b: eliminarTokenLocal() -> GestorSesion
+12b: destruir() -> TokenSesion
+13b: ok
+14b: ok
+15b: limpiarDatos()
+16b: redirigirALogin() -> PantallaLogin
+17b: mensaje
+5. Diagrama de Secuencia (PlantUML)
+plantuml
+@startuml
+actor Usuario as A
+participant "PantallaPerfil" as I1
+participant "DialogoConfirmacion" as I2
+participant "ControladorCerrarSesion" as C
+participant "ServicioAutenticacion" as S
+participant "GestorSesion" as G
+participant "TokenSesion" as T
+participant "CuentaUsuario" as E
+participant "PantallaLogin" as I3
+
+A -> I1 : selecciona "Cerrar Sesión"
+activate I1
+I1 -> C : iniciarCierre()
+activate C
+C -> I2 : mostrarDialogo()
+activate I2
+I2 --> A : muestra opciones
+A -> I2 : elige opción (normal)
+I2 -> C : confirmarCierre()
+deactivate I2
+C -> S : invalidarToken()
+activate S
+S --> C : ok
+deactivate S
+C -> G : eliminarTokenLocal()
+activate G
+G -> T : destruir()
+activate T
+T --> G : ok
+deactivate T
+G --> C : ok
+deactivate G
+C -> C : limpiarDatosSensibles()
+C -> I3 : redirigirALogin()
+activate I3
+I3 --> A : mensaje confirmación
+deactivate I3
+deactivate C
+deactivate I1
+@enduml
+Para el caso de "cerrar en todos los dispositivos", reemplazar la parte desde elige opción con:
+
+plantuml
+A -> I2 : elige opción (todos dispositivos)
+I2 -> C : cerrarTodos()
+C -> E : obtenerDispositivos()
+activate E
+E --> C : listaDispositivos
+deactivate E
+loop por cada dispositivo
+  C -> S : invalidarToken(disp)
+  activate S
+  S --> C : ok
+  deactivate S
+end
+C -> G : eliminarTokenLocal()
+... (igual que antes)
+Bosquejo ASCII Secuencia (UC-022)
+text
+A       PantPerf   Dialogo   CtrlCerrar   ServAuth   GestorSes   Token   Cuenta   PantLogin
+|          |          |           |           |          |         |        |          |
+|--cerrar->|          |           |           |          |         |        |          |
+|          |--inicio->|           |           |          |         |        |          |
+|          |          |--mostrar->|           |          |         |        |          |
+|          |          |<--opciones-|           |          |         |        |          |
+|--elige normal------>|           |           |          |         |        |          |
+|          |          |--confirmar()--------->|           |          |         |        |          |
+|          |          |           |--invalidar()-------->|          |         |        |          |
+|          |          |           |<--ok----------------|          |         |        |          |
+|          |          |           |--eliminarLocal()------------->|          |         |        |          |
+|          |          |           |            |          |--destruir()------->|        |          |
+|          |          |           |            |          |<--ok--------------|        |          |
+|          |          |           |<--ok-------|          |         |        |          |
+|          |          |           |--limpiarDatos()       |         |        |          |
+|          |          |           |--redirigir()------------------------------------>|          |
+|          |          |           |            |          |         |        |          |--mostrar->|
+|<-------------------------------------------------------------------------------------| mensaje  |
+Todos los diagramas están expresados en PlantUML (código listo para generar imágenes) y en bosquejos ASCII para rápida comprensión. 
+Puedes copiar el código PlantUML en cualquier editor compatible (como PlantUML online o local) para obtener los gráficos vectoriales.
+
+
++------------+
+|   UC-023   |
++------------+
+
+A continuación, se presentan los diagramas para el UC-023 "Recuperar Contraseña" según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Se incluye notación PlantUML (código ejecutable) y bosquejos ASCII para rápida comprensión.
+
+UC-023: Recuperar Contraseña
+1. Diagrama de Actividad
+PlantUML
+plantuml
+@startuml
+|Usuario|
+start
+:Selecciona "¿Olvidó su contraseña?";
+|Sistema|
+:Mostrar formulario para identificar cuenta (email o teléfono);
+|Usuario|
+:Ingresa email o teléfono y presiona "Recuperar";
+|Sistema|
+:Validar que la cuenta exista y esté activa;
+if (¿Cuenta válida y activa?) then (No)
+  :Aumentar contador de recuperos fallidos;
+  if (Contador fallidos > 3?) then (Sí)
+    :Bloquear recuperación por 15 minutos;
+    -->|Volver a paso 2| "Mostrar formulario...";
+  else (No)
+    -->|Volver a paso 2| "Mostrar formulario...";
+  endif
+else (Sí)
+  if (¿Cuenta bloqueada por sospecha?) then (Sí)
+    :Mostrar mensaje con contacto a CdM;
+    stop
+  endif
+  :Generar código de recuperación (expira en 10 min para email, 3 min para SMS);
+  if (Método = email) then (email)
+    :Enviar código por email;
+  else (teléfono)
+    :Enviar código por SMS;
+  endif
+  :Mostrar pantalla para ingresar código y opción reenviar;
+  |Usuario|
+  :Ingresa código recibido;
+  |Sistema|
+  :Validar código (no expirado, correcto);
+  if (Código válido?) then (No)
+    :Aumentar contador de recuperos fallidos;
+    if (Contador fallidos > 3?) then (Sí)
+      :Bloquear cuenta;
+      :Mostrar mensaje con contacto a CdM;
+      stop
+    else (No)
+      -->|Volver a mostrar pantalla código| "Mostrar pantalla para ingresar código";
+    endif
+  else (Sí)
+    :Mostrar pantalla para nueva contraseña y confirmación;
+    |Usuario|
+    :Ingresa nueva contraseña y confirmación;
+    |Sistema|
+    :Validar coincidencia, formato y que no sea una contraseña previa;
+    if (¿Válida?) then (No)
+      :Mostrar mensaje de error;
+      -->|Volver a mostrar pantalla contraseña| "Mostrar pantalla para nueva contraseña";
+    else (Sí)
+      :Guardar nueva contraseña;
+      :Invalidar todas las sesiones activas;
+      :Redirigir a pantalla de login con mensaje "Contraseña actualizada";
+      stop
+    endif
+  endif
+endif
+@enduml
+Bosquejo ASCII
+text
+|Usuario|                 |Sistema|
+ Inicio                    |
+   v                       |
+ Selecciona "Olvido pass" -> Mostrar formulario identidad
+   v                       |
+ Ingresa email/teléfono    |
+ y presiona "Recuperar"  -> Validar cuenta existente y activa
+                              |-- No -> Aumentar contador fallos
+                              |         |-- fallos>3 -> Bloquear 15 min -> volver
+                              |         |-- fallos<=3 -> volver
+                              |-- Sí -> ¿Cuenta bloqueada? -> Sí -> mostrar contacto CdM -> stop
+                              |         |-- No
+                              |         Generar código (email/SMS)
+                              |         Enviar código
+                              |         Mostrar pantalla código
+   |<-------------------------|
+   v                         |
+ Ingresa código -----------> Validar código
+                              |-- No -> Aumentar contador fallos
+                              |         |-- fallos>3 -> Bloquear cuenta -> mostrar CdM -> stop
+                              |         |-- fallos<=3 -> volver a pantalla código
+                              |-- Sí -> Mostrar pantalla nueva contraseña
+   |<-------------------------|
+   v                         |
+ Ingresa nueva pass -------> Validar coincidencia, formato, no repetida
+                              |-- No -> mostrar error -> volver
+                              |-- Sí -> Guardar pass, invalidar sesiones
+                                       Redirigir a login con mensaje
+                                       stop
+2. Diagrama de Estado
+Representa los estados del proceso de recuperación de contraseña.
+
+PlantUML
+plantuml
+@startuml
+[*] --> SolicitudRecuperacion : Usuario pide recuperar
+SolicitudRecuperacion --> IdentificandoCuenta : Mostrar formulario
+IdentificandoCuenta --> CuentaValida : Datos correctos
+IdentificandoCuenta --> FalloIdentificacion : Cuenta no existe o bloqueada
+FalloIdentificacion --> BloqueoRecuperacion : Fallos > 3
+BloqueoRecuperacion --> SolicitudRecuperacion : Tras 15 min
+CuentaValida --> CodigoEnviado : Enviar código
+CodigoEnviado --> ValidandoCodigo : Usuario ingresa código
+ValidandoCodigo --> CodigoCorrecto : Código válido
+ValidandoCodigo --> FalloCodigo : Código inválido o expirado
+FalloCodigo --> BloqueoCuenta : Fallos > 3
+BloqueoCuenta --> [*] : Contactar CdM
+CodigoCorrecto --> NuevaContraseña : Mostrar formulario
+NuevaContraseña --> ContraseñaValida : Datos correctos
+NuevaContraseña --> ErrorContraseña : No coincide o repetida
+ErrorContraseña --> NuevaContraseña : Reintentar
+ContraseñaValida --> SesionesInvalidadas : Guardar y cerrar sesiones
+SesionesInvalidadas --> [*] : Redirigir a login
+@enduml
+Bosquejo ASCII
+text
+[*] -> SolicitudRecuperacion
+SolicitudRecuperacion -> IdentificandoCuenta
+IdentificandoCuenta -> CuentaValida (éxito)
+IdentificandoCuenta -> FalloIdentificacion (error)
+FalloIdentificacion -> BloqueoRecuperacion (fallos>3)
+BloqueoRecuperacion -> SolicitudRecuperacion (tras 15 min)
+CuentaValida -> CodigoEnviado
+CodigoEnviado -> ValidandoCodigo
+ValidandoCodigo -> CodigoCorrecto (éxito)
+ValidandoCodigo -> FalloCodigo (error)
+FalloCodigo -> BloqueoCuenta (fallos>3)
+BloqueoCuenta -> [*]
+CodigoCorrecto -> NuevaContraseña
+NuevaContraseña -> ContraseñaValida (éxito)
+NuevaContraseña -> ErrorContraseña (error)
+ErrorContraseña -> NuevaContraseña
+ContraseñaValida -> SesionesInvalidadas
+SesionesInvalidadas -> [*]
+3. Diagrama de Clases de Análisis
+Identificación de clases con estereotipos (<<A>> actor, <<I>> interfaz, <<C>> controlador, <<E>> entidad). Se incluyen relaciones.
+
+PlantUML
+plantuml
+@startuml
+actor Usuario as A
+
+interface PantallaLogin as I1
+interface PantallaIdentificacion as I2
+interface PantallaIngresoCodigo as I3
+interface PantallaNuevaPass as I4
+
+controlador ControladorRecuperacion as C1
+controlador ServicioEmail as C2
+controlador ServicioSMS as C3
+controlador GestorSesiones as C4
+
+entidad CuentaUsuario as E1
+entidad CodigoRecuperacion as E2
+entidad ContadorFallosRecuperacion as E3   ' podría ser atributo de CuentaUsuario
+
+A --> I1
+A --> I2
+A --> I3
+A --> I4
+I1 --> C1 : "Olvido contraseña"
+I2 --> C1
+I3 --> C1
+I4 --> C1
+C1 --> C2 : enviar email
+C1 --> C3 : enviar SMS
+C1 --> C4 : invalidar sesiones
+C1 --> E1 : validar/actualizar cuenta
+C1 --> E2 : generar/validar código
+C1 --> E3 : controlar fallos
+E1 "1" --> "1" E2 : temporal
+E1 "1" --> "1" E3 : tiene contador
+@enduml
+Bosquejo ASCII
+text
+<<A>> Usuario
+   |
+   v
+<<I>> PantallaLogin ---------> <<C>> ControladorRecuperacion
+<<I>> PantallaIdentificacion --/       |   |   |   |
+<<I>> PantallaIngresoCodigo -----/     |   |   |   |
+<<I>> PantallaNuevaPass ---------/     |   |   |   |
+                                       |   |   |   v
+                                       |   |   |  <<C>> GestorSesiones
+                                       |   |   v
+                                       |   |  <<C>> ServicioSMS
+                                       |   v
+                                       |  <<C>> ServicioEmail
+                                       v
+                                  <<E>> CuentaUsuario
+                                       |   |
+                                       |   v
+                                       |  <<E>> CodigoRecuperacion
+                                       v
+                                  <<E>> ContadorFallosRecuperacion
+4. Diagrama de Colaboración
+Muestra objetos con mensajes numerados para el flujo principal exitoso (usuario ingresa email, código correcto, nueva contraseña válida).
+
+PlantUML
+plantuml
+@startuml
+actor Usuario as A
+interface PantallaLogin as I1
+interface PantallaIdentificacion as I2
+interface PantallaIngresoCodigo as I3
+interface PantallaNuevaPass as I4
+controlador ControladorRecuperacion as C
+entidad CuentaUsuario as E1
+entidad CodigoRecuperacion as E2
+controlador ServicioEmail as S
+controlador GestorSesiones as G
+
+A -> I1 : 1: "Olvido contraseña"
+I1 -> C : 2: iniciarRecuperacion()
+C -> I2 : 3: mostrarFormularioIdentidad()
+I2 --> A : 4: solicitar email/tel
+A -> I2 : 5: ingresa email
+I2 -> C : 6: verificarCuenta(email)
+C -> E1 : 7: buscar(email)
+E1 --> C : 8: cuentaActiva
+C -> E2 : 9: generarCodigo(email)
+E2 --> C : 10: codigo, expira
+C -> S : 11: enviarEmail(codigo, email)
+S --> C : 12: ok
+C -> I3 : 13: mostrarPantallaCodigo()
+I3 --> A : 14: pedir código
+A -> I3 : 15: ingresa codigo
+I3 -> C : 16: validarCodigo(codigo)
+C -> E2 : 17: verificar(codigo)
+E2 --> C : 18: valido
+C -> I4 : 19: mostrarPantallaNuevaPass()
+I4 --> A : 20: pedir nueva pass
+A -> I4 : 21: ingresa nueva pass y confirmación
+I4 -> C : 22: cambiarPass(nuevaPass)
+C -> C : 23: validarFormato, coincidencia, no repetida
+C -> E1 : 24: actualizarPass(nuevaPass)
+E1 --> C : 25: ok
+C -> G : 26: invalidarTodasSesiones()
+G --> C : 27: ok
+C -> I1 : 28: redirigirLogin(mensaje)
+I1 --> A : 29: "Contraseña actualizada"
+@enduml
+Bosquejo ASCII
+text
+1: "Olvido contraseña" -> PantallaLogin
+2: iniciarRecuperacion() -> ControladorRecuperacion
+3: mostrarFormularioIdentidad() -> PantallaIdentificacion
+4: solicitar email/tel -> Usuario
+5: ingresa email -> PantallaIdentificacion
+6: verificarCuenta(email) -> ControladorRecuperacion
+7: buscar(email) -> CuentaUsuario
+8: cuentaActiva
+9: generarCodigo(email) -> CodigoRecuperacion
+10: codigo, expira
+11: enviarEmail(codigo, email) -> ServicioEmail
+12: ok
+13: mostrarPantallaCodigo() -> PantallaIngresoCodigo
+14: pedir código -> Usuario
+15: ingresa codigo -> PantallaIngresoCodigo
+16: validarCodigo(codigo) -> ControladorRecuperacion
+17: verificar(codigo) -> CodigoRecuperacion
+18: valido
+19: mostrarPantallaNuevaPass() -> PantallaNuevaPass
+20: pedir nueva pass -> Usuario
+21: ingresa nueva pass y confirmación -> PantallaNuevaPass
+22: cambiarPass(nuevaPass) -> ControladorRecuperacion
+23: validarFormato, coincidencia, no repetida
+24: actualizarPass() -> CuentaUsuario
+25: ok
+26: invalidarTodasSesiones() -> GestorSesiones
+27: ok
+28: redirigirLogin(mensaje) -> PantallaLogin
+29: "Contraseña actualizada" -> Usuario
+5. Diagrama de Secuencia
+Muestra la secuencia temporal, líneas de vida, activaciones y ciclo de vida de los objetos. Flujo principal exitoso.
+
+PlantUML
+plantuml
+@startuml
+actor Usuario as A
+participant "PantallaLogin" as I1
+participant "PantallaIdentificacion" as I2
+participant "ControladorRecuperacion" as C
+participant "CuentaUsuario" as E1
+participant "CodigoRecuperacion" as E2
+participant "ServicioEmail" as S
+participant "PantallaIngresoCodigo" as I3
+participant "PantallaNuevaPass" as I4
+participant "GestorSesiones" as G
+
+A -> I1 : "Olvido contraseña"
+activate I1
+I1 -> C : iniciarRecuperacion()
+activate C
+C -> I2 : mostrarFormularioIdentidad()
+activate I2
+I2 --> A : solicitar email/tel
+A -> I2 : ingresa email
+I2 -> C : verificarCuenta(email)
+C -> E1 : buscar(email)
+activate E1
+E1 --> C : cuentaActiva
+deactivate E1
+C -> E2 : generarCodigo(email)
+activate E2
+E2 --> C : codigo, expira
+deactivate E2
+C -> S : enviarEmail(codigo, email)
+activate S
+S --> C : ok
+deactivate S
+C -> I3 : mostrarPantallaCodigo()
+activate I3
+deactivate I2
+I3 --> A : pedir código
+A -> I3 : ingresa codigo
+I3 -> C : validarCodigo(codigo)
+C -> E2 : verificar(codigo)
+activate E2
+E2 --> C : valido
+deactivate E2
+C -> I4 : mostrarPantallaNuevaPass()
+activate I4
+deactivate I3
+I4 --> A : pedir nueva pass
+A -> I4 : ingresa nueva pass y confirmación
+I4 -> C : cambiarPass(nuevaPass)
+C -> C : validar (coincidencia, formato, no repetida)
+C -> E1 : actualizarPass(nuevaPass)
+activate E1
+E1 --> C : ok
+deactivate E1
+C -> G : invalidarTodasSesiones()
+activate G
+G --> C : ok
+deactivate G
+C -> I1 : redirigirLogin("Contraseña actualizada")
+deactivate C
+I1 --> A : mensaje
+deactivate I1
+deactivate I4
+@enduml
+Bosquejo ASCII
+text
+A       PantLogin   PantIdentif   CtrlRec   Cuenta   CodigoRec   ServEmail   PantCodigo   PantNuevaPass   GestorSes
+|          |            |           |         |          |           |            |              |            |
+|--olvido->|            |           |         |          |           |            |              |            |
+|          |--inicio()->|           |         |          |           |            |              |            |
+|          |            |--mostrar()->|         |          |           |            |              |            |
+|          |            |<--solicita email--|         |          |           |            |              |            |
+|--email-->|            |           |         |          |           |            |              |            |
+|          |            |--verificar(email)->|         |          |           |            |              |            |
+|          |            |            |--buscar()-->|         |          |           |            |              |            |
+|          |            |            |<--activa---|         |          |           |            |              |            |
+|          |            |            |--generarCod()--------->|          |           |            |              |            |
+|          |            |            |<--codigo---|         |          |           |            |              |            |
+|          |            |            |--enviarEmail()---------------->|           |            |              |            |
+|          |            |            |<--ok----------------|         |          |           |            |              |            |
+|          |            |            |--mostrarCod()---------------------------->|            |              |            |
+|          |            |            |            |         |          |           |--pedir cod->|              |            |
+|<---------------------------------------------------------------------------|            |              |            |
+|--codigo-------------------------------------------------------------------->|            |              |            |
+|          |            |            |<--validarCod(cod)---------|          |           |            |              |            |
+|          |            |            |--verificar(cod)---------->|          |           |            |              |            |
+|          |            |            |<--valido---|         |          |           |            |              |            |
+|          |            |            |--mostrarNuevaPass()-------------------------------->|              |            |
+|          |            |            |            |         |          |           |            |--pedir pass->|            |
+|<---------------------------------------------------------------------------|            |              |            |
+|--nueva pass------------------------------------------------------------->|            |              |            |
+|          |            |            |<--cambiarPass()---------------------|            |              |            |
+|          |            |            |--validar()   |         |          |           |            |              |            |
+|          |            |            |--actualizarPass()------>|          |           |            |              |            |
+|          |            |            |<--ok--------|         |          |           |            |              |            |
+|          |            |            |--invalidarSesiones()------------------------------------------>|              |            |
+|          |            |            |<--ok--------|         |          |           |            |              |            |
+|          |            |            |--redirigirLogin()------>|          |           |            |              |            |
+|          |<--mensaje--|            |            |         |          |           |            |              |            |
+Ciclo de vida:
+
+PantallaIdentificacion, PantallaIngresoCodigo, PantallaNuevaPass se crean y destruyen según el flujo.
+
+CodigoRecuperacion se crea al generar el código y se destruye tras la validación (o expira).
+
+ControladorRecuperacion vive durante toda la interacción.
+
+GestorSesiones es invocado al final para invalidar sesiones.
+
+Todos los diagramas están listos para ser ejecutados en PlantUML o revisados como bosquejos ASCII. ¿Necesitas ajustar algún detalle o añadir más casos alternativos?
+
+
++------------+
+|   UC-024   |
++------------+
+
+A continuación se presentan los diagramas para el UC-024 "Registrar Dispositivo" según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Se incluye notación PlantUML (código ejecutable) y bosquejos ASCII.
+
+Nota: El actor principal es el sistema (automatizado), pero el usuario actúa como actor secundario en las interacciones de notificación y desvinculación. Para los diagramas, se modela al Usuario como actor.
+
+UC-024: Registrar Dispositivo
+1. Diagrama de Actividad
+PlantUML
+plantuml
+@startuml
+|Sistema|
+start
+:Recopilar información del dispositivo (IMEI, teléfono, modelo, SO, hardware, idioma, zona horaria, etc.);
+:Enviar información al servidor con ID usuario, token sesión y datos dispositivo;
+:Validar que el usuario puede registrar nuevo dispositivo;
+
+if (¿Dispositivo vinculado a otra cuenta activa?) then (Sí)
+  :Notificar al email de la cuenta sobre el intento de vinculación a otra cuenta;
+  :Ofrecer desvincular dispositivo o informar actividad sospechosa;
+  |Usuario|
+  :Usuario elige opción (si aplica);
+  |Sistema|
+  if (Elige desvincular?) then (Sí)
+    :Desvincular dispositivo de la otra cuenta;
+  else (Informar sospecha)
+    :Registrar incidente de seguridad;
+  endif
+  :Informar al usuario que el dispositivo está siendo usado por otra cuenta;
+  -->[Fin alternativo] "Mostrar mensaje y terminar";
+else (No)
+  if (¿Cuenta alcanzó máximo de dispositivos?) then (Sí)
+    :Informar al usuario que debe desvincular un dispositivo existente;
+    :Ofrecer desvincular dispositivo;
+    |Usuario|
+    :Usuario selecciona dispositivo a desvincular;
+    |Sistema|
+    :Desvincular dispositivo seleccionado;
+    :(Continuar con registro);
+  endif
+  :Generar ID para el dispositivo, nombre descriptivo, tipo dispositivo y fecha de registro;
+  :Asociar dispositivo a la cuenta del usuario;
+  :Mostrar mensaje "dispositivo vinculado exitosamente";
+endif
+stop
+@enduml
+Bosquejo ASCII
+text
+|Sistema|                        |Usuario|
+ Inicio                            |
+   v                               |
+ Recopilar datos dispositivo       |
+   v                               |
+ Enviar al servidor                |
+   v                               |
+ Validar posibilidad registro      |
+   |                               |
+   +-- ¿Vinculado a otra cuenta? --Sí---> Notificar email y ofrecer opciones
+   |                               |      |                               |
+   |                               |      v                               |
+   |                               |   ¿Desvincular? --Sí--> Desvincular  |
+   |                               |      |                               |
+   |                               |      No (informar sospecha)          |
+   |                               |      |                               |
+   |                               |      v                               |
+   |                               |   Informar usuario conflicto         |
+   |                               |      |                               |
+   |                               |      v                               |
+   |                               |   [Fin alternativo]                  |
+   |                               |                                      |
+   |                               No                                      |
+   |                               |                                      |
+   |                               +-- ¿Máximo alcanzado? --Sí--> Informar al usuario
+   |                               |      |                               |
+   |                               |      v                               |
+   |                               |   Ofrecer desvincular dispositivo    |
+   |                               |      |                               |
+   |                               |      v                               |
+   |                               |   Usuario selecciona dispositivo     |
+   |                               |      |                               |
+   |                               |      v                               |
+   |                               |   Sistema desvincula                 |
+   |                               |      |                               |
+   |                               |      v                               |
+   |                               |   (continúa)                         |
+   |                               |                                      |
+   |                               No                                      |
+   |                               |                                      |
+   |                               v                                      |
+   |                          Generar ID, nombre, tipo, fecha              |
+   |                               |                                      |
+   |                               v                                      |
+   |                          Asociar dispositivo a cuenta                |
+   |                               |                                      |
+   |                               v                                      |
+   |                          Mostrar mensaje éxito                       |
+   |                               |                                      |
+   v                               v                                      |
+ Fin                                                                       |
+2. Diagrama de Estado
+Representa los estados por los que pasa el proceso de registro de un dispositivo.
+
+PlantUML
+plantuml
+@startuml
+[*] --> RecopilandoInfo : Inicio del proceso
+RecopilandoInfo --> EnviandoAlServidor : Datos recopilados
+EnviandoAlServidor --> ValidandoVinculacion : Datos enviados
+ValidandoVinculacion --> DispositivoLibre : No vinculado a otra cuenta
+ValidandoVinculacion --> ConflictoOtraCuenta : Vinculado a otra cuenta
+ConflictoOtraCuenta --> ResolviendoConflicto : Notificar usuario
+ResolviendoConflicto --> DispositivoLibre : Desvinculación exitosa
+ResolviendoConflicto --> RegistroCancelado : Usuario informa sospecha o no desvincula
+DispositivoLibre --> VerificandoLimite : Cuenta válida
+VerificandoLimite --> CapacidadDisponible : Hay cupo
+VerificandoLimite --> ExcedenteLimite : Máximo alcanzado
+ExcedenteLimite --> DesvinculandoExistente : Usuario elige desvincular
+DesvinculandoExistente --> CapacidadDisponible : Desvinculación ok
+CapacidadDisponible --> GenerandoPerfil : Crear perfil dispositivo
+GenerandoPerfil --> AsociandoACuenta : ID generado
+AsociandoACuenta --> RegistroExitoso : Asociación completa
+RegistroExitoso --> [*]
+RegistroCancelado --> [*]
+@enduml
+Bosquejo ASCII
+text
+[*] -> RecopilandoInfo
+RecopilandoInfo -> EnviandoAlServidor
+EnviandoAlServidor -> ValidandoVinculacion
+ValidandoVinculacion -> DispositivoLibre (no conflicto)
+ValidandoVinculacion -> ConflictoOtraCuenta (sí conflicto)
+ConflictoOtraCuenta -> ResolviendoConflicto
+ResolviendoConflicto -> DispositivoLibre (desvincula)
+ResolviendoConflicto -> RegistroCancelado (no desvincula)
+DispositivoLibre -> VerificandoLimite
+VerificandoLimite -> CapacidadDisponible (cupo)
+VerificandoLimite -> ExcedenteLimite (sin cupo)
+ExcedenteLimite -> DesvinculandoExistente
+DesvinculandoExistente -> CapacidadDisponible
+CapacidadDisponible -> GenerandoPerfil
+GenerandoPerfil -> AsociandoACuenta
+AsociandoACuenta -> RegistroExitoso
+RegistroExitoso -> [*]
+RegistroCancelado -> [*]
+3. Diagrama de Clases de Análisis
+Identificación de clases con estereotipos: Actor secundario Usuario, interfaces (pantallas de notificación), controladores, entidades.
+
+PlantUML
+plantuml
+@startuml
+actor Usuario as A   ' actor secundario
+
+interface INotificacionDispositivo as I1   ' muestra mensajes de conflicto, éxito, etc.
+interface ISeleccionDesvinculacion as I2   ' para elegir dispositivo a desvincular
+
+controlador ControladorRegistroDispositivo as C1
+controlador ServicioNotificacionEmail as C2
+controlador ServicioDesvinculacion as C3
+
+entidad Dispositivo as E1
+entidad CuentaUsuario as E2
+entidad ConfiguracionDispositivo as E3
+
+A --> I1
+A --> I2
+I1 --> C1
+I2 --> C1
+C1 --> C2 : enviar email
+C1 --> C3 : desvincular dispositivo
+C1 --> E1 : crear/consultar
+C1 --> E2 : validar límite, asociar
+E2 "1" --> "*" E1 : tiene
+E1 "1" --> "1" E3 : configuración
+@enduml
+Bosquejo ASCII
+text
+<<A>> Usuario (secundario)
+   |
+   v
+<<I>> INotificacionDispositivo ---> <<C>> ControladorRegistroDispositivo
+<<I>> ISeleccionDesvinculacion ---/       |   |   |
+                                          |   |   v
+                                          |   |  <<C>> ServicioDesvinculacion
+                                          |   v
+                                          |  <<C>> ServicioNotificacionEmail
+                                          v
+                                     <<E>> CuentaUsuario
+                                          |
+                                          | 1..*
+                                          v
+                                     <<E>> Dispositivo
+                                          |
+                                          | 1
+                                          v
+                                     <<E>> ConfiguracionDispositivo
+4. Diagrama de Colaboración
+Muestra objetos y mensajes numerados para el flujo principal exitoso (sin conflictos y con cupo disponible). Se asume que el usuario no interviene directamente en el flujo principal.
+
+PlantUML
+plantuml
+@startuml
+actor Usuario as A   ' indirecto
+interface INotificacionDispositivo as I1
+controlador ControladorRegistroDispositivo as C
+entidad CuentaUsuario as E1
+entidad Dispositivo as E2
+entidad ConfiguracionDispositivo as E3
+
+C -> C : 1: recopilarDatosDispositivo()
+C -> C : 2: enviarAlServidor(datos)
+C -> E1 : 3: validarUsuarioPuedeRegistrar(usuarioId)
+E1 --> C : 4: ok, límite no excedido
+C -> E1 : 5: verificarVinculacionOtraCuenta(imei)
+E1 --> C : 6: no vinculado
+C -> C : 7: generarIdDispositivo()
+C -> E2 : 8: crearDispositivo(id, tipo, fecha)
+E2 --> C : 9: ok
+C -> E3 : 10: crearConfiguracionPorDefecto(dispositivoId)
+E3 --> C : 11: ok
+C -> E1 : 12: asociarDispositivoACuenta(usuarioId, dispositivoId)
+E1 --> C : 13: ok
+C -> I1 : 14: mostrarMensajeExito("dispositivo vinculado")
+I1 --> A : 15: mensaje visible
+@enduml
+Bosquejo ASCII
+text
+ControladorRegistroDispositivo (C)
+1: recopilarDatosDispositivo()
+2: enviarAlServidor(datos)
+3: validarUsuarioPuedeRegistrar() -> CuentaUsuario (E1)
+4: ok, límite no excedido
+5: verificarVinculacionOtraCuenta(imei) -> E1
+6: no vinculado
+7: generarIdDispositivo()
+8: crearDispositivo() -> Dispositivo (E2)
+9: ok
+10: crearConfiguracionPorDefecto() -> ConfiguracionDispositivo (E3)
+11: ok
+12: asociarDispositivoACuenta() -> E1
+13: ok
+14: mostrarMensajeExito() -> INotificacionDispositivo (I1)
+15: mensaje visible -> Usuario (A)
+5. Diagrama de Secuencia
+Muestra la secuencia temporal, líneas de vida y ciclo de vida de los objetos. Flujo principal exitoso.
+
+PlantUML
+plantuml
+@startuml
+participant "Sistema" as S   ' el propio sistema recopila
+participant "ControladorRegistroDispositivo" as C
+participant "CuentaUsuario" as E1
+participant "Dispositivo" as E2
+participant "ConfiguracionDispositivo" as E3
+participant "INotificacionDispositivo" as I1
+actor Usuario as A
+
+S -> C : iniciarRegistro()
+activate C
+C -> C : recopilarDatosDispositivo()
+C -> C : enviarAlServidor(datos)
+C -> E1 : validarUsuarioPuedeRegistrar(usuarioId)
+activate E1
+E1 --> C : ok (límite no excedido)
+deactivate E1
+C -> E1 : verificarVinculacionOtraCuenta(imei)
+activate E1
+E1 --> C : no vinculado
+deactivate E1
+C -> C : generarIdDispositivo()
+C -> E2 : crearDispositivo(id, tipo, fecha)
+activate E2
+E2 --> C : ok
+deactivate E2
+C -> E3 : crearConfiguracionPorDefecto(dispositivoId)
+activate E3
+E3 --> C : ok
+deactivate E3
+C -> E1 : asociarDispositivoACuenta(usuarioId, dispositivoId)
+activate E1
+E1 --> C : ok
+deactivate E1
+C -> I1 : mostrarMensajeExito("dispositivo vinculado")
+activate I1
+I1 --> A : mensaje visible
+deactivate I1
+deactivate C
+@enduml
+Ciclo de vida:
+
+ControladorRegistroDispositivo se crea al inicio del caso de uso y se destruye al final.
+
+Dispositivo y ConfiguracionDispositivo se crean durante el flujo y persisten en el sistema.
+
+INotificacionDispositivo es una interfaz transitoria que se muestra y luego se destruye.
+
+Bosquejo ASCII
+text
+Sistema   CtrlReg   CuentaUsu   Dispositivo   ConfigDisp   InterfazNotif   Usuario
+   |         |          |            |             |            |             |
+   |--inicio->|          |            |             |            |             |
+   |         |--recopilar()          |             |            |             |
+   |         |--enviar()             |             |            |             |
+   |         |--validar()---------->|             |            |             |
+   |         |<--ok----------------|             |            |             |
+   |         |--verificarVincul()-->|             |            |             |
+   |         |<--no vinculado------|             |            |             |
+   |         |--generarId()         |             |            |             |
+   |         |--crearDispositivo()------------>|            |             |
+   |         |<--ok---------------------------|            |             |
+   |         |--crearConfig()--------------------------->|             |
+   |         |<--ok--------------------------------------|             |
+   |         |--asociar()----------->|             |            |             |
+   |         |<--ok----------------|             |            |             |
+   |         |--mostrarExito()-------------------------------->|             |
+   |         |            |            |             |            |--mensaje-->|
+   |<--------|            |            |             |            |             |
+Todos los diagramas están listos para ser ejecutados en PlantUML o revisados como bosquejos ASCII. ¿Necesitas ajustes o agregar más detalles?
+
++------------+
+|   UC-025   |
++------------+
+
+Aquí tienes los diagramas completos para el caso de uso UC-025 "Gestionar Operadores" según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Se incluye notación PlantUML (código ejecutable) y bosquejos ASCII para cada uno de los cinco diagramas solicitados.
+
+Dado que el caso de uso es complejo y contiene múltiples flujos alternativos (crear, editar, eliminar, habilitar/deshabilitar, restablecer contraseña, ver historial), los diagramas se centran en el flujo principal (crear un nuevo operador) y se indican las variantes principales en el diagrama de actividad.
+
+UC-025: Gestionar Operadores
+1. Diagrama de Actividad
+PlantUML
+plantuml
+@startuml
+|Administrador CdM|
+start
+:Accede a "Gestión de Operadores";
+|Sistema|
+:Mostrar lista de operadores existentes con acciones;
+|Administrador CdM|
+if (Acción seleccionada?) then (Añadir nuevo)
+  |Sistema|
+  :Mostrar formulario de alta (datos personales, legajo, rol, turno);
+  |Administrador CdM|
+  :Llenar datos y presionar Aceptar;
+  |Sistema|
+  :Validar formato y unicidad (correo, legajo);
+  if (¿Datos válidos?) then (No)
+    :Mostrar mensaje de error en campos inválidos;
+    -->|Volver a formulario| "Mostrar formulario de alta";
+  else (Sí)
+    :Guardar operador con estado "pendiente activación";
+    :Ejecutar UC-028 (restablecer contraseña);
+    :Mostrar mensaje "operación exitosa";
+    :Refrescar lista;
+    -->|Volver a lista| "Mostrar lista de operadores";
+  endif
+else if (Editar operador)
+  |Sistema|
+  :Mostrar formulario con datos existentes (legajo deshabilitado);
+  |Administrador CdM|
+  :Modificar datos y presionar Aceptar;
+  |Sistema|
+  :Validar formato y unicidad (excepto legajo);
+  if (¿Datos válidos?) then (Sí)
+    :Actualizar operador;
+    :Registrar auditoría;
+    :Notificar cambios por email;
+    :Mostrar mensaje éxito y refrescar lista;
+  else
+    :Mostrar error y volver al formulario;
+  endif
+else if (Eliminar operador)
+  |Sistema|
+  :Mostrar diálogo con motivo obligatorio;
+  |Administrador CdM|
+  :Seleccionar motivo y confirmar;
+  |Sistema|
+  if (¿Motivo seleccionado?) then (Sí)
+    :Borrar operador (baja lógica);
+    :Registrar auditoría con motivo;
+    :Refrescar lista;
+  else
+    :Mostrar error "debe seleccionar motivo";
+    -->|Volver a diálogo| "Mostrar diálogo con motivo";
+  endif
+else if (Habilitar/Deshabilitar)
+  |Sistema|
+  :Mostrar diálogo con motivo obligatorio;
+  |Administrador CdM|
+  :Seleccionar motivo y confirmar;
+  |Sistema|
+  if (¿Motivo seleccionado?) then (Sí)
+    :Cambiar estado del operador;
+    :Registrar auditoría;
+    :Enviar email al operador (estado, motivo, responsable);
+    :Refrescar lista;
+  else
+    :Mostrar error y volver al diálogo;
+  endif
+else if (Restablecer contraseña)
+  |Sistema|
+  :Ejecutar UC-028 (restablecer contraseña);
+  :Refrescar lista;
+else if (Ver historial)
+  |Sistema|
+  :Ejecutar UC-033 (consultar historial filtrado por operador);
+  :Volver a lista;
+endif
+stop
+@enduml
+Bosquejo ASCII
+text
+|Administrador CdM|              |Sistema|
+ Inicio                           |
+   v                              |
+ Accede a Gestión Operadores ---> Mostrar lista
+   v                              |
+ Elige acción                     |
+   |                              |
+   +-- Añadir nuevo -------------> Mostrar formulario alta
+   |   |                          |
+   |   v                          |
+   |  Llena datos y acepta -----> Validar formato y unicidad
+   |                              |-- No -> mostrar error -> volver
+   |                              |-- Sí -> guardar (pendiente)
+   |                                       ejecutar UC-028
+   |                                       mensaje éxito, refrescar lista
+   |
+   +-- Editar -------------------> Mostrar formulario edición (legajo fijo)
+   |   |                          |
+   |   v                          |
+   |  Modifica y acepta --------> Validar
+   |                              |-- Sí -> actualizar, auditar, email, refrescar
+   |                              |-- No -> error y volver
+   |
+   +-- Eliminar -----------------> Diálogo con motivo obligatorio
+   |   |                          |
+   |   v                          |
+   |  Selecciona motivo y confirma
+   |                              |-- ¿motivo? No -> error, volver
+   |                              |-- Sí -> baja lógica, auditar, refrescar
+   |
+   +-- Habilitar/Deshabilitar ---> Diálogo con motivo
+   |   |                          |
+   |   v                          |
+   |  Selecciona motivo y confirma
+   |                              |-- ¿motivo? No -> error
+   |                              |-- Sí -> cambiar estado, auditar
+   |                                       enviar email, refrescar
+   |
+   +-- Restablecer contraseña ---> Ejecutar UC-028, refrescar
+   |
+   +-- Ver historial ------------> Ejecutar UC-033, luego volver a lista
+   |
+   v
+ Fin
+2. Diagrama de Estado
+Representa los estados por los que puede pasar un Operador desde su creación hasta su eliminación.
+
+PlantUML
+plantuml
+@startuml
+[*] --> PendienteActivacion : Administrador crea operador
+PendienteActivacion --> Activo : Administrador activa (o al establecer contraseña vía UC-028)
+Activo --> Inactivo : Administrador deshabilita
+Inactivo --> Activo : Administrador habilita
+Activo --> Eliminado : Administrador elimina (baja lógica)
+Inactivo --> Eliminado : Administrador elimina
+PendienteActivacion --> Eliminado : Administrador elimina antes de activar
+Eliminado --> [*]
+@enduml
+Bosquejo ASCII
+text
+[*] -> PendienteActivacion (crear)
+PendienteActivacion -> Activo (activar / UC-028)
+Activo -> Inactivo (deshabilitar)
+Inactivo -> Activo (habilitar)
+Activo -> Eliminado (eliminar)
+Inactivo -> Eliminado (eliminar)
+PendienteActivacion -> Eliminado (eliminar)
+Eliminado -> [*]
+3. Diagrama de Clases de Análisis
+Identificación de clases con estereotipos (<<A>> actor, <<I>> interfaz, <<C>> controlador, <<E>> entidad). Relaciones incluidas.
+
+PlantUML
+plantuml
+@startuml
+actor AdministradorCdM as A
+
+interface PantallaGestionOperadores as I1   ' lista con acciones
+interface FormularioOperador as I2          ' alta/edición
+interface DialogoMotivo as I3               ' para eliminar/habilitar
+
+controlador ControladorGestionOperadores as C1
+controlador ServicioNotificacionEmail as C2
+controlador ServicioAuditoria as C3
+
+entidad Operador as E1
+entidad Rol as E2
+entidad Turno as E3
+entidad HistorialAuditoria as E4
+
+A --> I1
+A --> I2
+A --> I3
+I1 --> C1
+I2 --> C1
+I3 --> C1
+C1 --> C2 : enviar email
+C1 --> C3 : registrar auditoría
+C1 --> E1 : CRUD
+C1 --> E2 : validar rol
+C1 --> E3 : asignar turno
+E1 "1" --> "1" E2 : tiene
+E1 "1" --> "1" E3 : asignado
+C3 --> E4 : crear registro
+@enduml
+Bosquejo ASCII
+text
+<<A>> AdministradorCdM
+   |
+   v
+<<I>> PantallaGestionOperadores ---> <<C>> ControladorGestionOperadores
+<<I>> FormularioOperador -----------/       |   |   |
+<<I>> DialogoMotivo -----------------/     |   |   |
+                                           |   |   v
+                                           |   |  <<C>> ServicioNotificacionEmail
+                                           |   v
+                                           |  <<C>> ServicioAuditoria
+                                           |      |
+                                           |      v
+                                           |   <<E>> HistorialAuditoria
+                                           v
+                                      <<E>> Operador
+                                           |   |
+                                           |   v
+                                           |  <<E>> Rol
+                                           v
+                                      <<E>> Turno
+4. Diagrama de Colaboración
+Muestra la interacción para el flujo principal (crear nuevo operador) con mensajes numerados.
+
+PlantUML
+plantuml
+@startuml
+actor AdministradorCdM as A
+interface PantallaGestionOperadores as I1
+interface FormularioOperador as I2
+controlador ControladorGestionOperadores as C
+entidad Operador as E
+controlador ServicioAuditoria as S
+controlador ServicioNotificacionEmail as N
+
+A -> I1 : 1: acceder gestión
+I1 -> C : 2: mostrarLista()
+C --> I1 : 3: lista
+A -> I1 : 4: selecciona "Añadir"
+I1 -> C : 5: nuevoOperador()
+C -> I2 : 6: mostrarFormularioAlta()
+I2 --> A : 7: formulario
+A -> I2 : 8: llenar datos y aceptar
+I2 -> C : 9: guardarOperador(datos)
+C -> C : 10: validarFormatoYUnicidad()
+C -> E : 11: crear(datos, estado="pendiente")
+E --> C : 12: ok
+C -> S : 13: registrarAuditoria("creación")
+S --> C : 14: ok
+C -> N : 15: enviarNotificacionPendiente(email)
+N --> C : 16: ok
+C -> C : 17: ejecutarUC028(restablecer contraseña)
+C -> I1 : 18: refrescarLista()
+I1 --> A : 19: mensaje éxito
+@enduml
+Bosquejo ASCII
+text
+1: acceder gestión -> PantallaGestion
+2: mostrarLista() -> Controlador
+3: lista
+4: selecciona "Añadir" -> PantallaGestion
+5: nuevoOperador() -> Controlador
+6: mostrarFormularioAlta() -> FormularioOperador
+7: formulario -> Administrador
+8: llenar datos y aceptar -> FormularioOperador
+9: guardarOperador(datos) -> Controlador
+10: validarFormatoYUnicidad()
+11: crear() -> Operador
+12: ok
+13: registrarAuditoria() -> ServicioAuditoria
+14: ok
+15: enviarNotificacion() -> ServicioEmail
+16: ok
+17: ejecutarUC028()
+18: refrescarLista() -> PantallaGestion
+19: mensaje éxito -> Administrador
+5. Diagrama de Secuencia
+Muestra la secuencia temporal, líneas de vida, activaciones y ciclo de vida para el flujo principal (crear operador).
+
+PlantUML
+plantuml
+@startuml
+actor AdministradorCdM as A
+participant "PantallaGestionOperadores" as I1
+participant "FormularioOperador" as I2
+participant "ControladorGestionOperadores" as C
+participant "Operador" as E
+participant "ServicioAuditoria" as S
+participant "ServicioNotificacionEmail" as N
+
+A -> I1 : acceder gestión
+activate I1
+I1 -> C : mostrarLista()
+activate C
+C --> I1 : lista
+A -> I1 : selecciona "Añadir"
+I1 -> C : nuevoOperador()
+C -> I2 : mostrarFormularioAlta()
+activate I2
+I2 --> A : formulario
+A -> I2 : llenar datos y aceptar
+I2 -> C : guardarOperador(datos)
+C -> C : validarFormatoYUnicidad()
+C -> E : crear(datos, "pendiente")
+activate E
+E --> C : ok
+deactivate E
+C -> S : registrarAuditoria("creación")
+activate S
+S --> C : ok
+deactivate S
+C -> N : enviarNotificacionPendiente(email)
+activate N
+N --> C : ok
+deactivate N
+C -> C : ejecutarUC028()
+C -> I1 : refrescarLista()
+deactivate I2
+I1 --> A : mensaje éxito
+deactivate C
+deactivate I1
+@enduml
+Ciclo de vida:
+
+PantallaGestionOperadores existe durante toda la interacción.
+
+FormularioOperador se crea al iniciar alta y se destruye tras guardar.
+
+ControladorGestionOperadores vive mientras dura la operación.
+
+Operador es una entidad persistente que se crea y queda almacenada.
+
+Los servicios (ServicioAuditoria, ServicioNotificacionEmail) son transitorios.
+
+Bosquejo ASCII
+text
+A       PantGestion   Formulario   Controlador   Operador   ServAudit   ServEmail
+|          |             |             |           |           |           |
+|--acceso->|             |             |           |           |           |
+|          |--mostrar()->|             |           |           |           |
+|          |<--lista-----|             |           |           |           |
+|--añadir->|             |             |           |           |           |
+|          |--nuevo()--->|             |           |           |           |
+|          |             |--mostrar()------------->|           |           |
+|          |             |<--formulario-|           |           |           |
+|--datos-->|             |             |           |           |           |
+|          |             |--guardar()------------->|           |           |
+|          |             |             |--validar()|           |           |
+|          |             |             |--crear()------------>|           |
+|          |             |             |<--ok------|           |           |
+|          |             |             |--registrarAudit()------------>|
+|          |             |             |<--ok----------------|           |
+|          |             |             |--notificar()-------------------->|
+|          |             |             |<--ok----------------|           |
+|          |             |             |--ejecUC028()        |           |
+|          |             |             |--refrescar()------->|           |
+|          |<--mensaje---|             |           |           |           |
+Todos los diagramas están listos para ser ejecutados en PlantUML o revisados como bosquejos ASCII. ¿Necesitas alguna modificación o agregar más detalles sobre los flujos alternativos?
+
++------------+
+|   UC-026   |
++------------+
+
+Aquí tienes los diagramas completos para el caso de uso UC-026 "Iniciar Sesión CdM" según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Se incluye notación PlantUML (código ejecutable) y bosquejos ASCII para cada uno de los cinco diagramas solicitados.
+
+UC-026: Iniciar Sesión CdM
+1. Diagrama de Actividad
+PlantUML
+plantuml
+@startuml
+|Operador|
+start
+:Accede a plataforma web CdM;
+|Sistema|
+:Mostrar formulario login (usuario, contraseña);
+|Operador|
+:Ingresa credenciales y selecciona "Iniciar Sesión";
+|Sistema|
+if (¿Selecciona "Restablecer contraseña"?) then (Sí)
+  :Enviar email al administrador CdM solicitando restablecimiento;
+  stop
+endif
+:Realizar validaciones básicas de formato;
+if (¿Formato válido?) then (No)
+  :Aumentar contador de fallos;
+  if (Contador fallos > 3?) then (Sí)
+    :Deshabilitar cuenta del operador;
+    :Mostrar mensaje de cuenta deshabilitada;
+    stop
+  else (No)
+    :Mostrar error de formato;
+    -->|Volver a formulario| "Mostrar formulario login";
+  endif
+else (Sí)
+  :Verificar si cuenta está bloqueada o dada de baja;
+  if (Cuenta bloqueada/baja?) then (Sí)
+    :Mostrar error: comunicarse con administrador;
+    stop
+  endif
+  :Verificar si contraseña es transitoria;
+  if (Contraseña transitoria?) then (Sí)
+    :Mostrar campos para nueva contraseña y confirmación;
+    |Operador|
+    :Ingresa nueva contraseña y confirma;
+    |Sistema|
+    :Validar formato y no uso previo;
+    if (Válida?) then (No)
+      :Mostrar error;
+      -->|Volver a cambio contraseña| "Mostrar campos nueva contraseña";
+    else (Sí)
+      :Guardar nueva contraseña;
+      :Mostrar mensaje de actualización exitosa;
+      -->|Volver a login| "Mostrar formulario login";
+    endif
+  else (No)
+    :Llamar a servicio de autenticación;
+    if (Autenticación exitosa?) then (No)
+      :Aumentar contador fallos;
+      if (Contador fallos > 3?) then (Sí)
+        :Deshabilitar cuenta;
+        :Mostrar mensaje;
+        stop
+      else (No)
+        :Mostrar error de credenciales;
+        -->|Volver a formulario| "Mostrar formulario login";
+      endif
+    else (Sí)
+      :Recibir token y datos del operador;
+      :Cargar datos, cifrar y guardar token;
+      :Cerrar interfaz login;
+      :Redirigir a pantalla principal de monitoreo;
+      stop
+    endif
+  endif
+endif
+@enduml
+Bosquejo ASCII
+text
+|Operador|                    |Sistema|
+ Inicio                        |
+   v                           |
+ Accede web CdM -------------> Mostrar formulario login
+   v                           |
+ Ingresa creds y               |
+ selecciona Iniciar ---------> ¿Restablecer? --Sí--> email admin -> stop
+   |                           | No
+   |                           v
+   |                       Validaciones formato
+   |                           |-- No -> aumentar fallos
+   |                           |         |-- fallos>3 -> deshabilitar cuenta -> stop
+   |                           |         |-- fallos<=3 -> mostrar error -> volver
+   |                           |-- Sí -> ¿Cuenta bloqueada? --Sí--> mostrar error contacto admin -> stop
+   |                           |         | No
+   |                           |         ¿Contraseña transitoria? --Sí--> pedir nueva pass
+   |                           |         |                              |-- No válida -> error y repetir
+   |                           |         |                              |-- Sí -> guardar, mensaje -> volver login
+   |                           |         | No
+   |                           |         Llamar servicio autenticación
+   |                           |              |-- No éxito -> aumentar fallos
+   |                           |              |             |-- fallos>3 -> deshabilitar -> stop
+   |                           |              |             |-- fallos<=3 -> error -> volver
+   |                           |              |-- Sí -> token, datos
+   |                           |                       guardar token
+   |                           |                       redirigir pantalla principal
+   |<--------------------------|                       stop
+2. Diagrama de Estado
+Representa los estados de la sesión y de la cuenta durante el proceso de login.
+
+PlantUML
+plantuml
+@startuml
+[*] --> NoAutenticado : Acceso a plataforma
+NoAutenticado --> Autenticando : Enviar credenciales
+Autenticando --> SesionActiva : Autenticación exitosa
+Autenticando --> FalloAutenticacion : Credenciales inválidas
+FalloAutenticacion --> NoAutenticado : Contador fallos < 3
+FalloAutenticacion --> CuentaDeshabilitada : Contador fallos > 3
+CuentaDeshabilitada --> [*] : Contactar admin
+Autenticando --> ContraseniaTransitoria : La contraseña es transitoria
+ContraseniaTransitoria --> ActualizandoPass : Usuario ingresa nueva pass
+ActualizandoPass --> NoAutenticado : Cambio exitoso, volver a login
+ActualizandoPass --> ContraseniaTransitoria : Error en nueva pass
+Autenticando --> CuentaBloqueada : Cuenta bloqueada o dada de baja
+CuentaBloqueada --> [*]
+SesionActiva --> [*] : Cierre de sesión
+@enduml
+Bosquejo ASCII
+text
+[*] -> NoAutenticado
+NoAutenticado -> Autenticando (enviar creds)
+Autenticando -> SesionActiva (éxito)
+Autenticando -> FalloAutenticacion (error)
+FalloAutenticacion -> NoAutenticado (fallos<3)
+FalloAutenticacion -> CuentaDeshabilitada (fallos>3)
+CuentaDeshabilitada -> [*]
+Autenticando -> ContraseniaTransitoria (pass transitoria)
+ContraseniaTransitoria -> ActualizandoPass (ingresa nueva)
+ActualizandoPass -> NoAutenticado (cambio ok)
+ActualizandoPass -> ContraseniaTransitoria (error)
+Autenticando -> CuentaBloqueada (cuenta bloqueada)
+CuentaBloqueada -> [*]
+SesionActiva -> [*] (logout)
+3. Diagrama de Clases de Análisis
+Identificación de clases con estereotipos: actores Operador y AdministradorCdM (secundario), interfaces, controladores, entidades.
+
+PlantUML
+plantuml
+@startuml
+actor Operador as A
+actor AdministradorCdM as A2   ' solo recibe email
+
+interface PantallaLoginCdM as I1
+interface PantallaCambioPassTransitoria as I2
+
+controlador ControladorLoginCdM as C1
+controlador ServicioAutenticacion as C2   ' external
+controlador ServicioNotificacionEmail as C3
+controlador GestorSesionCdM as C4
+
+entidad CuentaOperador as E1
+entidad TokenSesion as E2
+entidad ContadorFallos as E3   ' puede ser parte de CuentaOperador
+
+A --> I1
+A --> I2
+I1 --> C1
+I2 --> C1
+C1 --> C2 : autenticar
+C1 --> C3 : enviar email (restablecer solicitud)
+C1 --> C4 : gestionar sesión
+C1 --> E1 : validar estado, actualizar pass
+C4 --> E2 : crear/almacenar
+E1 "1" --> "1" E3 : tiene
+@enduml
+Bosquejo ASCII
+text
+<<A>> Operador          <<A>> AdministradorCdM (secundario)
+   |                              ^
+   v                              |
+<<I>> PantallaLoginCdM --------> <<C>> ControladorLoginCdM
+<<I>> PantallaCambioPassTransitoria /       |   |   |
+                                            |   |   v
+                                            |   |  <<C>> ServicioNotificacionEmail
+                                            |   v
+                                            |  <<C>> ServicioAutenticacion (externo)
+                                            v
+                                       <<C>> GestorSesionCdM
+                                            |
+                                            v
+                                       <<E>> TokenSesion
+                                       <<E>> CuentaOperador
+                                            |
+                                            v
+                                       <<E>> ContadorFallos
+4. Diagrama de Colaboración
+Muestra la interacción para el flujo principal exitoso (sin contraseña transitoria, sin fallos). Se omiten actores secundarios.
+
+PlantUML
+plantuml
+@startuml
+actor Operador as A
+interface PantallaLoginCdM as I1
+controlador ControladorLoginCdM as C
+actor ServicioAutenticacion as S   ' external
+controlador GestorSesionCdM as G
+entidad TokenSesion as T
+entidad CuentaOperador as E
+
+A -> I1 : 1: acceder plataforma
+I1 -> C : 2: mostrarFormulario()
+C --> I1 : 3: formulario
+A -> I1 : 4: ingresar credenciales
+I1 -> C : 5: login(usuario, pass)
+C -> C : 6: validarFormato()
+C -> E : 7: verificarEstadoCuenta(usuario)
+E --> C : 8: activa, no bloqueada, pass no transitoria
+C -> S : 9: autenticar(usuario, pass)
+S --> C : 10: token, datos
+C -> G : 11: guardarToken(token)
+G -> T : 12: almacenar()
+T --> G : 13: ok
+G --> C : 14: ok
+C -> C : 15: cargarDatosOperador()
+C -> I1 : 16: redirigirPantallaPrincipal()
+I1 --> A : 17: acceso concedido
+@enduml
+Bosquejo ASCII
+text
+1: acceder -> PantallaLogin
+2: mostrarFormulario() -> Controlador
+3: formulario
+4: ingresar creds -> PantallaLogin
+5: login() -> Controlador
+6: validarFormato()
+7: verificarEstadoCuenta() -> CuentaOperador
+8: activa, ok
+9: autenticar() -> ServicioAuth
+10: token, datos
+11: guardarToken() -> GestorSesion
+12: almacenar() -> TokenSesion
+13: ok
+14: ok
+15: cargarDatosOperador()
+16: redirigirPantallaPrincipal() -> PantallaLogin
+17: acceso concedido
+5. Diagrama de Secuencia
+Muestra la secuencia temporal, líneas de vida, activaciones y ciclo de vida para el flujo principal exitoso.
+
+PlantUML
+plantuml
+@startuml
+actor Operador as A
+participant "PantallaLoginCdM" as I1
+participant "ControladorLoginCdM" as C
+participant "CuentaOperador" as E
+participant "ServicioAutenticacion" as S
+participant "GestorSesionCdM" as G
+participant "TokenSesion" as T
+participant "PantallaPrincipalCdM" as I2
+
+A -> I1 : acceder plataforma
+activate I1
+I1 -> C : mostrarFormulario()
+activate C
+C --> I1 : formulario
+deactivate C
+A -> I1 : ingresar credenciales
+I1 -> C : login(usuario, pass)
+activate C
+C -> C : validarFormato()
+C -> E : verificarEstadoCuenta(usuario)
+activate E
+E --> C : activa, no bloqueada, pass normal
+deactivate E
+C -> S : autenticar(usuario, pass)
+activate S
+S --> C : token, datos
+deactivate S
+C -> G : guardarToken(token)
+activate G
+G -> T : almacenar()
+activate T
+T --> G : ok
+deactivate T
+G --> C : ok
+deactivate G
+C -> C : cargarDatosOperador()
+C -> I2 : redirigirPantallaPrincipal()
+activate I2
+deactivate C
+deactivate I1
+I2 --> A : acceso concedido
+deactivate I2
+@enduml
+Ciclo de vida:
+
+PantallaLoginCdM se crea al inicio, se destruye tras redirigir.
+
+ControladorLoginCdM se crea para la operación, se destruye al final.
+
+TokenSesion se crea y persiste durante la sesión.
+
+PantallaPrincipalCdM se crea al final y permanece activa.
+
+Bosquejo ASCII
+text
+A       PantLogin   CtrlLogin   CuentaOper   ServAuth   GestorSes   Token   PantPrincipal
+|          |           |            |           |          |         |          |
+|--acceso->|           |            |           |          |         |          |
+|          |--mostrar()->|            |           |          |         |          |
+|          |<--formulario-|            |           |          |         |          |
+|--creds-->|           |            |           |          |         |          |
+|          |--login()-->|            |           |          |         |          |
+|          |           |--validar()  |           |          |         |          |
+|          |           |--verificarEstado()-->|           |          |         |          |
+|          |           |<--activa----|           |          |         |          |
+|          |           |--autenticar()-------------------->|          |         |          |
+|          |           |<--token+datos---------------------|          |         |          |
+|          |           |--guardarToken()------------------------->|          |          |
+|          |           |            |           |          |--almacenar()------->|
+|          |           |            |           |          |<--ok---------------|
+|          |           |<--ok-------|           |          |         |          |
+|          |           |--cargarDatos() |           |          |         |          |
+|          |           |--redirigir()------------------------------------>|          |
+|          |           |            |           |          |         |          |--mostrar->|
+|<---------------------------------------------------------------------------------| acceso   |
+Todos los diagramas están listos para ser ejecutados en PlantUML o revisados como bosquejos ASCII. ¿Necesitas alguna modificación o agregar más detalles sobre los flujos alternativos (como la contraseña transitoria o el bloqueo por fallos)?
+
+
++------------+
+|   UC-027   |
++------------+
+
+Aquí tienes los diagramas completos para el caso de uso UC-027 "Cerrar Sesión CdM" según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Se incluye notación PlantUML (código ejecutable) y bosquejos ASCII para cada uno de los cinco diagramas solicitados.
+
+UC-027: Cerrar Sesión CdM
+1. Diagrama de Actividad
+PlantUML
+plantuml
+@startuml
+|Operador CdM|
+start
+:Accede al menú de perfil y selecciona "Cerrar Sesión";
+|Sistema|
+:Mostrar diálogo de confirmación "¿Está seguro?";
+|Operador CdM|
+if (¿Confirma?) then (No - Cancela)
+  |Sistema|
+  :Continuar en pantalla actual (sin cerrar sesión);
+  stop
+else (Sí - Confirma)
+  |Sistema|
+  :Enviar solicitud de invalidación al servicio de autenticación;
+  :Eliminar token local del almacenamiento;
+  :Limpiar datos sensibles de memoria;
+  :Redirigir a pantalla de inicio de sesión del CdM;
+  :Mostrar mensaje de confirmación "Sesión cerrada";
+  stop
+endif
+@enduml
+Bosquejo ASCII
+text
+|Operador CdM|              |Sistema|
+ Inicio                      |
+   v                         |
+ Selecciona "Cerrar Sesión" -> Mostrar diálogo confirmación
+   v                         |
+ Elige opción                |
+   |                         |
+   +-- Cancelar ------------> Continuar en pantalla actual -> Fin
+   |                         |
+   +-- Confirmar -----------> Enviar invalidación a Servicio Auth
+                             Eliminar token local
+                             Limpiar datos sensibles
+                             Redirigir a pantalla login CdM
+                             Mostrar mensaje "Sesión cerrada"
+                             Fin
+2. Diagrama de Estado
+Representa los estados de la sesión del operador durante el cierre.
+
+PlantUML
+plantuml
+@startuml
+[*] --> SesionActiva : Operador autenticado
+SesionActiva --> CerrandoSesion : Selecciona "Cerrar Sesión"
+CerrandoSesion --> Cancelado : Usuario cancela
+Cancelado --> SesionActiva : Regresa a pantalla anterior
+CerrandoSesion --> InvalidandoToken : Usuario confirma
+InvalidandoToken --> TokenInvalidado : Respuesta del servicio
+TokenInvalidado --> LimpiandoLocal : Eliminar token y datos
+LimpiandoLocal --> NoAutenticado : Limpieza completa
+NoAutenticado --> [*] : Redirigir a login
+@enduml
+Bosquejo ASCII
+text
+[*] -> SesionActiva
+SesionActiva -> CerrandoSesion (clic en cerrar)
+CerrandoSesion -> Cancelado (cancelar) -> SesionActiva
+CerrandoSesion -> InvalidandoToken (confirmar)
+InvalidandoToken -> TokenInvalidado (ok)
+TokenInvalidado -> LimpiandoLocal
+LimpiandoLocal -> NoAutenticado
+NoAutenticado -> [*]
+3. Diagrama de Clases de Análisis
+Identificación de clases con estereotipos: actores, interfaces, controladores, entidades.
+
+PlantUML
+plantuml
+@startuml
+actor OperadorCdM as A
+actor ServicioAutenticacion as ASec   ' externo
+
+interface PantallaPerfilCdM as I1
+interface DialogoConfirmacion as I2
+interface PantallaLoginCdM as I3
+
+controlador ControladorCerrarSesionCdM as C1
+controlador GestorSesionCdM as C2
+
+entidad TokenSesion as E1
+entidad AuditoriaSesion as E2
+
+A --> I1
+A --> I2
+I1 --> C1
+I2 --> C1
+C1 --> ASec : invalidar token
+C1 --> C2 : limpiar sesión local
+C2 --> E1 : eliminar token
+C1 --> E2 : registrar cierre
+@enduml
+Bosquejo ASCII
+text
+<<A>> OperadorCdM          <<A>> ServicioAutenticacion
+   |                              ^
+   v                              |
+<<I>> PantallaPerfilCdM -------> <<C>> ControladorCerrarSesionCdM
+<<I>> DialogoConfirmacion -----/       |   |   |
+                                       |   |   v
+                                       |   |  <<C>> GestorSesionCdM
+                                       |   |      |
+                                       |   |      v
+                                       |   |   <<E>> TokenSesion
+                                       |   v
+                                       |  <<E>> AuditoriaSesion
+                                       v
+                                  <<I>> PantallaLoginCdM (destino)
+4. Diagrama de Colaboración
+Muestra objetos con mensajes numerados para el flujo principal (confirmación de cierre).
+
+PlantUML
+plantuml
+@startuml
+actor OperadorCdM as A
+interface PantallaPerfilCdM as I1
+interface DialogoConfirmacion as I2
+controlador ControladorCerrarSesionCdM as C
+actor ServicioAutenticacion as S
+controlador GestorSesionCdM as G
+entidad TokenSesion as T
+interface PantallaLoginCdM as I3
+
+A -> I1 : 1: selecciona "Cerrar Sesión"
+I1 -> C : 2: iniciarCierre()
+C -> I2 : 3: mostrarDialogo()
+I2 --> A : 4: mostrar opciones
+A -> I2 : 5: confirma cierre
+I2 -> C : 6: confirmarCierre()
+C -> S : 7: invalidarToken()
+S --> C : 8: ok
+C -> G : 9: eliminarTokenLocal()
+G -> T : 10: destruir()
+T --> G : 11: ok
+G --> C : 12: ok
+C -> C : 13: limpiarDatosSensibles()
+C -> I3 : 14: redirigirALogin()
+I3 --> A : 15: mensaje "sesión cerrada"
+@enduml
+Bosquejo ASCII
+text
+1: "Cerrar Sesión" -> PantallaPerfil
+2: iniciarCierre() -> Controlador
+3: mostrarDialogo() -> DialogoConfirmacion
+4: mostrar opciones -> Operador
+5: confirma cierre -> DialogoConfirmacion
+6: confirmarCierre() -> Controlador
+7: invalidarToken() -> ServicioAuth
+8: ok
+9: eliminarTokenLocal() -> GestorSesion
+10: destruir() -> TokenSesion
+11: ok
+12: ok
+13: limpiarDatosSensibles()
+14: redirigirALogin() -> PantallaLogin
+15: mensaje "sesión cerrada" -> Operador
+5. Diagrama de Secuencia
+Muestra la secuencia temporal, líneas de vida, activaciones y ciclo de vida de los objetos. Flujo principal (confirmación de cierre).
+
+PlantUML
+plantuml
+@startuml
+actor OperadorCdM as A
+participant "PantallaPerfilCdM" as I1
+participant "DialogoConfirmacion" as I2
+participant "ControladorCerrarSesionCdM" as C
+participant "ServicioAutenticacion" as S
+participant "GestorSesionCdM" as G
+participant "TokenSesion" as T
+participant "PantallaLoginCdM" as I3
+
+A -> I1 : selecciona "Cerrar Sesión"
+activate I1
+I1 -> C : iniciarCierre()
+activate C
+C -> I2 : mostrarDialogo()
+activate I2
+I2 --> A : mostrar opciones
+A -> I2 : confirma cierre
+I2 -> C : confirmarCierre()
+deactivate I2
+C -> S : invalidarToken()
+activate S
+S --> C : ok
+deactivate S
+C -> G : eliminarTokenLocal()
+activate G
+G -> T : destruir()
+activate T
+T --> G : ok
+deactivate T
+G --> C : ok
+deactivate G
+C -> C : limpiarDatosSensibles()
+C -> I3 : redirigirALogin()
+activate I3
+deactivate C
+deactivate I1
+I3 --> A : mensaje "sesión cerrada"
+deactivate I3
+@enduml
+Ciclo de vida:
+
+PantallaPerfilCdM existe antes del cierre.
+
+DialogoConfirmacion se crea al mostrar el diálogo y se destruye tras la confirmación.
+
+ControladorCerrarSesionCdM se crea para la operación y se destruye al final.
+
+TokenSesion se destruye explícitamente (fin de su vida).
+
+PantallaLoginCdM se crea al final y permanece.
+
+Bosquejo ASCII
+text
+A       PantPerfil   DialogoConf   CtrlCerrar   ServAuth   GestorSes   Token   PantLogin
+|          |             |             |           |          |         |          |
+|--cerrar->|             |             |           |          |         |          |
+|          |--inicio()->|             |           |          |         |          |
+|          |             |--mostrar()->|           |          |         |          |
+|          |             |<--opciones--|           |          |         |          |
+|--confirma----------->|             |           |          |         |          |
+|          |             |--confirmar()--------->|           |          |         |          |
+|          |             |             |--invalidar()-------->|          |         |          |
+|          |             |             |<--ok----------------|          |         |          |
+|          |             |             |--eliminarLocal()------------->|          |          |
+|          |             |             |            |          |--destruir()------->|
+|          |             |             |            |          |<--ok--------------|
+|          |             |             |<--ok-------|          |         |          |
+|          |             |             |--limpiarDatos()       |         |          |
+|          |             |             |--redirigir()-------------------------------->|
+|          |             |             |            |          |         |          |--mostrar->|
+|<---------------------------------------------------------------------------------| mensaje   |
+Todos los diagramas están listos para ser ejecutados en PlantUML o revisados como bosquejos ASCII. ¿Necesitas alguna modificación?
+
+
++------------+
+|   UC-028   |
++------------+
+
+Aquí tienes los diagramas completos para el caso de uso UC-028 "Restablecer Contraseña" según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Se incluye notación PlantUML (código ejecutable) y bosquejos ASCII para cada uno de los cinco diagramas solicitados.
+
+UC-028: Restablecer Contraseña
+1. Diagrama de Actividad
+PlantUML
+plantuml
+@startuml
+|Administrador CdM|
+start
+:Selecciona "Restablecer Contraseña" desde gestión de operadores
+(o entra por link desde correo);
+|Sistema|
+:Mostrar diálogo con nombre, legajo, advertencia,
+opción notificar (sí/no), campo motivo obligatorio,
+botones Restablecer y Cancelar;
+|Administrador CdM|
+:Ingresa motivo y presiona Restablecer;
+|Sistema|
+if (¿Motivo ingresado?) then (No)
+  :Mostrar mensaje de error "falta el motivo";
+  -->|Volver a diálogo| "Mostrar diálogo";
+else (Sí)
+  :Generar contraseña temporal segura;
+  :Guardar contraseña como temporal, asignar al operador;
+  :Invalidar todas las sesiones activas del operador;
+  if (¿Opción notificar = Sí?) then (Sí)
+    :Enviar email al operador con contraseña temporal y link de inicio;
+  endif
+  :Mostrar mensaje de confirmación "Restablecimiento exitoso";
+  stop
+endif
+@enduml
+Bosquejo ASCII
+text
+|Administrador CdM|              |Sistema|
+ Inicio                           |
+   v                              |
+ Selecciona Restablecer --------> Mostrar diálogo (operador, motivo obligatorio)
+   v                              |
+ Ingresa motivo y confirma -----> ¿Motivo ingresado?
+                                      |-- No -> mostrar error "falta motivo" -> volver al diálogo
+                                      |-- Sí -> Generar contraseña temporal
+                                                Guardar como temporal, invalidar sesiones
+                                                Si notificar = Sí -> enviar email
+                                                Mostrar mensaje éxito
+                                                Fin
+2. Diagrama de Estado
+Representa los estados de la contraseña del operador durante el proceso de restablecimiento.
+
+PlantUML
+plantuml
+@startuml
+[*] --> ContraseniaNormal : Operador con contraseña normal
+ContraseniaNormal --> RestablecimientoSolicitado : Admin solicita restablecer
+RestablecimientoSolicitado --> GenerandoTemporal : Validar motivo
+GenerandoTemporal --> TemporalAsignada : Contraseña temporal generada
+TemporalAsignada --> ContraseniaNormal : Operador cambia contraseña al iniciar sesión (UC-026 paso 4.D)
+TemporalAsignada --> [*] : (opcional) nuevo restablecimiento
+@enduml
+Bosquejo ASCII
+text
+[*] -> ContraseniaNormal
+ContraseniaNormal -> RestablecimientoSolicitado (admin pide restablecer)
+RestablecimientoSolicitado -> GenerandoTemporal (motivo válido)
+GenerandoTemporal -> TemporalAsignada (contraseña temporal guardada)
+TemporalAsignada -> ContraseniaNormal (operador cambia pass en próximo login)
+TemporalAsignada -> [*] (nuevo restablecimiento)
+3. Diagrama de Clases de Análisis
+Identificación de clases con estereotipos: actor AdministradorCdM, interfaces, controladores, entidades.
+
+PlantUML
+plantuml
+@startuml
+actor AdministradorCdM as A
+
+interface PantallaGestionOperadores as I1   ' desde donde se accede
+interface DialogoRestablecerPass as I2
+
+controlador ControladorRestablecerPass as C1
+controlador ServicioNotificacionEmail as C2
+controlador ServicioInvalidacionSesiones as C3
+
+entidad Operador as E1
+entidad ContraseniaTemporal as E2   ' puede ser atributo de Operador
+
+A --> I1
+A --> I2
+I1 --> C1
+I2 --> C1
+C1 --> C2 : enviar email
+C1 --> C3 : invalidar sesiones
+C1 --> E1 : actualizar contraseña (temporal)
+E1 "1" --> "1" E2 : tiene (temporal)
+@enduml
+Bosquejo ASCII
+text
+<<A>> AdministradorCdM
+   |
+   v
+<<I>> PantallaGestionOperadores ---> <<C>> ControladorRestablecerPass
+<<I>> DialogoRestablecerPass ------/       |   |   |
+                                          |   |   v
+                                          |   |  <<C>> ServicioNotificacionEmail
+                                          |   v
+                                          |  <<C>> ServicioInvalidacionSesiones
+                                          v
+                                     <<E>> Operador
+                                          |
+                                          v
+                                     <<E>> ContraseniaTemporal
+4. Diagrama de Colaboración
+Muestra la interacción para el flujo principal exitoso (con motivo y notificación sí).
+
+PlantUML
+plantuml
+@startuml
+actor AdministradorCdM as A
+interface PantallaGestionOperadores as I1
+interface DialogoRestablecerPass as I2
+controlador ControladorRestablecerPass as C
+entidad Operador as E
+controlador ServicioNotificacionEmail as N
+controlador ServicioInvalidacionSesiones as S
+
+A -> I1 : 1: acceder gestión
+I1 -> C : 2: seleccionarRestablecer(operadorId)
+C -> I2 : 3: mostrarDialogo(operador)
+I2 --> A : 4: datos operador, campo motivo
+A -> I2 : 5: ingresar motivo y confirmar
+I2 -> C : 6: restablecer(motivo, notificar=true)
+C -> C : 7: validarMotivo()
+C -> E : 8: generarYAsignarPassTemporal(operadorId)
+E --> C : 9: ok
+C -> S : 10: invalidarSesiones(operadorId)
+S --> C : 11: ok
+C -> N : 12: enviarEmail(operador, passTemporal)
+N --> C : 13: ok
+C -> I1 : 14: mostrarMensajeExito()
+I1 --> A : 15: confirmación
+@enduml
+Bosquejo ASCII
+text
+1: acceder gestión -> PantallaGestion
+2: seleccionarRestablecer() -> Controlador
+3: mostrarDialogo() -> DialogoRestablecer
+4: datos operador -> Admin
+5: ingresar motivo y confirmar -> Dialogo
+6: restablecer() -> Controlador
+7: validarMotivo()
+8: generarYAsignarPassTemporal() -> Operador
+9: ok
+10: invalidarSesiones() -> ServicioInvalidacion
+11: ok
+12: enviarEmail() -> ServicioEmail
+13: ok
+14: mostrarMensajeExito() -> PantallaGestion
+15: confirmación -> Admin
+5. Diagrama de Secuencia
+Muestra la secuencia temporal, líneas de vida, activaciones y ciclo de vida de los objetos. Flujo principal exitoso.
+
+PlantUML
+plantuml
+@startuml
+actor AdministradorCdM as A
+participant "PantallaGestionOperadores" as I1
+participant "DialogoRestablecerPass" as I2
+participant "ControladorRestablecerPass" as C
+participant "Operador" as E
+participant "ServicioInvalidacionSesiones" as S
+participant "ServicioNotificacionEmail" as N
+
+A -> I1 : acceder gestión
+activate I1
+I1 -> C : seleccionarRestablecer(operadorId)
+activate C
+C -> I2 : mostrarDialogo(operador)
+activate I2
+I2 --> A : datos operador, campo motivo
+A -> I2 : ingresar motivo y confirmar
+I2 -> C : restablecer(motivo, notificar=true)
+deactivate I2
+C -> C : validarMotivo()
+C -> E : generarYAsignarPassTemporal(operadorId)
+activate E
+E --> C : ok
+deactivate E
+C -> S : invalidarSesiones(operadorId)
+activate S
+S --> C : ok
+deactivate S
+C -> N : enviarEmail(operador, passTemporal)
+activate N
+N --> C : ok
+deactivate N
+C -> I1 : mostrarMensajeExito()
+deactivate C
+I1 --> A : confirmación
+deactivate I1
+@enduml
+Ciclo de vida:
+
+PantallaGestionOperadores existe antes del restablecimiento.
+
+DialogoRestablecerPass se crea al mostrar el diálogo y se destruye tras la confirmación.
+
+ControladorRestablecerPass se crea para la operación y se destruye al final.
+
+Operador es una entidad persistente que se modifica (nueva contraseña temporal).
+
+Los servicios (ServicioInvalidacionSesiones, ServicioNotificacionEmail) son transitorios.
+
+Bosquejo ASCII
+text
+A       PantGestion   DialogoRest   CtrlRest   Operador   ServInval   ServEmail
+|          |             |             |          |           |           |
+|--acceso->|             |             |          |           |           |
+|          |--seleccRest(operId)----->|          |           |           |
+|          |             |--mostrarDialogo(oper)-->|           |           |
+|          |             |<--datos----|          |           |           |
+|--motivo y confirma--------------->|             |          |           |
+|          |             |--restablecer(mot,notif)-->|           |           |
+|          |             |             |--validarMotivo() |           |           |
+|          |             |             |--generarPassTemporal()-->|           |           |
+|          |             |             |<--ok-----|          |           |           |
+|          |             |             |--invalidarSesiones()----------->|           |
+|          |             |             |<--ok----------------|           |           |
+|          |             |             |--enviarEmail()------------------------>|
+|          |             |             |<--ok-------------------------|           |
+|          |             |             |--mostrarMensajeExito()-->|           |           |
+|          |<--confirmación--|             |          |           |           |
+Todos los diagramas están listos para ser ejecutados en PlantUML o revisados como bosquejos ASCII. ¿Necesitas alguna modificación o agregar más detalles?
