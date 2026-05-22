@@ -3262,3 +3262,563 @@ text
     │◄──listaFinal──│                │                  │              │       │         │          │          │            │
 Si requieres ajustes adicionales o deseas continuar con otros casos de uso, estoy a tu disposición.
 
+---------------
+nueva version
+---------------
+
+A continuación se presentan los diagramas solicitados, basados en el caso de uso UC-013 Buscar Autoridades Cercanas y aplicando el enfoque del Proceso Unificado (Jacobson, Booch, Rumbaugh). Se incluyen tanto el código PlantUML como un bosquejo ASCII de cada diagrama.
+
+1. Diagrama de Actividad
+Representa el flujo de acciones del sistema y los actores externos, modelando el camino principal y las alternativas.
+
+Código PlantUML
+plantuml
+@startuml
+|Sistema|
+start
+:Recibir coordenadas de última ubicación;
+if (¿Coordenadas recibidas?) then (sí)
+else (no)
+  |Servicio de Localización|
+  :Intentar obtener ubicación (UC-034);
+  if (¿Ubicación obtenida?) then (sí)
+    |Sistema|
+  else (no)
+    :Registrar fallo de ubicación;
+    stop
+  endif
+endif
+:Buscar región, estado o país;
+|Servicio de Autoridades Online|
+:Consultar listado de autoridades para la región;
+if (¿Datos obtenidos?) then (sí)
+  |Sistema|
+  :Usar listado online;
+else (no)
+  |Base de Datos Local|
+  :Consultar lista local de autoridades;
+  if (¿Lista local encontrada?) then (sí)
+    if (¿Lista actualizada?) then (sí)
+      |Sistema|
+    else (no)
+      |Sistema|
+      :Reintentar actualización online;
+      |Servicio de Autoridades Online|
+      if (¿Actualización exitosa?) then (sí)
+        |Sistema|
+        :Actualizar lista local;
+      else (no)
+        |Sistema|
+        :Usar lista desactualizada;
+      endif
+    endif
+  else (no)
+    |Sistema|
+    :Registrar fallo (sin lista);
+    stop
+  endif
+endif
+|Sistema|
+:Filtrar por ciudad/región, distancia, tipo, horario;
+if (¿Autoridades en radio configurado?) then (sí)
+else (no)
+  :Ampliar radio progresivamente (máx. 200km);
+  if (¿Resultados encontrados?) then (sí)
+  else (no)
+    :Utilizar números de emergencia genéricos;
+  endif
+endif
+:Ordenar por proximidad y relevancia;
+:Devolver listado (máx. 5);
+:Registrar búsqueda en historial;
+if (¿Se usó API online?) then (sí)
+  :Cachear resultados localmente;
+else (no)
+endif
+|Usuario|
+:Mostrar lista de autoridades;
+stop
+@enduml
+Bosquejo ASCII
+text
+        ┌───────────┐
+        │  Sistema  │
+        └─────┬─────┘
+              │
+     ┌───────▼────────┐
+     │ Recibir coord. │
+     └───────┬────────┘
+              │
+         ╔════╧════╗
+    sí   ║ ¿Coord? ║   no
+         ╚════╤════╝
+              │        ┌─────────────────────────┐
+              │        │Servicio de Localización │
+              │        └───────────┬─────────────┘
+              │              ┌────▼────┐
+              │              │Obtener  │
+              │              │ubicación│
+              │              └────┬────┘
+              │              ╔════╧════╗
+              │         sí  ║¿Obtenida?║ no
+              │              ╚════╤════╝   │
+              │                   │    ┌───▼───┐
+              │                   │    │Fallo  │
+              │                   │    │ubicac.│
+              │                   │    └───┬───┘
+              │                   │        │
+              └───────────────────┼────────┘
+                                  │
+                       ┌──────────▼──────────┐
+                       │Buscar región/estado │
+                       └──────────┬──────────┘
+                                  │
+               ┌──────────────────▼──────────────────┐
+               │ Servicio de Autoridades Online      │
+               │ Consultar listado para región       │
+               └──────────────────┬──────────────────┘
+                              ╔════╧════╗
+                         sí  ║¿Datos? ║ no
+                              ╚════╤════╝
+                                   │
+    ┌───────────────────────┐   ┌──▼───────────────┐
+    │ Usar listado online   │   │BD Local          │
+    └───────────┬───────────┘   │Consultar lista   │
+                │               └──┬───────────────┘
+                │            ╔════╧════╗
+                │       sí   ║¿Encontrada?║ no
+                │            ╚════╤════╝     │
+                │        ╔════════╧═══════╗  │
+                │        ║¿Actualizada?║     │
+                │        ╚════╤════╤════╝     │
+                │          sí │    │ no       │
+                │             │    │          │
+                │             │ ┌──▼────────┐ │
+                │             │ │Reintentar │ │
+                │             │ │online     │ │
+                │             │ └──┬────────┘ │
+                │             │ ╔══╧═══╗      │
+                │             │ ║Éxito?║      │
+                │             │ ╚══╤═══╝      │
+                │             │  sí│   no     │
+                │             │ ┌──▼─┐ │      │
+                │             │ │Act.│ │      │
+                │             │ │lista│ │      │
+                │             │ └──┬─┘ │      │
+                │             │    │   │      │
+                └─────────────┴────┴───┴──────┘
+                                  │
+                    ┌─────────────▼──────────────┐
+                    │Filtrar (ciudad, distancia, │
+                    │tipo, horario)              │
+                    └─────────────┬──────────────┘
+                              ╔════╧════╗
+                         sí  ║¿En radio?║ no
+                              ╚════╤════╝
+                                   │
+              ┌────────────────────▼────────────────────┐
+              │Ampliar radio progresivamente (máx 200km)│
+              └────────────────────┬────────────────────┘
+                               ╔═══╧═══╗
+                          sí  ║¿Result.?║ no
+                               ╚═══╤═══╝
+                                   │
+                              ┌────▼────┐
+                              │Genéricos│
+                              └────┬────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+                    │Ordenar (proximidad, relevanc.)│
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+                    │ Devolver listado (máx 5)     │
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+                    │Registrar historial / cachear │
+                    └──────────────┬───────────────┘
+                                   │
+                          ┌────────▼────────┐
+                          │    Usuario      │
+                          │ Mostrar lista   │
+                          └────────┬────────┘
+                                   │
+                                  [*]
+2. Diagrama de Estado
+Describe los estados por los que pasa el proceso de búsqueda de autoridades.
+
+Código PlantUML
+plantuml
+@startuml
+state Inactivo
+state ObteniendoUbicacion
+state BuscandoRegion
+state ObteniendoAutoridades
+state Filtrando
+state AmpliandoRadio
+state Ordenando
+state DevolviendoResultados
+state RegistrandoHistorial
+state Finalizado
+state FalloUbicacion
+state FalloDatos
+
+[*] --> Inactivo : activación
+Inactivo --> ObteniendoUbicacion : inicio búsqueda
+ObteniendoUbicacion --> BuscandoRegion : coordenadas recibidas
+ObteniendoUbicacion --> FalloUbicacion : no se pudo obtener ubicación
+BuscandoRegion --> ObteniendoAutoridades : región identificada
+ObteniendoAutoridades --> Filtrando : datos de autoridades obtenidos
+ObteniendoAutoridades --> FalloDatos : no se encontraron datos (local/online)
+Filtrando --> AmpliandoRadio : sin resultados en radio configurado
+Filtrando --> Ordenando : resultados encontrados
+AmpliandoRadio --> Filtrando : radio ampliado, reintentar filtrado
+AmpliandoRadio --> DevolviendoResultados : radio máximo alcanzado (usar genéricos)
+Ordenando --> DevolviendoResultados : lista ordenada
+DevolviendoResultados --> RegistrandoHistorial : resultados listos
+RegistrandoHistorial --> Finalizado : registro completado
+FalloUbicacion --> Finalizado : [fin sin resultados]
+FalloDatos --> Finalizado : [fin sin resultados]
+Finalizado --> [*]
+@enduml
+Bosquejo ASCII
+text
+     [*] ---> Inactivo
+      │
+      ▼
+ObteniendoUbicacion ── coordenadas ──> BuscandoRegion
+      │                                     │
+      │ (fallo)                             │
+      ▼                                     ▼
+FalloUbicacion                   ObteniendoAutoridades
+      │                                     │
+      │                                     │ (datos)
+      │                                     ▼
+      │                                 Filtrando
+      │                                  │    │
+      │                     sin resultados   │ resultados
+      │                                  │    │
+      │                                  ▼    ▼
+      │                          AmpliandoRadio   Ordenando
+      │                               │    │           │
+      │             radio ampliado    │    │           │
+      │                               │    │           │
+      │                               ▼    │           │
+      │                           (vuelve a Filtrando)  │
+      │                               │                 │
+      │                               │ máx radio       │
+      │                               ▼                 │
+      │                         DevolviendoResultados ◄─┘
+      │                                │
+      ▼                                ▼
+FalloDatos                    RegistrandoHistorial
+      │                                │
+      │                                ▼
+      └──────────► Finalizado ◄─────────┘
+                      │
+                     [*]
+3. Diagrama de Clases de Análisis
+Muestra las clases con sus estereotipos (A: Actor, I: Interfaz, C: Controlador, E: Entidad) y sus relaciones.
+
+Código PlantUML
+plantuml
+@startuml
+actor Usuario <<A>>
+
+class IU_BusquedaAutoridades <<I>> {
+  +mostrarResultados(lista: List<Resultado>)
+}
+
+class IGestorLocalizacion <<I>> {
+  +obtenerUbicacion(): Ubicacion
+  +obtenerRegion(coord: Ubicacion): Region
+}
+
+class IServicioAutoridadesOnline <<I>> {
+  +buscarAutoridades(region: Region): List<Autoridad>
+}
+
+class IBaseDatosLocal <<I>> {
+  +buscarAutoridadesLocales(region: Region): List<Autoridad>
+  +guardarHistorial(h: HistorialBusqueda)
+  +actualizarCache(region: Region, lista: List<Autoridad>)
+  +obtenerConfiguracion(): Configuracion
+  +obtenerCache(region: Region): CacheAutoridades
+}
+
+class ControladorBuscarAutoridades <<C>> {
+  +ejecutarBusqueda()
+}
+
+class Ubicacion <<E>> {
+  +latitud: double
+  +longitud: double
+  +timestamp: DateTime
+}
+
+class Region <<E>> {
+  +nombre: string
+  +estado: string
+  +pais: string
+}
+
+class Autoridad <<E>> {
+  +nombre: string
+  +direccion: string
+  +telefono: string
+  +tipo: string
+  +coordenadas: Ubicacion
+  +horario: string
+}
+
+class Resultado <<E>> {
+  +nombre: string
+  +direccion: string
+  +telefono: string
+  +distancia: double
+  +eta: string
+}
+
+class Configuracion <<E>> {
+  +radioDefaultKm: int
+  +maxResultados: int
+  +maxAmpliacionKm: int
+}
+
+class HistorialBusqueda <<E>> {
+  +id: string
+  +fecha: DateTime
+  +resultados: List<Resultado>
+  +estado: string
+}
+
+class CacheAutoridades <<E>> {
+  +region: Region
+  +autoridades: List<Autoridad>
+  +ultimaActualizacion: DateTime
+}
+
+Usuario -- IU_BusquedaAutoridades : interactúa
+ControladorBuscarAutoridades -- IU_BusquedaAutoridades
+ControladorBuscarAutoridades -- IGestorLocalizacion
+ControladorBuscarAutoridades -- IServicioAutoridadesOnline
+ControladorBuscarAutoridades -- IBaseDatosLocal
+
+ControladorBuscarAutoridades -- Ubicacion
+ControladorBuscarAutoridades -- Region
+ControladorBuscarAutoridades -- Autoridad
+ControladorBuscarAutoridades -- Resultado
+ControladorBuscarAutoridades -- Configuracion
+ControladorBuscarAutoridades -- HistorialBusqueda
+ControladorBuscarAutoridades -- CacheAutoridades
+
+IBaseDatosLocal -- Configuracion
+IBaseDatosLocal -- HistorialBusqueda
+IBaseDatosLocal -- CacheAutoridades
+IBaseDatosLocal -- Autoridad
+IGestorLocalizacion -- Ubicacion
+IGestorLocalizacion -- Region
+IServicioAutoridadesOnline -- Autoridad
+IU_BusquedaAutoridades -- Resultado
+@enduml
+Bosquejo ASCII
+text
+     ┌───────────┐
+     │  Usuario  │<<A>>
+     └─────┬─────┘
+           │ interactúa
+┌──────────▼────────────────┐
+│ IU_BusquedaAutoridades <<I>>│
+└──────────┬────────────────┘
+           │ usa
+           ▼
+┌───────────────────────────────────────────┐
+│    ControladorBuscarAutoridades <<C>>     │
+└──┬──────┬────────┬──────────┬────────────┘
+   │ usa  │ usa    │ usa      │ usa
+   ▼      ▼        ▼          ▼
+┌──────┐┌─────────┐┌─────────┐┌────────────┐
+│IGestor││IServicio││IBaseDatos││            │
+│Loc   ││Online   ││Local    ││            │
+└──┬───┘└────┬────┘└──┬───┬──┘│            │
+   │         │        │   │   │            │
+   │         │        │   │   │            │
+   ▼         ▼        ▼   ▼   ▼ entidades  │
+┌──────┐┌───────┐┌───────┐┌───────┐┌───────┴─┐
+│Ubica ││Region ││Autorid││Cache  ││Configura│
+│ción  ││       ││       ││Aut.   ││ción     │
+└──────┘└───────┘└───────┘└───────┘└─────────┘
+┌──────┐┌────────────┐┌──────────┐
+│Resul-││Historial   ││          │
+│tado  ││Búsqueda    ││          │
+└──────┘└────────────┘└──────────┘
+4. Diagrama de Colaboración
+Muestra las mismas clases de análisis con los mensajes que intercambian durante la ejecución del caso de uso.
+
+Código PlantUML
+plantuml
+@startuml
+actor Usuario
+boundary IU_BusquedaAutoridades as ui
+control ControladorBuscarAutoridades as ctrl
+boundary IGestorLocalizacion as loc
+boundary IServicioAutoridadesOnline as online
+boundary IBaseDatosLocal as db
+
+ctrl -> loc : 1: obtenerUbicacion()
+loc --> ctrl : 1.1: Ubicacion
+
+ctrl -> loc : 2: obtenerRegion(ubicacion)
+loc --> ctrl : 2.1: Region
+
+ctrl -> online : 3: buscarAutoridades(region) [online disponible]
+online --> ctrl : 3.1: List<Autoridad>
+ctrl -> db : 3b: buscarAutoridadesLocales(region) [fallo online o local]
+db --> ctrl : 3b.1: List<Autoridad>
+
+ctrl -> online : 4: buscarAutoridades(region) [reintento actualización]
+online --> ctrl : 4.1: List<Autoridad>
+ctrl -> db : 5: actualizarCache(region, lista)
+
+ctrl -> ctrl : 6: filtrar y ordenar
+
+ctrl -> ui : 7: mostrarResultados(listaResultados)
+Usuario <- ui : 7.1: visualiza
+
+ctrl -> db : 8: guardarHistorial(historial)
+ctrl -> db : 9: actualizarCache(region, lista) [si usó online]
+@enduml
+Bosquejo ASCII
+text
+                ┌───────────────┐
+                │   Usuario     │
+                └───────┬───────┘
+                        │ 7.1 visualiza
+┌───────────────────┐   │
+│IU_BusquedaAutorid.│◄──┘
+└────────┬──────────┘
+         │ 7: mostrarResultados()
+         │
+┌────────▼──────────────────────────┐
+│ ControladorBuscarAutoridades      │
+│                                    │
+│ 6: filtrar y ordenar (autollamada)│
+└───┬──────┬───────────┬────────────┘
+    │      │           │
+    │1,2   │3,4        │3b,5,8,9
+    ▼      ▼           ▼
+┌──────┐┌───────────┐┌───────────┐
+│IGest ││IServicio  ││IBaseDatos │
+│Loc   ││Online     ││Local      │
+└──┬───┘└─────┬─────┘└─────┬─────┘
+   │          │            │
+   └──────────┴────────────┘
+   Mensajes numerados según flujo:
+   1. obtenerUbicacion() → Ubicacion
+   2. obtenerRegion(ubic) → Region
+   3. buscarAutoridades(region) → Lista (online)
+   3b. buscarAutoridadesLocales(region) → Lista (local)
+   4. buscarAutoridades(region) → Lista (reintento)
+   5. actualizarCache(region, lista)
+   8. guardarHistorial(historial)
+   9. actualizarCache(region, lista) (si API online)
+5. Diagrama de Secuencia (Interacción)
+Muestra la comunicación secuencial entre objetos, incluyendo ciclos de vida y fragmentos de alternativas.
+
+Código PlantUML
+plantuml
+@startuml
+actor Usuario
+participant IU_BusquedaAutoridades as ui
+participant ControladorBuscarAutoridades as ctrl
+participant IGestorLocalizacion as loc
+participant IServicioAutoridadesOnline as online
+participant IBaseDatosLocal as db
+
+== Inicio de búsqueda ==
+ctrl -> loc : obtenerUbicacion()
+alt coordenadas disponibles
+    loc --> ctrl : Ubicacion
+else fallo de ubicación
+    loc --> ctrl : error
+    ctrl -> ctrl : manejar fallo y finalizar
+    note right: Fin del caso de uso
+end
+
+ctrl -> loc : obtenerRegion(ubicacion)
+loc --> ctrl : Region
+
+== Obtención de lista de autoridades ==
+opt online disponible
+    ctrl -> online : buscarAutoridades(region)
+    online --> ctrl : listaAutoridades
+else fallo online
+    ctrl -> db : buscarAutoridadesLocales(region)
+    db --> ctrl : listaLocal (o vacía)
+    alt lista local encontrada
+        opt lista desactualizada
+            ctrl -> online : buscarAutoridades(region)
+            online --> ctrl : listaActualizada
+            ctrl -> db : actualizarCache(region, listaActualizada)
+        end
+        note right: continuar con lista obtenida
+    else lista local no encontrada
+        ctrl -> ctrl : registrar fallo y finalizar
+    end
+end
+
+== Filtrado y ordenamiento ==
+ctrl -> db : obtenerConfiguracion()
+db --> ctrl : Configuracion
+ctrl -> ctrl : filtrar(criterios, config)
+alt resultados en radio configurado
+    ctrl -> ctrl : ordenar(proximidad, relevancia)
+else sin resultados
+    loop ampliar radio hasta 200km
+        ctrl -> ctrl : ampliarRadio()
+        ctrl -> ctrl : filtrar() de nuevo
+    end
+    alt aún sin resultados
+        ctrl -> ctrl : usarNúmerosGenéricos()
+    end
+end
+
+== Devolución y registro ==
+ctrl -> ui : mostrarResultados(listaFinal)
+Usuario <- ui : visualiza lista
+ctrl -> db : guardarHistorial(historial)
+opt usó API online
+    ctrl -> db : actualizarCache(region, lista)
+end
+@enduml
+Bosquejo ASCII
+text
+Usuario   ui         ctrl                 loc        online        db
+  │        │           │                    │           │           │
+  │        │           │──obtenerUbicacion─►│           │           │
+  │        │           │◄──Ubicacion / error│           │           │
+  │        │           │                    │           │           │
+  │        │           │──obtenerRegion────►│           │           │
+  │        │           │◄──Region───────────│           │           │
+  │        │           │                    │           │           │
+  │        │           │─buscarAutoridades──────────────►│           │
+  │        │           │◄──lista───────────────────────│           │
+  │        │           │ (si fallo)                     │           │
+  │        │           │──buscarAutoridadesLocales──────────────────►│
+  │        │           │◄──listaLocal───────────────────────────────│
+  │        │           │                    │           │           │
+  │        │           │──(reintento)───────┼──────────►│           │
+  │        │           │◄──listaActualizada─┼──────────│           │
+  │        │           │──actualizarCache──────────────────────────►│
+  │        │           │                    │           │           │
+  │        │           │──obtenerConfig─────────────────────────────►│
+  │        │           │◄──Config───────────────────────────────────│
+  │        │           │[filtrar y ordenar] │           │           │
+  │        │           │                    │           │           │
+  │        │◄─mostrarResultados─│           │           │           │
+  │◄───────│           │                    │           │           │
+  │        │           │──guardarHistorial──────────────────────────►│
+  │        │           │──actualizarCache───────────────────────────►│
+  │        │           │                    │           │           │
+Estos diagramas cubren los artefactos solicitados alineados al Proceso Unificado. Si necesitas algún ajuste adicional, no dudes en pedirlo.
