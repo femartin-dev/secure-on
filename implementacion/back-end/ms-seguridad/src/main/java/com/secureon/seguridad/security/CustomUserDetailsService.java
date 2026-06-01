@@ -44,20 +44,26 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         // Primero intentamos como usuario móvil
-        Usuario usuario = usuarioRepository.findByEmail(username).orElse(null);
+        Usuario usuario = usuarioRepository.findByEmail(username).orElse(null); 
+        if (usuario == null) {
+            usuario = usuarioRepository.findByTelefono(username).orElse(null); 
+        }
         if (usuario != null) {
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority(rolesProps.getRolUsuario()));
-            return new User(usuario.getEmail(), usuario.getHashContrasena(), authorities);
+            return new User(usuario.getId().toString(), usuario.getHashContrasena(), authorities);
         }
 
         // Luego como operador CdM
         Operador operador = operadorRepository.findByEmail(username).orElse(null);
+        if (operador == null) {
+            operador = operadorRepository.findByLegajo(Integer.valueOf(username)).orElse(null);
+        }
         if (operador != null) {
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             String role = operador.getEsAdministrador() ? rolesProps.getRolAdministrador(): rolesProps.getRolOperador();
             authorities.add(new SimpleGrantedAuthority(role));
-            return new User(operador.getEmail(), operador.getHashContrasena(), authorities);
+            return new User(operador.getId().toString(), operador.getHashContrasena(), authorities);
         }
 
         throw new UsernameNotFoundException(messageService.getMessage("err.usr.not-found.email", username));

@@ -6,6 +6,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { ContactService } from '../../../../services/contact.service';
 import { NotificationService } from '../../../../services/notification.service';
+import { AuthService } from '../../../../services/auth.service';
 import { Contact, CatalogType } from '../../../../models/config.models';
 
 type ViewMode = 'list' | 'form';
@@ -30,41 +31,54 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
     nombre: '',
     apellido: '',
     telefono: '',
-    email: '',
     relacion: 'Amigo',
-    canalNotificaiones: [] as CatalogType[],
+    canalNotificacion: [] as CatalogType[],
     esEmergencia: false
   };
 
-  relationOptions = ['Padre', 'Madre', 'Amigo', 'Pareja', 'Hermano/a', 'Hijo/a', 'Otro'];
-  notificationTypes: CatalogType[] = [
-    { id: 1, descripcion: 'WA' },
-    { id: 3, descripcion: 'TG' },
-    { id: 2, descripcion: 'SMS' },
-    { id: 4, descripcion: 'Mail' },
-  ];
-  // we'll map icon separately
-  notificationIcons: Record<number,string> = {
-    1: 'chat',
-    2: 'sms',
+  relationOptions: string[] = []; //['Padre', 'Madre', 'Amigo', 'Pareja', 'Hermano/a', 'Hijo/a', 'Otro'];
+  notificationTypes: CatalogType[] = [];
+  // icons by channel id: 1-sms, 2-whatsapp, 3-telegram, 4-messenger, 5-mail, 6-llamada, 0-otro
+  notificationIcons: Record<number, string> = {
+    0: 'notifications',
+    1: 'sms',
+    2: 'chat',
     3: 'send',
-    4: 'mail'
+    4: 'chat_bubble',
+    5: 'mail',
+    6: 'phone',
   };
 
   loading = false;
   private destroy$ = new Subject<void>();
+  private userId: string = '';
 
   constructor(
     private contactService: ContactService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    // Get userId from authenticated user
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.userId = currentUser.id;
+    }
+
+    this.contactService.getCanalesNotificacion()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(types => {
+        this.notificationTypes = types;
+      });
+
     this.contactService.contacts$
       .pipe(takeUntil(this.destroy$))
       .subscribe(contacts => {
         this.contacts = contacts;
       });
+
+    this.relationOptions = this.contactService.getRelationOptions();
   }
 
   ngOnDestroy(): void {
@@ -88,10 +102,9 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
       nombre: contact.nombre,
       apellido: contact.apellido || '',
       telefono: contact.telefono,
-      email: contact.email || '',
       relacion: contact.relacion || 'Amigo',
-      canalNotificaiones: contact.canalNotificaiones ? [...contact.canalNotificaiones] : [],
-      esEmergencia: contact.esEmergencia || false
+      canalNotificacion: contact.canalNotificacion ? [...contact.canalNotificacion] : [],
+      esEmergencia: contact.esPrincipal || false
     };
     this.viewMode = 'form';
   }
@@ -104,16 +117,18 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
   // ─── Notification type toggle ──────────────────
 
   isNotifActive(key: CatalogType): boolean {
-    return this.formData.canalNotificaiones.some(t => t.id === key.id);
+    return this.formData.canalNotificacion.some(t => t.id === key.id);
   }
 
   toggleNotif(key: CatalogType): void {
-    const idx = this.formData.canalNotificaiones.findIndex(t => t.id === key.id);
-    if (idx >= 0) {
-      this.formData.canalNotificaiones.splice(idx, 1);
+    const idx = this.formData.canalNotificacion.findIndex(t => t.id === key.id);
+    /*if (idx >= 0) {
+      this.formData.canalNotificacion.splice(idx, 1);
     } else {
-      this.formData.canalNotificaiones.push(key);
+      this.formData.canalNotificacion.push(key);
     }
+    */
+    this.formData.canalNotificacion = [key];
   }
 
   // ─── CRUD ──────────────────────────────────────
@@ -127,14 +142,13 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
     this.loading = true;
 
     const payload: Omit<Contact, 'id'> = {
+      userId: this.userId,
       nombre: this.formData.nombre.trim(),
       apellido: this.formData.apellido.trim(),
       telefono: this.formData.telefono.trim(),
-      email: this.formData.email.trim(),
       relacion: this.formData.relacion,
-      canalNotificaiones: this.formData.canalNotificaiones,
-      esPrimario: this.formData.esEmergencia,
-      esEmergencia: this.formData.esEmergencia
+      canalNotificacion: this.formData.canalNotificacion,
+      esPrincipal: this.formData.esEmergencia
     };
     if (this.isNew) {
       this.contactService.addContact(payload)
@@ -186,9 +200,8 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
       nombre: '',
       apellido: '',
       telefono: '',
-      email: '',
       relacion: 'Amigo',
-      canalNotificaiones: [],
+      canalNotificacion: [],
       esEmergencia: false
     };
   }
@@ -196,12 +209,15 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
   // ─── Helpers ───────────────────────────────────
 
   getNotifIcons(contact: Contact): { icon: string; color: string; title: string }[] {
-    const types = contact.canalNotificaiones || [];
+    const types = contact.canalNotificacion || [];
     const map: Record<number, { icon: string; color: string; title: string }> = {
-      1: { icon: 'chat', color: 'text-green-600', title: 'WhatsApp' },
-      3: { icon: 'send', color: 'text-blue-500', title: 'Telegram' },
-      2: { icon: 'sms', color: 'text-orange-500', title: 'SMS' },
-      4: { icon: 'mail', color: 'text-slate-500', title: 'Mail' }
+      0: { icon: 'notifications', color: 'text-slate-400',  title: 'Otro' },
+      1: { icon: 'sms',           color: 'text-orange-500', title: 'SMS' },
+      2: { icon: 'chat',          color: 'text-green-600',  title: 'WhatsApp' },
+      3: { icon: 'send',          color: 'text-blue-500',   title: 'Telegram' },
+      4: { icon: 'chat_bubble',   color: 'text-indigo-500', title: 'Messenger' },
+      5: { icon: 'mail',          color: 'text-slate-500',  title: 'Mail' },
+      6: { icon: 'phone',         color: 'text-teal-500',   title: 'Llamada' },
     };
     return types.map(t => map[t.id]).filter(Boolean);
   }

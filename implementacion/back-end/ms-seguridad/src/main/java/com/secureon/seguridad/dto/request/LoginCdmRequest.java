@@ -16,21 +16,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginCdmRequest {
 
-    @NotBlank
     @Email
     private String email;
-    @JsonIgnore
+    
     private Integer legajo;
-    @JsonIgnore
-    private String usuario;
 
     @NotBlank
     private String password;
 
-    //@AssertTrue(message = "{cdm.login.err.any-value}")
+    @AssertTrue(message = "{cdm.login.err.any-value}")
     public boolean isAnyIdentifierPresent() {
         return StringUtils.isNotBlank(email) 
-            || legajo != null 
-            || StringUtils.isNotBlank(usuario);
+            || legajo != null;
     }
 }

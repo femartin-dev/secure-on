@@ -18,11 +18,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginAppRequest {
-    @NotEmpty
     @Email
     private String email;
 
-    @JsonIgnore
     @Pattern(regexp = "\\+?[0-9]{10,15}", message = "{err.phone.not-valid}")
     private String telefono;
 
@@ -31,7 +29,7 @@ public class LoginAppRequest {
     @NotBlank
     private String password;
     
-    //@AssertTrue(message = "{usr.login.err.any-value}")
+    @AssertTrue(message = "{usr.login.err.any-value}")
     public boolean isAnyIdentifierPresent() {
         return StringUtils.isNotBlank(email) 
             || StringUtils.isNotBlank(telefono)

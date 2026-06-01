@@ -37,8 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String clientIp = getClientIp(request);
         try {
+            String clientIp = getClientIp(request);
             String jwt = resolveToken(request);
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 String username = tokenProvider.getUsername(jwt);
@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 try {
-                    auditService.setAuditContext(username, clientIp);
+                    auditService.setAuditContext(userDetails.getUsername(), clientIp);
                 } catch (Exception e) {
                     logger.warn("No se pudo establecer contexto de auditoría para usuario autenticado", e);
                 }

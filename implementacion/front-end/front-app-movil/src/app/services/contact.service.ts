@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
 import { API_CONFIG } from '../config/api-config';
-import { Contact, ContactResponse, ContactRequest } from '../models/config.models';
+import { AuthService } from './auth.service';
+import { Contact, ContactResponse, ContactRequest, CatalogType } from '../models/config.models';
 
 @Injectable({
   providedIn: 'root'
@@ -14,8 +15,10 @@ import { Contact, ContactResponse, ContactRequest } from '../models/config.model
 export class ContactService {
   private contactsSubject = new BehaviorSubject<Contact[]>([]);
   public contacts$ = this.contactsSubject.asObservable();
+  private userId: string;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private authService: AuthService) {
+    this.userId = this.authService.getCurrentUser()?.id || '';
     this.loadContacts();
   }
 
@@ -55,14 +58,13 @@ export class ContactService {
           const contacts: Contact[] = arr.map((item) => {
             return {
               id: item.id,
-              nombre: item.nombre,
-              apellido: item.apellido || '',
+              userId: item.userId,
+              nombre: item.nombre.split(',')[1] || item.nombre.split(' ')[0] || '',
+              apellido: item.nombre.split(',')[0] || item.nombre.split(' ')[1] || '',
               telefono: item.telefono,
-              email: item.email || '',
               relacion: item.relacion,
-              canalNotificaiones: item.canal ? [item.canal] : [],
-              esPrimario: item.esPrincipal === true,
-              esEmergencia: false
+              canalNotificacion: item.canal ? [item.canal] : [],
+              esPrincipal: item.esPrincipal === true,
             } as Contact;
           });
           return of({ contacts, total: contacts.length } as ContactResponse);
@@ -77,13 +79,12 @@ export class ContactService {
   addContact(contact: Omit<Contact, 'id'>): Observable<Contact> {
     // transform to backend payload
     const payload: ContactRequest = {
-      nombre: contact.nombre,
-      apellido: contact.apellido,
+      userId: contact.userId,
+      nombre: contact.apellido + ', ' + contact.nombre,
       relacion: contact.relacion,
       telefono: contact.telefono,
-      email: contact.email,
-      canalId: contact.canalNotificaiones.length > 0 ? contact.canalNotificaiones[0].id : 1,
-      prioridad: contact.esPrimario
+      canalId: contact.canalNotificacion.length > 0 ? contact.canalNotificacion[0].id : 1,
+      esPrincipal: contact.esPrincipal,
     };
     return this.http
       .post<Contact>(
@@ -109,13 +110,20 @@ export class ContactService {
   updateContact(id: string, contact: Partial<Contact>): Observable<void> {
     // transform to backend payload
     const payload: Partial<ContactRequest> = {};
-    if (contact.nombre !== undefined) payload.nombre = contact.nombre;
-    if (contact.apellido !== undefined) payload.apellido = contact.apellido;
+    if (contact.userId !== undefined) payload.userId = contact.userId;
+    if (contact.nombre !== undefined && contact.apellido !== undefined) {
+      payload.nombre = contact.apellido + ', ' + contact.nombre;
+    } else if (contact.nombre !== undefined) {
+      payload.nombre = contact.nombre;
+    } else if (contact.apellido !== undefined) {
+      payload.nombre = contact.apellido;
+    } else {
+      payload.nombre = '';
+    }
     if (contact.relacion !== undefined) payload.relacion = contact.relacion;
     if (contact.telefono !== undefined) payload.telefono = contact.telefono;
-    if (contact.email !== undefined) payload.email = contact.email;
-    if (contact.canalNotificaiones !== undefined) payload.canalId = contact.canalNotificaiones.map(c => c.id)[0];
-    if (contact.esPrimario !== undefined) payload.prioridad = contact.esPrimario;
+    if (contact.canalNotificacion !== undefined) payload.canalId = contact.canalNotificacion.map(c => c.id)[0];
+    if (contact.esPrincipal !== undefined) payload.esPrincipal = contact.esPrincipal;
 
     return this.http
       .post<void>(
@@ -186,14 +194,13 @@ export class ContactService {
         if (contact.phoneNumbers && contact.phoneNumbers.length > 0) {
           const telephone = contact.phoneNumbers[0].number || '';
           const newContact: Omit<Contact, 'id'> = {
+            userId: this.userId,
             nombre: contact.displayName || 'Sin nombre',
             apellido: '',
             telefono: telephone,
-            email: contact.emails?.[0]?.address || '',
             relacion: 'Contacto importado',
-            canalNotificaiones: [],
-            esPrimario: false,
-            esEmergencia: false
+            canalNotificacion: [],
+            esPrincipal: false,
           };
 
           this.addContact(newContact).subscribe();
@@ -205,16 +212,33 @@ export class ContactService {
   }
 
   /**
-   * Get emergency contacts
-   */
-  getEmergencyContacts(): Contact[] {
-    return this.contactsSubject.value.filter((c) => c.esEmergencia);
-  }
-
-  /**
    * Get primary contact
    */
   getPrimaryContact(): Contact | null {
-    return this.contactsSubject.value.find((c) => c.esPrimario) || null;
+    return this.contactsSubject.value.find((c) => c.esPrincipal) || null;
   }
+
+  getCanalesNotificacion(): Observable<CatalogType[]> {
+    return this.http
+      .get<any[]>(
+        `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CATALOG_NOTIFICATION_CHANNELS}`
+      )
+      .pipe(
+        map((items) =>
+          items
+            .filter((item) => item.habilitada !== false)
+            .map((item) => ({ id: item.id, descripcion: item.descripcion } as CatalogType))
+        ),
+        catchError((error) => {
+          console.error('Error getting notification channels:', error);
+          return throwError(() => new Error('Error al obtener canales de notificación'));
+        })
+      );
+  }
+
+  getRelationOptions(): string[] {
+    return ['Padre', 'Madre', 'Amigo', 'Pareja', 'Hermano/a', 'Hijo/a', 'Otro'];
+  }
+
+
 }

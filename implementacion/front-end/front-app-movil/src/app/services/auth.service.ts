@@ -7,7 +7,7 @@ import { Device } from '@capacitor/device';
 import { Preferences } from '@capacitor/preferences';
 
 import { API_CONFIG } from '../config/api-config';
-import { pegarDesdeClipboard } from '../utils/clipboard-util.util';
+import { getClipboard } from '../utils/clipboard-util.util';
 import {
   LoginRequest,
   LoginResponse,
@@ -166,7 +166,7 @@ export class AuthService {
       const loginRequest: LoginRequest = {
         email,
         password,
-        dispositivoAppId: this.deviceAppId,
+        dispositivoAppId: this.deviceAppId
       };
 
       console.log('Login request payload:', JSON.stringify(loginRequest));
@@ -369,7 +369,7 @@ export class AuthService {
       // Get from clipboard if on web (for testing multiple browser sessions)
       const isWeb = typeof window !== 'undefined' && !!window.document;
       if (!deviceId && isWeb) {
-        const clipboardText = await pegarDesdeClipboard();
+        const clipboardText = await getClipboard();
         if (clipboardText) {
           await Preferences.set({ key: API_CONFIG.DEVICE_ID_KEY, value: clipboardText });
           return clipboardText;
@@ -391,7 +391,7 @@ export class AuthService {
    * Get device app ID
    */
   async getDeviceAppId() {
-    return this.deviceAppId || pegarDesdeClipboard();
+    return this.deviceAppId || getClipboard();
   }
 
   /**

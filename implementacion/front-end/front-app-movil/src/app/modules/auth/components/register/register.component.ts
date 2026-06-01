@@ -5,7 +5,7 @@ import { Device } from '@capacitor/device';
 import { AuthService } from '@app/services/auth.service';
 import { NotificationService } from '@app/services/notification.service';
 import { DeviceInfo } from '@app/models/auth.models';
-import { pegarDesdeClipboard } from '../../../../utils/clipboard-util.util';
+import { getClipboard } from '../../../../utils/clipboard-util.util';
 
 @Component({
   selector: 'app-register',
@@ -73,7 +73,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       let dispositivoAppId = deviceId.identifier;
       if (platform === 'web') {
         tipoDispositivo = 'WEB_BROWSER';
-        const clipboardText = await pegarDesdeClipboard();
+        const clipboardText = await getClipboard();
         dispositivoAppId = clipboardText || deviceId.identifier;
       }
 

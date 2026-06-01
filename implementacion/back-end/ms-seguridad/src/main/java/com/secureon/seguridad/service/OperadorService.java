@@ -12,6 +12,7 @@ import com.secureon.common.exception.ResourceNotFoundException;
 import com.secureon.common.model.entity.Operador;
 import com.secureon.common.model.entity.Sesion;
 import com.secureon.common.model.entity.SesionCdm;
+import com.secureon.common.model.entity.Usuario;
 import com.secureon.common.util.MessagesService;
 
 import com.secureon.seguridad.dto.request.LoginCdmRequest;
@@ -72,10 +73,19 @@ public class OperadorService {
 
     @Transactional
     public LoginResponse login(LoginCdmRequest request) {
-        String token = sessionService.autenticar(request.getEmail(), request.getPassword());
+        String username = request.getEmail() != null ? request.getEmail() : request.getLegajo().toString();
+        String token = sessionService.autenticar(username, request.getPassword());
+        Operador operador = null;
+        if (request.getEmail() != null) {
+            operador = operadorRepository.findByEmail(username)
+                .orElseThrow(() -> new BadRequestException(messageService.getMessage("err.auth.operator.login.email")));
 
-        Operador operador = operadorRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadRequestException(messageService.getMessage("err.operator.not-found")));
+        } else if (request.getLegajo() != null) {
+            operador = operadorRepository.findByLegajo(request.getLegajo())
+                .orElseThrow(() -> new BadRequestException(messageService.getMessage("err.auth.operator.login.legajo")));
+        } else {
+            throw new BadRequestException(messageService.getMessage("cdm.login.err.any-value"));
+        }
 
         Sesion sesion = sessionService.crearSesionOperador(operador, token);
 

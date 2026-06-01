@@ -51,7 +51,7 @@
               <!-- Primary Star -->
               <td class="px-4 py-3 text-center">
                 <span class="material-symbols-outlined"
-                  [ngClass]="contact.esEmergencia ? 'text-primary filled-icon' : 'text-slate-300 dark:text-slate-600'">star</span>
+                  [ngClass]="contact.esPrincipal ? 'text-primary filled-icon' : 'text-slate-300 dark:text-slate-600'">star</span>
               </td>
               <!-- Actions -->
               <td class="px-4 py-3 text-right">
@@ -123,13 +123,13 @@
             class="w-full border-slate-300 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary text-sm bg-slate-50 dark:bg-slate-900 dark:text-white" />
         </div>
 
-        <!-- Email -->
+        <!-- Email --
         <div>
           <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Email</label>
           <input [(ngModel)]="formData.email" type="email" placeholder="ejemplo@correo.com"
             class="w-full border-slate-300 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary text-sm bg-slate-50 dark:bg-slate-900 dark:text-white" />
         </div>
-
+        -->
         <!-- Relación -->
         <div>
           <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Relación</label>

@@ -56,25 +56,23 @@ export type CatalogType = {
 
 export interface Contact {
   id: string;
+  userId: string;
   nombre: string;
   apellido: string;
   telefono: string;
-  email: string;
   relacion: string;
-  canalNotificaiones: CatalogType[];
-  esPrimario: boolean;
-  esEmergencia: boolean;
+  canalNotificacion: CatalogType[];
+  esPrincipal: boolean;
 }
 
 // payload expected by backend when creating/updating
 export interface ContactRequest {
+  userId: string;
   nombre: string;
-  apellido: string;
   relacion: string;
   telefono: string;
-  email: string;
   canalId: number; // list of catalog IDs
-  prioridad: boolean;
+  esPrincipal: boolean;
 }
 export interface ContactResponse {
   contacts: Contact[];

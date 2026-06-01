@@ -64,10 +64,19 @@ public class UsuarioService {
 
     @Transactional
     public LoginResponse login(LoginAppRequest request) {
+        String username = request.getEmail() != null ? request.getEmail() : request.getTelefono();
+        String token = sessionService.autenticar(username, request.getPassword());
+        Usuario usuario = null;
+        if (request.getEmail() != null) {
+            usuario = usuarioRepository.findByEmail(username)
+                    .orElseThrow(() -> new BadRequestException(messageService.getMessage("err.auth.user.login.email")));
 
-        String token = sessionService.autenticar(request.getEmail(), request.getPassword());
-        Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadRequestException(messageService.getMessage("err.auth.login", request.getEmail())));
+        } else if (request.getTelefono() != null) {
+            usuario = usuarioRepository.findByTelefono(username)
+                .orElseThrow(() -> new BadRequestException(messageService.getMessage("err.auth.user.login.phone")));
+        } else {
+            throw new BadRequestException(messageService.getMessage("usr.login.err.any-value"));
+        }
 
         Dispositivo dispositivo = dispositivoService.obtenerPorAppId(usuario, request.getDispositivoAppId());
 

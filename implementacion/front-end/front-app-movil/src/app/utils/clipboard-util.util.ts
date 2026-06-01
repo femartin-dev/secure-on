@@ -1,4 +1,4 @@
-export async function pegarDesdeClipboard(): Promise<string> {
+export async function getClipboard(): Promise<string> {
   try {
     const texto = await navigator.clipboard.readText();
     console.log('Texto del clipboard:', texto);
