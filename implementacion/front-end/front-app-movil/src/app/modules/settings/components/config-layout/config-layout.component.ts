@@ -1,6 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
+import { NotificationService } from '@app/services/notification-toast.service';
+import { SettingsLayoutStateService } from '../../services/settings-layout-state.service';
+import { SettingsConfigDraftService } from '../../services/settings-config-draft.service';
 
 interface ConfigPage {
   id: string;
@@ -14,54 +19,156 @@ interface ConfigPage {
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './config-layout.component.html',
-  styleUrl: './config-layout.component.css'
+  styleUrl: './config-layout.component.css',
 })
-export class ConfigLayoutComponent {
+export class ConfigLayoutComponent implements OnDestroy {
+  actionButtonsVisible: boolean = true; // This can be toggled based on the current section or other logic
 
-  pages: ConfigPage[] = [
-    { id: 'contacts', label: 'Contactos', icon: 'contacts', route: '/settings/contacts' },
-    // Future pages:
-    // { id: 'general', label: 'General', icon: 'tune', route: '/settings/general' },
-    // { id: 'security', label: 'Seguridad', icon: 'shield', route: '/settings/security' },
-    // { id: 'notifications', label: 'Notificaciones', icon: 'notifications', route: '/settings/notifications' },
+  sections: ConfigPage[] = [
+    {
+      id: 'general',
+      label: 'Configuracion General',
+      icon: 'tune',
+      route: '/settings/general',
+    },
+    {
+      id: 'activation',
+      label: 'Configuracion de Activacion',
+      icon: 'gesture',
+      route: '/settings/activation',
+    },
+    {
+      id: 'security',
+      label: 'Configuracion de Seguridad',
+      icon: 'shield',
+      route: '/settings/security',
+    },
+    {
+      id: 'performance',
+      label: 'Configuracion de Rendimiento',
+      icon: 'battery_charging_full',
+      route: '/settings/performance',
+    },
+    {
+      id: 'notifications',
+      label: 'Configuracion de Notificaciones',
+      icon: 'notifications',
+      route: '/settings/notifications',
+    },
+    {
+      id: 'contacts',
+      label: 'Configuracion de Contactos',
+      icon: 'contacts',
+      route: '/settings/contacts',
+    },
   ];
 
-  currentPageIndex = 0;
+  private circleGo: boolean = true;
 
-  constructor(private router: Router) {
-    // Determine current page from URL
-    const url = this.router.url;
-    const idx = this.pages.findIndex(p => url.includes(p.id));
-    if (idx >= 0) this.currentPageIndex = idx;
+
+  currentSectionIndex = 0;
+  private readonly destroy$ = new Subject<void>();
+
+  constructor(
+    private router: Router,
+    private readonly notificationService: NotificationService,
+    private settingsLayoutStateService: SettingsLayoutStateService,
+    private settingsConfigDraftService: SettingsConfigDraftService
+  ) {
+
   }
 
-  get currentPage(): ConfigPage {
-    return this.pages[this.currentPageIndex];
+  ngOnInit(): void {
+    this.settingsConfigDraftService.ensureInitialized();
+    this.syncCurrentPage(this.router.url);
+
+    this.settingsLayoutStateService.actionButtonsVisible$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((visible) => {
+        this.actionButtonsVisible = visible;
+      });
+
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((event) => {
+        this.syncCurrentPage((event as NavigationEnd).urlAfterRedirects);
+      });
+
+
+  }
+
+  get currentSection(): ConfigPage {
+    return this.sections[this.currentSectionIndex];
   }
 
   get canGoPrev(): boolean {
-    return this.currentPageIndex > 0;
+    return this.circleGo || this.currentSectionIndex > 0;
   }
 
   get canGoNext(): boolean {
-    return this.currentPageIndex < this.pages.length - 1;
+    return this.circleGo || this.currentSectionIndex < this.sections.length - 1;
   }
 
   goPrev(): void {
-    if (this.canGoPrev) {
-      this.currentPageIndex--;
-      this.router.navigate([this.currentPage.route]);
+    if (this.circleGo) {
+      this.currentSectionIndex = this.currentSectionIndex > 0 ? this.currentSectionIndex - 1 : this.sections.length - 1;
+      this.router.navigate([this.currentSection.route]);
+    }
+    else if (this.canGoPrev) {
+      this.currentSectionIndex--;
+      this.router.navigate([this.currentSection.route]);
     }
   }
 
   goNext(): void {
-    if (this.canGoNext) {
-      this.currentPageIndex++;
-      this.router.navigate([this.currentPage.route]);
+    if (this.circleGo) {
+      this.currentSectionIndex = this.currentSectionIndex < this.sections.length - 1 ? this.currentSectionIndex + 1 : 0;
+      this.router.navigate([this.currentSection.route]);
+    } else if (this.canGoNext) {
+      this.currentSectionIndex++;
+      this.router.navigate([this.currentSection.route]);
     }
   }
 
   goBack(): void {
     this.router.navigate(['/main']);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private syncCurrentPage(url: string): void {
+    const idx = this.sections.findIndex((section) => url.includes(section.id));
+    if (idx >= 0) {
+      this.currentSectionIndex = idx;
+    }
+  }
+
+  // Placeholder methods for buttons  - these can be implemented as needed
+  cancelForm(): void {
+    this.settingsConfigDraftService.resetToInitial();
+    this.goBack();
+  }
+
+  resetForm(): void {
+    this.settingsConfigDraftService.resetToInitial();
+    this.notificationService.showSuccess('Formulario restablecido a su estado inicial');
+  }
+
+  saveForm(): void {
+    this.settingsConfigDraftService.saveAll().subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Configuracion guardada');
+        this.goBack();
+      },
+      error: () => {
+        this.notificationService.showError('Error al guardar configuracion');
+      },
+    });
   }
 }

@@ -25,11 +25,10 @@ public class UbicacionResponse {
     private BigDecimal longitud;
     private Integer precisionToma;
     private MetodoUbicacion metodoUbicacion;
-    private Integer bateriaNivel;
-    private Boolean esEstimada;
-    @JsonIgnore
+    private Integer bateriaNivel;    
     private BigDecimal velocidad;
     private BigDecimal altura;
+    private BigDecimal rumbo;
     private OffsetDateTime fechaToma;
 
     private static final String LAT = "Y";
@@ -46,18 +45,17 @@ public class UbicacionResponse {
                                 .longitud(getValorCoordenadas(u,LNG))
                                 .metodoUbicacion(u.getMetodoUbicacion())
                                 .bateriaNivel(u.getBateriaNivel())
-                                .esEstimada(u.getEsEstimada())
-                                //.velocidad(u.getVelocidad())
-                                .altura(getValorCoordenadas(u,ALT))
+                                .velocidad(u.getVelocidad())
+                                .altura(u.getAltura())
+                                .rumbo(u.getRumbo())
                                 .fechaToma(u.getFechaToma())
                                 .build();
     }
 
     private static BigDecimal getValorCoordenadas(Ubicacion u, String eje) {
-        double val = LAT.equals(eje) ? u.getPosicion().getCoordinate().getY() :
-                     LNG.equals(eje) ? u.getPosicion().getCoordinate().getX() :
-                     ALT.equals(eje) ? u.getPosicion().getCoordinate().getZ() : 0.0; 
-        return BigDecimal.valueOf(val);
+        return LAT.equals(eje) ? BigDecimal.valueOf(u.getPosicion().getCoordinate().getY()) :
+               LNG.equals(eje) ? BigDecimal.valueOf(u.getPosicion().getCoordinate().getX()) :
+               ALT.equals(eje) ? BigDecimal.valueOf(u.getPosicion().getCoordinate().getZ()) : BigDecimal.ZERO;
     }
 }
 

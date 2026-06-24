@@ -1,0 +1,106 @@
+<div class="page flex h-full flex-col bg-[#f1f3f6] dark:bg-background-dark text-[#111317] dark:text-white">
+  <main class="flex-1 overflow-y-auto max-w-md mx-auto w-full p-4 space-y-4">
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between border-b border-gray-50 dark:border-gray-700">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <span class="material-symbols-outlined text-lg">battery_charging_full</span>
+          </div>
+          <span class="font-medium text-gray-700 dark:text-gray-200">Gestion bateria</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex gap-1">
+          <label class="flex-1">
+            <input class="hidden peer" name="battery-mode" type="radio" value="max" [(ngModel)]="batteryMode" title="Modo de bateria maximo" aria-label="Modo de bateria maximo" />
+            <div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white dark:peer-checked:bg-gray-600 peer-checked:text-blue-900 dark:peer-checked:text-white text-gray-500 dark:text-gray-300 cursor-pointer uppercase">
+              Maximo
+            </div>
+          </label>
+          <label class="flex-1">
+            <input class="hidden peer" name="battery-mode" type="radio" value="balanced" [(ngModel)]="batteryMode" title="Modo de bateria equilibrado" aria-label="Modo de bateria equilibrado" />
+            <div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white dark:peer-checked:bg-gray-600 peer-checked:text-blue-900 dark:peer-checked:text-white text-gray-500 dark:text-gray-300 cursor-pointer uppercase">
+              Equilibrado
+            </div>
+          </label>
+          <label class="flex-1">
+            <input class="hidden peer" name="battery-mode" type="radio" value="min" [(ngModel)]="batteryMode" title="Modo de bateria minimo" aria-label="Modo de bateria minimo" />
+            <div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white dark:peer-checked:bg-gray-600 peer-checked:text-blue-900 dark:peer-checked:text-white text-gray-500 dark:text-gray-300 cursor-pointer uppercase">
+              Minimo
+            </div>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+        <label class="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase mb-2 block px-1">Umbral maximo (%)</label>
+        <input [(ngModel)]="settings.umbralBateriaMedia" (ngModelChange)="onMaxThresholdChange($event)" title="Umbral maximo" aria-label="Umbral maximo" class="w-full h-11 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 text-gray-900 dark:text-white" type="number" />
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+        <label class="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase mb-2 block px-1">Umbral equilibrado (%)</label>
+        <input [(ngModel)]="settings.umbralBateriaBaja" (ngModelChange)="onBalancedThresholdChange($event)" title="Umbral equilibrado" aria-label="Umbral equilibrado" class="w-full h-11 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 text-gray-900 dark:text-white" type="number" />
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+        <label class="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase mb-2 block px-1">Umbral minimo (%)</label>
+        <input [(ngModel)]="settings.umbralBateriaCritica" (ngModelChange)="onMinThresholdChange($event)" title="Umbral minimo" aria-label="Umbral minimo" class="w-full h-11 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 text-gray-900 dark:text-white" type="number" />
+      </div>
+      <p *ngIf="validationMessage" class="px-1 text-xs font-medium text-red-600 dark:text-red-400">
+        {{ validationMessage }}
+      </p>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+      <div class="flex justify-between items-center mb-6 px-1">
+        <!--
+        <h2 class="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">Visualizacion Umbrales</h2>
+        -->
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Estado de Carga</span>
+        <span class="material-symbols-outlined text-xl">battery_android_frame_4</span>
+
+      </div>
+      <div class="relative pt-6 pb-2">
+        <div class="absolute top-0 left-0 w-full flex justify-between text-[10px] font-bold text-gray-400 uppercase px-1">
+          <span>0%</span>
+          <span>Critico</span>
+          <span>Bajo</span>
+          <span>Regular</span>
+          <span>100%</span>
+        </div>
+        <div class="h-4 w-full inverted-slider-track rounded-full shadow-inner relative overflow-hidden"></div>
+        <div class="absolute -bottom-1 left-[75%] -translate-x-1/2 flex flex-col items-center">
+          <div class="w-0.5 h-6 bg-gray-800 dark:bg-gray-100"></div>
+          <div class="mt-1 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 text-[9px] px-1.5 py-0.5 rounded font-bold">75%</div>
+        </div>
+      </div>
+      <div class="mt-8 grid grid-cols-4 gap-1">
+        <div class="flex items-center gap-1">
+          <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+          <span class="text-[9px] font-bold text-gray-500 dark:text-gray-300 uppercase">Max</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+          <span class="text-[9px] font-bold text-gray-500 dark:text-gray-300 uppercase">Med</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+          <span class="text-[9px] font-bold text-gray-500 dark:text-gray-300 uppercase">Bajo</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="w-2.5 h-2.5 rounded-full bg-black"></div>
+          <span class="text-[9px] font-bold text-gray-500 dark:text-gray-300 uppercase">Crit</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!--
+  <footer class="shrink-0 bg-white dark:bg-background-dark border-t border-gray-200 dark:border-gray-700 p-4">
+    <div class="max-w-md mx-auto grid grid-cols-3 gap-3">
+      <button class="h-12 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-sm">Cancelar</button>
+      <button class="h-12 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl text-sm">Restablecer</button>
+      <button class="h-12 bg-[#1d3583] text-white font-bold rounded-xl text-sm shadow-md">Guardar</button>
+    </div>
+  </footer>
+  -->
+</div>

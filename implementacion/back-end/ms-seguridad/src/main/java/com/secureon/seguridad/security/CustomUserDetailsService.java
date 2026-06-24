@@ -3,6 +3,7 @@ package com.secureon.seguridad.security;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -43,11 +44,12 @@ public class CustomUserDetailsService implements UserDetailsService {
             username = Normalizer.normalize(username, Normalizer.Form.NFC);
         }
 
+        
+
         // Primero intentamos como usuario móvil
-        Usuario usuario = usuarioRepository.findByEmail(username).orElse(null); 
-        if (usuario == null) {
-            usuario = usuarioRepository.findByTelefono(username).orElse(null); 
-        }
+        Usuario usuario = usuarioRepository.findById(username != null && username.matches(messageService.getMessage("pattern.uuid")) ? UUID.fromString(username) : UUID.fromString(messageService.getMessage("mock.uuid"))).orElse(
+                        usuarioRepository.findByEmail(username).orElse( 
+                        usuarioRepository.findByTelefono(username).orElse(null) ));
         if (usuario != null) {
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority(rolesProps.getRolUsuario()));
@@ -55,10 +57,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         // Luego como operador CdM
-        Operador operador = operadorRepository.findByEmail(username).orElse(null);
-        if (operador == null) {
-            operador = operadorRepository.findByLegajo(Integer.valueOf(username)).orElse(null);
-        }
+        Operador operador = operadorRepository.findById(username != null && username.matches(messageService.getMessage("pattern.uuid")) ? UUID.fromString(username) : UUID.fromString(messageService.getMessage("mock.uuid"))).orElse(
+                            operadorRepository.findByEmail(username).orElse(
+                            operadorRepository.findByLegajo(username != null && username.matches(messageService.getMessage("pattern.only-numbers")) ? Integer.valueOf(username) : null).orElse(null) ));
+        
         if (operador != null) {
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             String role = operador.getEsAdministrador() ? rolesProps.getRolAdministrador(): rolesProps.getRolOperador();

@@ -1,0 +1,99 @@
+spring:
+    application:
+        name: lib-common
+    datasource:
+        url: jdbc:postgresql://localhost:5432/secure_on_db
+        username: secure_on_admin
+        password: admin-123
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        hibernate:
+            ddl-auto: validate  
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+        show-sql: true
+    cache:
+        type: simple
+
+ws-gateway:
+    config:
+        server-url: http://localhost:8090
+        endpoint-ws: /ws/secure-on
+        enabled-brokers: /topic,/queue
+        app-destination: /app
+        user-destination: /user
+    routes:
+        topics:
+            alarma:
+                nueva: /topic/alarma/nueva
+                cambio-estado: /topic/alarma/cambio-estado
+                reactivacion: /topic/alarma/reactivacion
+                finalizacion: /topic/alarma/finalizacion
+                asignacion: /topic/alarma/asignacion
+            ubicacion:
+                realtime: /topic/ubicacion/realtime
+            evidencia:
+                realtime: /topic/evidencia/realtime
+            operador:
+                estado: /topic/operador/estado
+                asignacion: /topic/operador/asignacion
+            sistema:
+                salud: /topic/sistema/salud
+                alertas: /topic/sistema/alertas
+        queues:
+            usuario:
+                notificaciones: /queue/usuario/notificaciones
+                alertas: /queue/usuario/alertas
+            operador:
+                tareas: /queue/operador/tareas
+                asignaciones: /queue/operador/asignaciones
+            cdm:
+                control: /queue/cdm/control
+                auditoria: /queue/cdm/auditoria
+
+api-gateway:
+    server_url: http://localhost:8090
+    endpoints:
+        ws-internal: /ws/internal
+        app-movil: /api/secure-on/servicios-moviles
+        cmd-control: /api/secure-on/centro-de-monitoreo
+        seguridad: /api/secure-on/seguridad
+
+app:
+    repository:
+        path: 
+            evidencias: c:/secure-on-dev/evidencias/
+    jwt:
+        secret: rN3tF0nX5kK7d8JmP4z6Ww2Xb3L0E9A5R8Q1sHjDkC7ZP2M4J9F6LQYtE8gVwUSecret34frt34EMUIrsCore45
+        expiration: 86400000     # 24 horas en milisegundos
+        refresh-expiration: 604800000 # 7 días
+    static-data:
+        estado-alarma:
+            activa: 1
+            cancelada: 2
+            finalizada: 3
+        prioridad:
+            normal: 1
+            alta: 2
+            urgencia: 3
+        tipo-evidencia:
+            imagen: sif
+            video: svf
+            audio: saf
+            mime-types: image/jpeg, image/png, image/gif, video/mp4, video/avi, audio/mpeg, audio/wav, audio/ogg, audio/aac
+
+
+third-party:
+    twilio:
+        account-sid: AC9cf7355031ab2f52ba33de04090be613
+        auth-token: d32a2a29a91b69e81e2a0ea88a3f027d
+        sms-from-number: +15417872824
+        messaging-service-sid: MGd8e4ebaed97cf667bae8501be3a2c9ed
+        whatsapp-from-number : +14155238886
+        alphanumeric-sender : Secure-ON
+
+logging:
+    level:
+        com.secureon.common: DEBUG
+        org.springframework.security: DEBUG

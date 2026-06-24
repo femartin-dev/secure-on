@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { tap, catchError, map } from 'rxjs/operators';
@@ -7,17 +7,22 @@ import { throwError } from 'rxjs';
 
 import { API_CONFIG } from '../config/api-config';
 import { AuthService } from './auth.service';
-import { Contact, ContactResponse, ContactRequest, CatalogType } from '../models/config.models';
+import { Contact, ContactResponse, ContactRequest } from '../models/contact.models';
+import { CanalNotificacion } from '@app/models/catalog.models';
+import { notificationChannelsConfig } from '../utils/constants.util';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ContactService {
   private contactsSubject = new BehaviorSubject<Contact[]>([]);
   public contacts$ = this.contactsSubject.asObservable();
   private userId: string;
 
-  constructor(private http: HttpClient, private authService: AuthService) {
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {
     this.userId = this.authService.getCurrentUser()?.id || '';
     this.loadContacts();
   }
@@ -43,9 +48,9 @@ export class ContactService {
   getContacts(): Observable<ContactResponse> {
     // backend returns array of simplified contacts
     return this.http
-      .get<any[]>(
-        `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CONTACT_BASE}`
-      )
+      .get<
+        any[]
+      >(`${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CONTACT_BASE}/${this.userId}/listar`)
       .pipe(
         catchError((error) => {
           console.error('Error getting contacts:', error);
@@ -59,8 +64,8 @@ export class ContactService {
             return {
               id: item.id,
               userId: item.userId,
-              nombre: item.nombre.split(',')[1] || item.nombre.split(' ')[0] || '',
-              apellido: item.nombre.split(',')[0] || item.nombre.split(' ')[1] || '',
+              nombre: item.nombre.split(',')[1]?.trim() || '',
+              apellido: item.nombre.split(',')[0]?.trim() || '',
               telefono: item.telefono,
               relacion: item.relacion,
               canalNotificacion: item.canal ? [item.canal] : [],
@@ -110,20 +115,12 @@ export class ContactService {
   updateContact(id: string, contact: Partial<Contact>): Observable<void> {
     // transform to backend payload
     const payload: Partial<ContactRequest> = {};
-    if (contact.userId !== undefined) payload.userId = contact.userId;
-    if (contact.nombre !== undefined && contact.apellido !== undefined) {
-      payload.nombre = contact.apellido + ', ' + contact.nombre;
-    } else if (contact.nombre !== undefined) {
-      payload.nombre = contact.nombre;
-    } else if (contact.apellido !== undefined) {
-      payload.nombre = contact.apellido;
-    } else {
-      payload.nombre = '';
-    }
-    if (contact.relacion !== undefined) payload.relacion = contact.relacion;
-    if (contact.telefono !== undefined) payload.telefono = contact.telefono;
-    if (contact.canalNotificacion !== undefined) payload.canalId = contact.canalNotificacion.map(c => c.id)[0];
-    if (contact.esPrincipal !== undefined) payload.esPrincipal = contact.esPrincipal;
+    payload.userId = contact.userId || this.userId;
+    payload.nombre = contact.nombre && contact.apellido ? contact.apellido + ', ' + contact.nombre : contact.nombre ?? contact.apellido ?? '';
+    payload.relacion = contact.relacion ?? payload.relacion;
+    payload.telefono = contact.telefono ?? payload.telefono;
+    payload.canalId = contact.canalNotificacion?.map((c) => c.id)[0] ?? payload.canalId;
+    payload.esPrincipal = contact.esPrincipal ?? payload.esPrincipal;
 
     return this.http
       .post<void>(
@@ -218,17 +215,29 @@ export class ContactService {
     return this.contactsSubject.value.find((c) => c.esPrincipal) || null;
   }
 
-  getCanalesNotificacion(): Observable<CatalogType[]> {
+  getCanalesNotificacion(): Observable<CanalNotificacion[]> {
     return this.http
-      .get<any[]>(
+      .get<any>(
         `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CATALOG_NOTIFICATION_CHANNELS}`
       )
       .pipe(
-        map((items) =>
-          items
-            .filter((item) => item.habilitada !== false)
-            .map((item) => ({ id: item.id, descripcion: item.descripcion } as CatalogType))
-        ),
+        map((response) => {
+          // Backend returns { canalesNotificacion: [...] }
+          const items: any[] = response?.canalesNotificacion ?? response?.contenido ?? [];
+          return items
+            .filter((item: any) => item.habilitada !== false && item.habilitada !== 0)
+            .map((item: any) => {
+              const cfg = notificationChannelsConfig[item.id] ?? notificationChannelsConfig[0];
+              return {
+                id: item.id,
+                descripcion: item.descripcion,
+                icono: cfg.icon,
+                svgIcono: cfg.svgIcon,
+                color: cfg.color,
+                orden: item.orden ?? item.id,
+              } as CanalNotificacion;
+            });
+        }),
         catchError((error) => {
           console.error('Error getting notification channels:', error);
           return throwError(() => new Error('Error al obtener canales de notificación'));
@@ -236,9 +245,16 @@ export class ContactService {
       );
   }
 
-  getRelationOptions(): string[] {
-    return ['Padre', 'Madre', 'Amigo', 'Pareja', 'Hermano/a', 'Hijo/a', 'Otro'];
+  getRelaciones(): Observable<string[]> {
+    return this.http
+      .get<
+        string[]
+      >(`${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CATALOG_RELATIONSHIPS}`)
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching relationships:', error);
+          return throwError(() => new Error('Error al obtener relaciones'));
+        })
+      );
   }
-
-
 }

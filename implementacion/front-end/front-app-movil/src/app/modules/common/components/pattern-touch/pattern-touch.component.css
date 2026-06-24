@@ -1,0 +1,55 @@
+.pattern-container {
+  display: inline-block;
+}
+
+.pattern-svg {
+  touch-action: none;
+  /* Evita gestos del navegador en dispositivos táctiles */
+  border-radius: 10px;
+  display: block;
+}
+
+.dot {
+  fill: #ffffff;
+  stroke: #888888;
+  stroke-width: 2;
+  transition: fill 0.2s, stroke 0.2s;
+  pointer-events: none;
+  /* Los clics los recibe el área táctil */
+}
+
+.dot-dark {
+  fill: #0f0f0f;
+  stroke: #888888;
+  stroke-width: 2;
+  transition: fill 0.2s, stroke 0.2s;
+  pointer-events: none;
+  /* Los clics los recibe el área táctil */
+}
+
+.dot.selected {
+  fill: #183daa;
+  stroke: #26345d;
+}
+
+.dot-hitarea {
+  cursor: pointer;
+}
+
+.pattern-line {
+  stroke: #183daa;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  /* La línea no interfiere con los eventos de los puntos */
+}
+
+.pattern-line-dark {
+  stroke: #ffff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  /* La línea no interfiere con los eventos de los puntos */
+}

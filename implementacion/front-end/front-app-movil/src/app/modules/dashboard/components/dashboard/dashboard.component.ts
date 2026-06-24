@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../services/auth.service';
 import { AlarmService } from '../../../../services/alarm.service';
 import { GeolocationService } from '../../../../services/geolocation.service';
-import { NotificationService } from '../../../../services/notification.service';
+import { NotificationService } from '../../../../services/notification-toast.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocationData } from '../../../../models/alarm.models';

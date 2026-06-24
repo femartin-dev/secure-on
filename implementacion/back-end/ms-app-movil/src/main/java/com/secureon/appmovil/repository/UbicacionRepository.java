@@ -15,4 +15,6 @@ public interface UbicacionRepository extends JpaRepository<Ubicacion, UUID> {
     Optional<Ubicacion> findById(UUID id);
 
     List<Ubicacion> findByAlarma(Alarma alarma);
+
+    List<Ubicacion> findByAlarmaIdOrderByFechaTomaDesc(UUID alarmaId);
 }

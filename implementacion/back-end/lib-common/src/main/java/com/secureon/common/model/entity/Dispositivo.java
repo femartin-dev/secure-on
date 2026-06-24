@@ -5,7 +5,10 @@ import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.secureon.common.model.converter.OffsetDateTimeConverter;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -69,5 +72,6 @@ public class Dispositivo {
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime fechaCreacion;
 }

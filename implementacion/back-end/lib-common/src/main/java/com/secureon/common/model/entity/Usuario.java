@@ -6,8 +6,10 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.secureon.common.model.converter.OffsetDateTimeConverter;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -52,5 +54,6 @@ public class Usuario {
 
     @CreationTimestamp
     @Column(name = "fecha_registro")
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime fechaRegistro;
 }

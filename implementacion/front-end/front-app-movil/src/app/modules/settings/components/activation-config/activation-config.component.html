@@ -1,0 +1,184 @@
+<div class="page flex h-full flex-col bg-background-light dark:bg-background-dark text-[#111317] dark:text-white">
+  <main class="flex-1 overflow-y-auto px-4 pt-6 pb-4 w-full max-w-md mx-auto space-y-5">
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#1e3a8a] dark:text-blue-400">
+            <span class="material-symbols-outlined text-xl">gesture</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Patron tactil</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="touchPatternEnabled" title="Activar patron tactil" aria-label="Activar patron tactil" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div *ngIf="touchPatternEnabled" class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-4">
+        <button (click)="openPattern()" class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
+          {{ showPatternTrace ? 'Mostrar patrón' : 'Definir patrón' }}
+        </button>
+        <div class="flex items-center justify-between ">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Mostrar trazo</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only" [(ngModel)]="showPatternTrace" title="Mostrar trazo del patrón" aria-label="Mostrar trazo del patrón" />
+            <span class="toggle small"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+            <span class="material-symbols-outlined text-xl">mic</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Comando de voz</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="voiceCommandEnabled" title="Activar comando de voz" aria-label="Activar comando de voz" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div *ngIf="voiceCommandEnabled" class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-5">
+        <button class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
+          Definir clave de voz
+        </button>
+        <!--
+        <div class="flex flex-col gap-2">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-700 dark:text-gray-300">Sensibilidad</span>
+            <span class="font-bold text-[#1e3a8a] dark:text-blue-400">{{ voiceSensitivity }}</span>
+          </div>
+          <input type="range" min="1" max="10" [(ngModel)]="voiceSensitivity" title="Sensibilidad de comando de voz" aria-label="Sensibilidad de comando de voz" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600" />
+          <div class="flex justify-between text-xs text-gray-400 px-1">
+            <span>1</span>
+            <span>10</span>
+          </div>
+        </div>
+        -->
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+            <span class="material-symbols-outlined text-xl">vibration</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Movimiento</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="movementEnabled" title="Activar movimiento" aria-label="Activar movimiento" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div *ngIf="movementEnabled" class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
+        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Sensibilidad de sacudida</span>
+        <div class="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
+          <button (click)="movementSensitivity='low'" class="flex-1 py-1.5 text-sm rounded-md transition-colors" [ngClass]="movementSensitivity === 'low' ? 'font-bold bg-white dark:bg-gray-600 text-[#1e3a8a] dark:text-white shadow-sm' : 'font-medium text-gray-500 dark:text-gray-400'">Baja</button>
+          <button (click)="movementSensitivity='medium'" class="flex-1 py-1.5 text-sm rounded-md transition-colors" [ngClass]="movementSensitivity === 'medium' ? 'font-bold bg-white dark:bg-gray-600 text-[#1e3a8a] dark:text-white shadow-sm' : 'font-medium text-gray-500 dark:text-gray-400'">Media</button>
+          <button (click)="movementSensitivity='high'" class="flex-1 py-1.5 text-sm rounded-md transition-colors" [ngClass]="movementSensitivity === 'high' ? 'font-bold bg-white dark:bg-gray-600 text-[#1e3a8a] dark:text-white shadow-sm' : 'font-medium text-gray-500 dark:text-gray-400'">Alta</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400">
+            <span class="material-symbols-outlined text-xl">timer</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Temporizador cancelacion</span>
+        </div>
+        <span class="text-sm font-bold text-[#1e3a8a] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">{{ cancelTimer }} seg</span>
+      </div>
+      <div class="px-1 pb-1">
+        <input type="range" min="{{ cancelTimerSettings.min }}"
+                max="{{ cancelTimerSettings.max }}"
+                step="{{ cancelTimerSettings.step }}"
+                [(ngModel)]="cancelTimer"
+                title="Temporizador de cancelacion" aria-label="Temporizador de cancelacion"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600" />
+        <div class="flex justify-between text-xs text-gray-400 mt-2">
+          <span>{{ cancelTimerSettings.min }} s</span>
+          <span>{{ cancelTimerSettings.max }} s</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400">
+            <span class="material-symbols-outlined text-xl">timer</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Temporizador activacion</span>
+        </div>
+        <span class="text-sm font-bold text-[#1e3a8a] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">{{ activationTimer }} seg</span>
+      </div>
+      <div class="px-1 pb-1">
+        <input type="range" min="{{ activationTimerSettings.min }}"
+                max="{{ activationTimerSettings.max }}"
+                step="{{ activationTimerSettings.step }}"
+                [(ngModel)]="activationTimer"
+                title="Temporizador de activacion" aria-label="Temporizador de activacion"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600" />
+        <div class="flex justify-between text-xs text-gray-400 mt-2">
+          <span>{{ activationTimerSettings.min }} s</span>
+          <span>{{ activationTimerSettings.max }} s</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <!--
+  <footer class="shrink-0 bg-background-light dark:bg-background-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+    <div class="flex flex-col gap-3 px-4 py-4 w-full max-w-md mx-auto">
+      <div class="grid grid-cols-3 gap-3">
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+          <span class="truncate">Cancelar</span>
+        </button>
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+          <span class="truncate">Restablecer</span>
+        </button>
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-[#1e3a8a] border border-transparent text-white text-sm font-bold shadow-sm">
+          <span class="truncate">Guardar</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+  -->
+
+  <!-- Modal de Patrón Táctil -->
+  <div *ngIf="showPatternModal" class="fixed inset-0 bg-black/50 z-40 flex items-end animate-in fade-in">
+    <div class="w-full bg-white dark:bg-gray-800 rounded-t-2xl shadow-2xl animate-in slide-in-from-bottom-5">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white">Definir Patrón Táctil</h2>
+        <button (click)="closePatternModal()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" aria-label="Cerrar modal">
+          <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 flex flex-col items-center justify-center min-h-[500px]">
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 text-center">Dibuja un patrón de 4 a 9 puntos tocando los círculos</p>
+        <app-pattern-touch (patternDrawn)="onPatternDrawn($event)" [pattern]="showPatternTrace ? touchPatternValue : []" [editable]="!showPatternTrace"></app-pattern-touch>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <button (click)="closePatternModal()" class="flex-1 py-3 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          {{ showPatternTrace ? 'Cerrar' : 'Cancelar' }}
+        </button>
+        <button *ngIf="!showPatternTrace" (click)="clearPattern()" class="flex-1 py-3 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          Limpiar
+        </button>
+        <button *ngIf="!showPatternTrace" (click)="confirmChanges()" class="flex-1 py-3 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

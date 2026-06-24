@@ -1,0 +1,112 @@
+<div class="page flex h-full flex-col bg-background-light dark:bg-background-dark text-[#111317] dark:text-white">
+  <main class="flex-1 overflow-y-auto px-4 pt-6 pb-4 w-full max-w-md mx-auto space-y-5">
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#1e3a8a] dark:text-blue-400">
+            <span class="material-symbols-outlined text-xl">fingerprint</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Desbloqueo por huella</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="fingerprintEnabled" title="Activar desbloqueo por huella" aria-label="Activar desbloqueo por huella" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <button class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
+          DEFINIR HUELLA
+        </button>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+            <span class="material-symbols-outlined text-xl">gesture</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Patron de desbloqueo</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="patternEnabled" title="Activar patron de desbloqueo" aria-label="Activar patron de desbloqueo" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <button class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
+          Definir Patron
+        </button>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+            <span class="material-symbols-outlined text-xl">dialpad</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">PIN numerico</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="pinEnabled" title="Activar PIN numerico" aria-label="Activar PIN numerico" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <input [(ngModel)]="pin" title="PIN de seguridad" aria-label="PIN de seguridad" class="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-[#1e3a8a] focus:border-[#1e3a8a] dark:text-white" placeholder="INGRESAR PIN (4-6 DIGITOS)" type="password" />
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400">
+            <span class="material-symbols-outlined text-xl">lock</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Contrasena</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="passwordEnabled" title="Activar contrasena" aria-label="Activar contrasena" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <input [(ngModel)]="password" title="Contrasena de seguridad" aria-label="Contrasena de seguridad" class="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-[#1e3a8a] focus:border-[#1e3a8a] dark:text-white" placeholder="INGRESAR CONTRASENA" type="password" />
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-600 dark:text-red-400">
+            <span class="material-symbols-outlined text-xl">report</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Numero maximo intentos</span>
+        </div>
+        <div class="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
+          <button (click)="maxAttempts = 3" class="flex-1 py-1.5 text-sm rounded-md transition-colors" [ngClass]="maxAttempts === 3 ? 'font-bold bg-white dark:bg-gray-600 text-[#1e3a8a] dark:text-white shadow-sm' : 'font-medium text-gray-500 dark:text-gray-400'">3</button>
+          <button (click)="maxAttempts = 5" class="flex-1 py-1.5 text-sm rounded-md transition-colors" [ngClass]="maxAttempts === 5 ? 'font-bold bg-white dark:bg-gray-600 text-[#1e3a8a] dark:text-white shadow-sm' : 'font-medium text-gray-500 dark:text-gray-400'">5</button>
+          <button (click)="maxAttempts = 10" class="flex-1 py-1.5 text-sm rounded-md transition-colors" [ngClass]="maxAttempts === 10 ? 'font-bold bg-white dark:bg-gray-600 text-[#1e3a8a] dark:text-white shadow-sm' : 'font-medium text-gray-500 dark:text-gray-400'">10</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!--
+  <footer class="shrink-0 bg-background-light dark:bg-background-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+    <div class="flex flex-col gap-3 px-4 py-4 w-full max-w-md mx-auto">
+      <div class="grid grid-cols-3 gap-3">
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+          <span class="truncate">Cancelar</span>
+        </button>
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+          <span class="truncate">Restablecer</span>
+        </button>
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-[#1e3a8a] border border-transparent text-white text-sm font-bold shadow-sm">
+          <span class="truncate">Guardar</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+  -->
+</div>

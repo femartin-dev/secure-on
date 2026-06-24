@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.secureon.common.model.converter.OffsetDateTimeConverter;
 
 @Entity
 @Table(schema = "secure_on_cdmso", name = "operadores_cdm")
@@ -47,6 +48,7 @@ public class Operador {
     private Operador supervisor;
 
     @Column(name = "fecha_registro")
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime fechaRegistro = OffsetDateTime.now();
 
 }

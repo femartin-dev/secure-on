@@ -5,7 +5,10 @@ import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.secureon.common.model.converter.OffsetDateTimeConverter;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -43,6 +46,7 @@ public class AlarmaContacto {
 
     @CreationTimestamp
     @Column(name = "fecha_envio")
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime fechaEnvio;
 
     @ManyToOne(fetch = FetchType.LAZY)

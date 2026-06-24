@@ -5,21 +5,25 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { ContactService } from '../../../../services/contact.service';
-import { NotificationService } from '../../../../services/notification.service';
+import { NotificationService } from '../../../../services/notification-toast.service';
 import { AuthService } from '../../../../services/auth.service';
-import { Contact, CatalogType } from '../../../../models/config.models';
+import { CatalogType } from '../../../../models/catalog.models';
+import { Contact } from '../../../../models/contact.models';
+import { CanalNotificacion } from '../../../../models/catalog.models';
+import { notificationChannelsConfig } from '../../../../utils/constants.util';
+import { SettingsLayoutStateService } from '../../services/settings-layout-state.service';
+import { PhoneFormatPipe } from '../../../common/pipes/phone/phone-format.pipe';
 
 type ViewMode = 'list' | 'form';
 
 @Component({
   selector: 'app-contacts-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhoneFormatPipe],
   templateUrl: './contacts-config.component.html',
-  styleUrl: './contacts-config.component.css'
+  styleUrl: './contacts-config.component.css',
 })
 export class ContactsConfigComponent implements OnInit, OnDestroy {
-
   viewMode: ViewMode = 'list';
   contacts: Contact[] = [];
 
@@ -31,23 +35,15 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
     nombre: '',
     apellido: '',
     telefono: '',
-    relacion: 'Amigo',
+    relacion: 'Amigo/a',
     canalNotificacion: [] as CatalogType[],
-    esEmergencia: false
+    esEmergencia: false,
   };
 
+  listTableColumnsName = ['Tipo', 'Teléfono', 'Nombre', 'Principal', 'Acciones'];
+
   relationOptions: string[] = []; //['Padre', 'Madre', 'Amigo', 'Pareja', 'Hermano/a', 'Hijo/a', 'Otro'];
-  notificationTypes: CatalogType[] = [];
-  // icons by channel id: 1-sms, 2-whatsapp, 3-telegram, 4-messenger, 5-mail, 6-llamada, 0-otro
-  notificationIcons: Record<number, string> = {
-    0: 'notifications',
-    1: 'sms',
-    2: 'chat',
-    3: 'send',
-    4: 'chat_bubble',
-    5: 'mail',
-    6: 'phone',
-  };
+  notificationChannels: CanalNotificacion[] = [];
 
   loading = false;
   private destroy$ = new Subject<void>();
@@ -56,32 +52,48 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
   constructor(
     private contactService: ContactService,
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private settingsLayoutStateService: SettingsLayoutStateService
   ) {}
 
   ngOnInit(): void {
+    this.settingsLayoutStateService.setActionButtonsVisible(true);
+
     // Get userId from authenticated user
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
       this.userId = currentUser.id;
     }
 
-    this.contactService.getCanalesNotificacion()
+    this.contactService
+      .getCanalesNotificacion()
       .pipe(takeUntil(this.destroy$))
-      .subscribe(types => {
-        this.notificationTypes = types;
+      .subscribe({
+        next: (types) => {
+          console.log('[ContactsConfig] Canales cargados:', types);
+          this.notificationChannels = types;
+        },
+        error: (err) => {
+          console.error('[ContactsConfig] Error cargando canales:', err);
+        },
       });
 
-    this.contactService.contacts$
+    this.contactService.contacts$.pipe(takeUntil(this.destroy$)).subscribe((contacts) => {
+      this.contacts = contacts;
+    });
+
+    //this.relationOptions = this.contactService.getRelationOptions();
+    this.contactService
+      .getRelaciones()
       .pipe(takeUntil(this.destroy$))
-      .subscribe(contacts => {
-        this.contacts = contacts;
+      .subscribe((relations) => {
+        this.relationOptions = relations;
       });
 
-    this.relationOptions = this.contactService.getRelationOptions();
   }
 
   ngOnDestroy(): void {
+    this.settingsLayoutStateService.resetActionButtonsVisibility();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -92,7 +104,7 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
     this.isNew = true;
     this.editingContact = null;
     this.resetForm();
-    this.viewMode = 'form';
+    this.setViewMode('form');
   }
 
   showEditForm(contact: Contact): void {
@@ -102,26 +114,31 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
       nombre: contact.nombre,
       apellido: contact.apellido || '',
       telefono: contact.telefono,
-      relacion: contact.relacion || 'Amigo',
+      relacion: contact.relacion || 'Amigo/a',
       canalNotificacion: contact.canalNotificacion ? [...contact.canalNotificacion] : [],
-      esEmergencia: contact.esPrincipal || false
+      esEmergencia: contact.esPrincipal || false,
     };
-    this.viewMode = 'form';
+    this.setViewMode('form');
   }
 
   backToList(): void {
-    this.viewMode = 'list';
+    this.setViewMode('list');
     this.resetForm();
+  }
+
+  private setViewMode(mode: ViewMode): void {
+    this.viewMode = mode;
+    this.settingsLayoutStateService.setActionButtonsVisible(mode !== 'form');
   }
 
   // ─── Notification type toggle ──────────────────
 
   isNotifActive(key: CatalogType): boolean {
-    return this.formData.canalNotificacion.some(t => t.id === key.id);
+    return this.formData.canalNotificacion.some((t) => t.id === key.id);
   }
 
   toggleNotif(key: CatalogType): void {
-    const idx = this.formData.canalNotificacion.findIndex(t => t.id === key.id);
+    const idx = this.formData.canalNotificacion.findIndex((t) => t.id === key.id);
     /*if (idx >= 0) {
       this.formData.canalNotificacion.splice(idx, 1);
     } else {
@@ -135,7 +152,7 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
 
   saveContact(): void {
     if (!this.formData.nombre.trim() || !this.formData.telefono.trim()) {
-      this.notificationService.showToast('Nombre y teléfono son obligatorios');
+      this.notificationService.showError('Nombre y teléfono son obligatorios');
       return;
     }
 
@@ -148,10 +165,11 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
       telefono: this.formData.telefono.trim(),
       relacion: this.formData.relacion,
       canalNotificacion: this.formData.canalNotificacion,
-      esPrincipal: this.formData.esEmergencia
+      esPrincipal: this.formData.esEmergencia,
     };
     if (this.isNew) {
-      this.contactService.addContact(payload)
+      this.contactService
+        .addContact(payload)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
@@ -160,12 +178,13 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
             this.backToList();
           },
           error: () => {
-            this.notificationService.showToast('Error al agregar contacto');
+            this.notificationService.showError('Error al agregar contacto');
             this.loading = false;
-          }
+          },
         });
     } else if (this.editingContact) {
-      this.contactService.updateContact(this.editingContact.id, payload as Partial<Contact>)
+      this.contactService
+        .updateContact(this.editingContact.id, payload as Partial<Contact>)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
@@ -174,23 +193,24 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
             this.backToList();
           },
           error: () => {
-            this.notificationService.showToast('Error al actualizar contacto');
+            this.notificationService.showError('Error al actualizar contacto');
             this.loading = false;
-          }
+          },
         });
     }
   }
 
   deleteContact(contact: Contact): void {
-    this.contactService.deleteContact(contact.id)
+    this.contactService
+      .deleteContact(contact.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.notificationService.showSuccess('Contacto eliminado');
         },
         error: () => {
-          this.notificationService.showToast('Error al eliminar contacto');
-        }
+          this.notificationService.showError('Error al eliminar contacto');
+        },
       });
   }
 
@@ -200,25 +220,32 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
       nombre: '',
       apellido: '',
       telefono: '',
-      relacion: 'Amigo',
+      relacion: 'Amigo/a',
       canalNotificacion: [],
-      esEmergencia: false
+      esEmergencia: false,
     };
   }
 
   // ─── Helpers ───────────────────────────────────
 
-  getNotifIcons(contact: Contact): { icon: string; color: string; title: string }[] {
+  getNotifIcons(contact: Contact): {  icon: string; svgIcon?: string; color: string; title: string }[] {
     const types = contact.canalNotificacion || [];
-    const map: Record<number, { icon: string; color: string; title: string }> = {
-      0: { icon: 'notifications', color: 'text-slate-400',  title: 'Otro' },
-      1: { icon: 'sms',           color: 'text-orange-500', title: 'SMS' },
-      2: { icon: 'chat',          color: 'text-green-600',  title: 'WhatsApp' },
-      3: { icon: 'send',          color: 'text-blue-500',   title: 'Telegram' },
-      4: { icon: 'chat_bubble',   color: 'text-indigo-500', title: 'Messenger' },
-      5: { icon: 'mail',          color: 'text-slate-500',  title: 'Mail' },
-      6: { icon: 'phone',         color: 'text-teal-500',   title: 'Llamada' },
-    };
-    return types.map(t => map[t.id]).filter(Boolean);
+    return types
+      .map((t) => notificationChannelsConfig[t.id] ?? notificationChannelsConfig[0])
+      .filter(Boolean);
+  }
+
+  importContacts(): void {
+    this.notificationService.showInfo('Funcionalidad no implementada');
+    /*
+    this.contactService
+      .importDeviceContacts()
+      .then(() => {
+        this.notificationService.showSuccess('Contactos importados exitosamente');
+      })
+      .catch(() => {
+        this.notificationService.showError('Error al importar contactos');
+      });
+      */
   }
 }

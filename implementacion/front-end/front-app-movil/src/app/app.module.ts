@@ -15,7 +15,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { AuthService } from './services/auth.service';
 import { GeolocationService } from './services/geolocation.service';
 import { AlarmService } from './services/alarm.service';
-import { NotificationService } from './services/notification.service';
+import { NotificationService } from './services/notification-toast.service';
 
 @NgModule({
   declarations: [

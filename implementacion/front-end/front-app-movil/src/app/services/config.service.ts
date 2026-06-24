@@ -1,85 +1,87 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { Preferences } from '@capacitor/preferences';
 
 import { API_CONFIG } from '../config/api-config';
-import { AppConfig, GeneralSettings, ActivationSettings, SecuritySettings, PerformanceSettings, NotificationSettings } from '../models/config.models';
+import {
+  AppSettings,
+  Configuracion,
+  toAppSettings,
+  toConfiguracion,
+} from '../models/config.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ConfigService {
-  private configSubject = new BehaviorSubject<AppConfig | null>(null);
+  private configSubject = new BehaviorSubject<AppSettings | null>(null);
   public config$ = this.configSubject.asObservable();
 
-  private defaultConfig: AppConfig = {
-    general: {
-      nombreDispositivo: 'Mi Dispositivo',
-      numeroTelefono: '',
-      correoEmergencia: '',
-      idioma: 'es',
-      zonaHoraria: 'America/Argentina/Buenos_Aires'
-    },
-    activation: {
-      tiempoActivacion: 3000, // 3 seconds
-      tiempoCancelacion: 15000, // 15 seconds
-      vibracionHabilitada: true,
-      sonoroHabilitado: true,
-      volumenSonoro: 80
-    },
-    security: {
-      metodosDesbloqueo: ['PASSWORD', 'PIN'],
-      requerirHuellaPrimero: false,
-      cambiarContrasenaAuto: false,
-      diasParaCambio: 90
-    },
-    performance: {
-      actualizarGPS: 5000, // 5 seconds
-      callidadGPS: 'ALTA',
-      registrosLocales: true,
-      borrarDatos: 30 // 30 days
-    },
-    notifications: {
-      notificacionesHabilitadas: true,
-      notificacionesVoz: true,
-      vibracionalEnable: true
-    }
+  private defaultConfig: AppSettings = {
+    id: '',
+    usuarioId: '',
+    dispositivoId: '',
+    general: { idiomaId: 'es', modoSigilosoActivo: false, modoDarkActivo: false },
+    activation: { comandosVozActivo: false, fraseActivacionVoz: null, patronActivo: false, patronActivacion: null, movimientoActivo: false, sensibilidadMovimiento: null, tiempoCancelacionSeg: 0, tiempoActivacionSeg: 0 },
+    security: { patronDesbloqueo: null, pinDesbloqueo: null, passDesbloqueo: null, nroIntentosFallidos: 0 },
+    notifications: { frecuenciaUbicacion: 0, frecuenciaCapturaFotos: 0, frecuenciaGrabaAudio: 0, notificarSiempreSms: false, templateMensaje: null },
+    media: { compresionAudio: '', resolucionFotosDpi: 0, umbralMinimoLux: null, usarFiltrosRuido: false },
+    location: { precisionRed: 0, ubicacionWifi: false },
+    storage: { conservarEvidencias: false, retencionEvidenciasDias: 0, limiteEspacioEvidencias: 0, borrarAntiguas: false, borrarEnviadas: false, espacioCriticoPct: 0, conservarHistorialLocal: 0 },
+    network: { usarDatosMoviles: false, limiteDatos: 0, envioSoloWifi: false },
+    battery: { umbralBateriaMedia: 50, umbralBateriaBaja: 20, umbralBateriaCritica: 5 }
   };
 
-  constructor(private http: HttpClient) {
-    this.loadConfig();
-  }
+  constructor(private http: HttpClient) {}
 
   /**
-   * Load configuration
+   * Load configuration for an authenticated user session.
    */
-  private loadConfig(): void {
-    this.getConfig().subscribe(
-      (config) => {
-        this.configSubject.next(config);
-        this.persistConfig(config);
-      },
-      (error) => {
-        console.error('Error loading config from server:', error);
-        // Try to load from local storage
-        this.loadLocalConfig();
+  async loadConfigForUser(usuarioId: string, dispositivoId: string, reload: boolean): Promise<void> {
+    console.log('Loading config for user:', usuarioId, 'device:', dispositivoId);
+    let config;
+    try {
+      config = await this.getLocalConfig();
+      if (config === null || reload) {
+        config = await firstValueFrom(this.getConfig(usuarioId, dispositivoId));
       }
-    );
+      this.configSubject.next(config);
+      console.log('Config loaded:', config);
+      await this.persistConfig(config);
+    } catch (error) {
+      console.error('Error loading config from server:', error);
+    }
+  }
+
+  async getLocalConfig(): Promise<AppSettings | null> {
+    try {
+      const result = await Preferences.get({ key: 'app_config' })
+      return JSON.parse(result?.value ?? '') as AppSettings;
+    } catch (error) {
+      console.error('Error loading local config:', error);
+      return null;
+    }
   }
 
   /**
    * Get configuration from server
    * Note: No GET endpoint documented - using local fallback
    */
-  getConfig(): Observable<AppConfig> {
+  getConfig(usuarioId: string, dispositivoId: string): Observable<AppSettings> {
+    const params = new HttpParams()
+      .set('usuarioId', usuarioId)
+      .set('dispositivoId', dispositivoId);
+
     return this.http
-      .get<AppConfig>(
-        `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CONFIG_BASE}`
+      .get<Configuracion>(
+        `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CONFIG_BASE}/obtener`,
+        { params }
       )
       .pipe(
+        map((config) => toAppSettings(config)),
         catchError((error) => {
           console.error('Error getting config:', error);
           return throwError(() => new Error('Error al obtener configuración'));
@@ -91,13 +93,18 @@ export class ConfigService {
    * Create new configuration
    * POST /servicios-moviles/v1/config/nuevo
    */
-  createConfig(config: AppConfig): Observable<AppConfig> {
+  createConfig(usuarioId: string, dispositivoId: string): Observable<AppSettings> {
+    const payload = {
+      usuarioId,
+      dispositivoId
+    };
     return this.http
-      .post<AppConfig>(
+      .post<Configuracion>(
         `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CREATE_CONFIG}`,
-        config
+        payload
       )
       .pipe(
+        map((config) => toAppSettings(config)),
         tap((createdConfig) => {
           this.configSubject.next(createdConfig);
           this.persistConfig(createdConfig);
@@ -113,14 +120,16 @@ export class ConfigService {
    * Update configuration
    * POST /servicios-moviles/v1/config/{configId}/editar
    */
-  updateConfig(config: AppConfig, configId?: string): Observable<AppConfig> {
-    const url = configId
-      ? `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CONFIG_BASE}/${configId}/editar`
-      : `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CREATE_CONFIG}`;
-
+  updateConfig(config: AppSettings): Observable<AppSettings> {
+    const payload = toConfiguracion(config);
+    console.log('Updating config with payload:', payload);
     return this.http
-      .post<AppConfig>(url, config)
+      .post<Configuracion>(
+        `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CONFIG_BASE}/${config.id}/editar`,
+        payload
+      )
       .pipe(
+        map((config) => toAppSettings(config)),
         tap((updatedConfig) => {
           this.configSubject.next(updatedConfig);
           this.persistConfig(updatedConfig);
@@ -135,35 +144,14 @@ export class ConfigService {
   /**
    * Get current config
    */
-  getCurrentConfig(): AppConfig | null {
+  getCurrentConfig(): AppSettings | null {
     return this.configSubject.value;
-  }
-
-  /**
-   * Update specific section
-   */
-  async updateSection(
-    section: keyof AppConfig,
-    data: any
-  ): Promise<void> {
-    const current = this.configSubject.value || this.defaultConfig;
-    const updated = {
-      ...current,
-      [section]: { ...current[section], ...data }
-    };
-
-    return new Promise((resolve, reject) => {
-      this.updateConfig(updated).subscribe(
-        () => resolve(),
-        (error) => reject(error)
-      );
-    });
   }
 
   /**
    * Persist config to local storage
    */
-  private async persistConfig(config: AppConfig): Promise<void> {
+  private async persistConfig(config: AppSettings): Promise<void> {
     try {
       await Preferences.set({ key: 'app_config', value: JSON.stringify(config) });
     } catch (error) {
@@ -171,22 +159,12 @@ export class ConfigService {
     }
   }
 
-  /**
-   * Load config from local storage
-   */
-  private async loadLocalConfig(): Promise<void> {
+
+  private async clearLocalConfig(): Promise<void> {
     try {
-      const result = await Preferences.get({ key: 'app_config' });
-      if (result.value) {
-        const config = JSON.parse(result.value) as AppConfig;
-        this.configSubject.next(config);
-      } else {
-        // Use default config
-        this.configSubject.next(this.defaultConfig);
-      }
+      await Preferences.remove({ key: 'app_config' });
     } catch (error) {
-      console.error('Error loading local config:', error);
-      this.configSubject.next(this.defaultConfig);
+      console.error('Error clearing local config:', error);
     }
   }
 
@@ -196,5 +174,41 @@ export class ConfigService {
   async resetToDefault(): Promise<void> {
     this.configSubject.next(this.defaultConfig);
     await this.persistConfig(this.defaultConfig);
+  }
+
+  validarCredencialDesbloqueo(method: string, value: any) : boolean {
+    const config = this.getCurrentConfig();
+    if (!config)
+      return false;
+    switch (method) {
+      case 'PASSWORD':
+        return (config.security.passDesbloqueoActivo || false) && value === config.security.passDesbloqueo;
+      case 'PIN':
+        return (config.security.pinDesbloqueoActivo || false) && value === config.security.pinDesbloqueo;
+      case 'PATRON':
+        return (config.security.patronDesbloqueoActivo || false) && value === config.security.patronDesbloqueo;
+      default:
+        return false;
+    }
+  }
+
+  validarCredencialActivacion(method: string, value: any) : boolean {
+    const config = this.getCurrentConfig();
+    if (!config)
+      return false;
+    switch (method) {
+      case 'FRASE_VOZ':
+        return (config.activation.comandosVozActivo || false) && value === config.activation.fraseActivacionVoz;
+      case 'PATRON':
+        return (config.activation.patronActivo || false) && value === config.activation.patronActivacion;
+      case 'MOVIMIENTO':
+        return config.activation.movimientoActivo || false;
+      case 'REACTIVACION':
+        return true; // No credential, just reactivation flow
+      case 'MANUAL':
+        return true; // No credential, just manual activation
+      default:
+        return false;
+    }
   }
 }

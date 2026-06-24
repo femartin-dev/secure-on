@@ -40,16 +40,18 @@
               <div class="relative flex items-center">
                 <span class="material-symbols-outlined absolute left-4 text-text-muted z-10">person</span>
                 <input
-                  formControlName="email"
-                  type="email"
-                  placeholder="Usuario o correo"
+                  formControlName="usuario"
+                  type="text"
+                  inputmode="email"
+                  placeholder="Correo o teléfono"
+                  autocomplete="username"
                   class="form-input w-full rounded-xl text-white focus:ring-2 focus:ring-primary/50 border-white/10 bg-white/5 focus:border-primary h-14 placeholder:text-text-muted/50 pl-12 pr-4 transition-all"
-                  [class.border-red-500]="submitted && f['email'].invalid"
+                  [class.border-red-500]="submitted && f['usuario'].invalid"
                 />
               </div>
-              <div *ngIf="submitted && f['email'].invalid" class="text-xs text-red-400 mt-1">
-                <span *ngIf="f['email'].errors?.['required']">El correo es requerido</span>
-                <span *ngIf="f['email'].errors?.['email']">Debe ser un correo válido</span>
+              <div *ngIf="submitted && f['usuario'].invalid" class="text-xs text-red-400 mt-1">
+                <span *ngIf="f['usuario'].errors?.['required']">El usuario es requerido</span>
+                <span *ngIf="f['usuario'].errors?.['usuarioInvalido']">Ingresa un correo o teléfono válido</span>
               </div>
             </div>
 

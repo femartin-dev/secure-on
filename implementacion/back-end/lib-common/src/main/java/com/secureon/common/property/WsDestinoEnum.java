@@ -15,7 +15,7 @@ public enum WsDestinoEnum {
     
     // Topics - Ubicación
     TOPIC_UBICACION_REALTIME("topics", "ubicacion", "realtime"),
-    TOPIC_UBICACION_HISTORIAL("topics", "ubicacion", "historial"),
+    TOPIC_EVIDENCIA_REALTIME("topics", "evidencia", "realtime"),
     
     // Topics - Operador
     TOPIC_OPERADOR_ESTADO("topics", "operador", "estado"),

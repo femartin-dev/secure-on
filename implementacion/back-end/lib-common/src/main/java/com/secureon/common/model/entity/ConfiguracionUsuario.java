@@ -5,7 +5,10 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.secureon.common.model.converter.JsonNodeConverter;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -20,6 +23,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import tools.jackson.databind.node.ObjectNode;
+
 
 @Data
 @Entity
@@ -53,7 +58,8 @@ public class ConfiguracionUsuario {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "patron_activacion", columnDefinition = "jsonb")
-    private PatronDefinition patronActivacion;
+    @Convert(converter = JsonNodeConverter.class)
+    private ObjectNode patronActivacion;
 
     @Column(name = "sensibilidad_movimiento", length = 10)
     private String sensibilidadMovimiento;
@@ -69,7 +75,8 @@ public class ConfiguracionUsuario {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "patron_desbloqueo", columnDefinition = "jsonb")
-    private PatronDefinition patronDesbloqueo;
+    @Convert(converter = JsonNodeConverter.class)
+    private ObjectNode patronDesbloqueo;
 
     @Column(name = "pin_desbloqueo")
     private Integer pinDesbloqueo;
@@ -148,4 +155,10 @@ public class ConfiguracionUsuario {
 
     @Column(name = "umbral_minimo_lux")
     private Integer umbralMinimoLux;
+
+    @Column(name = "modo_dark")
+    private Boolean modoDark;
+
+    @Column(name = "tiempo_activacion_seg")
+    private Integer tiempoActivacionSeg;
 }

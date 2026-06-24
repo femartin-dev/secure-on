@@ -6,6 +6,8 @@ import lombok.Data;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.secureon.common.model.converter.OffsetDateTimeConverter;
+
 @Entity
 @Table(schema = "secure_on_cdmso", name = "alarmas_operadores")
 @Data
@@ -24,12 +26,14 @@ public class AlarmaOperador {
     private Operador operador;
 
     @Column(name = "fecha_asignacion")
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime fechaAsignacion = OffsetDateTime.now();
 
     @Column(name = "es_asignacion_auto")
     private Boolean esAsignacionAuto = false;
 
     @Column(name = "fecha_verificacion")
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime fechaVerificacion;
 
     @Column(name = "observaciones_verificacion")

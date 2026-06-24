@@ -26,5 +26,10 @@ public class DispositivoService {
             .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.dispositivo.not-found")));
     }
 
+    public Dispositivo getDispositivoPorAppId(UUID dispositivoAppId) {
+        return dispositivoRepository.findByDispositivoAppId(dispositivoAppId)
+            .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.dispositivo.not-found")));
+    }
+
 }
 

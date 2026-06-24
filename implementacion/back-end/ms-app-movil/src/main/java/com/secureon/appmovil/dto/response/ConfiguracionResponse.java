@@ -4,12 +4,12 @@ import java.util.UUID;
 
 import com.secureon.common.model.entity.ConfiguracionUsuario;
 import com.secureon.common.model.entity.Idioma;
-import com.secureon.common.model.entity.PatronDefinition;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tools.jackson.databind.node.ObjectNode;
 
 @Data
 @Builder
@@ -20,14 +20,16 @@ public class ConfiguracionResponse {
     private UUID id;
     private UUID usuarioId;
     private UUID dispositivoId;
-    private Idioma idioma;
+    private String idiomaId;
     private String fraseActivacionVoz;
-    private PatronDefinition patronActivacion;
+    private ObjectNode patronActivacion;
     private String sensibilidadMovimiento;
     private Integer tiempoCancelacionSeg;
+    private Integer tiempoActivacionSeg;
     private Boolean modoSigilosoActivo;
+    private Boolean modoDark;
     private Boolean notificarSiempreSms;
-    private PatronDefinition patronDesbloqueo;
+    private ObjectNode patronDesbloqueo;
     private Integer pinDesbloqueo;
     private String passDesbloqueo;
     private Integer umbralBateriaMedia;
@@ -60,7 +62,9 @@ public class ConfiguracionResponse {
                                     .id(config.getId())
                                     .usuarioId(config.getUsuario().getId())
                                     .dispositivoId(config.getDispositivo().getId())
-                                    .idioma(config.getIdioma())
+                                    .idiomaId(config.getIdioma().getId())
+                                    .modoDark(config.getModoDark())
+                                    .tiempoActivacionSeg(config.getTiempoActivacionSeg())
                                     .fraseActivacionVoz(config.getFraseActivacionVoz())
                                     .patronActivacion(config.getPatronActivacion())
                                     .sensibilidadMovimiento(config.getSensibilidadMovimiento())

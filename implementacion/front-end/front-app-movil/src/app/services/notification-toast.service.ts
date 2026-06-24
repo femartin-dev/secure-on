@@ -1,17 +1,25 @@
 import { Injectable } from '@angular/core';
 
+type ToastType = 'error' | 'success' | 'warning' | 'info';
+
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
   private toastTimeout: any;
+  private readonly iconByType: Record<ToastType, string> = {
+    error: 'dangerous',
+    success: 'check_circle',
+    warning: 'warning',
+    info: 'info'
+  };
 
   constructor() {}
 
   /**
    * Show toast notification as an on-screen element
    */
-  async showToast(message: string, duration: number = 2000): Promise<void> {
+  private async showToast(type: ToastType, message: string, duration: number = 2000): Promise<void> {
     try {
       // Remove existing toast if any
       const existing = document.getElementById('app-toast');
@@ -21,38 +29,34 @@ export class NotificationService {
       // Create toast element
       const toast = document.createElement('div');
       toast.id = 'app-toast';
-      toast.textContent = message;
-      Object.assign(toast.style, {
-        position: 'fixed',
-        bottom: '32px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        background: 'rgba(28, 31, 38, 0.95)',
-        color: '#fff',
-        padding: '12px 24px',
-        borderRadius: '12px',
-        fontSize: '14px',
-        fontFamily: 'Public Sans, sans-serif',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        zIndex: '99999',
-        maxWidth: '90vw',
-        textAlign: 'center',
-        border: '1px solid rgba(255,255,255,0.1)',
-        transition: 'opacity 0.3s ease',
-        opacity: '0'
-      });
+      toast.className = `app-toast toast-${type}`;
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+
+      const icon = document.createElement('span');
+      icon.className = 'material-symbols-outlined';
+      icon.textContent = this.iconByType[type];
+
+      const text = document.createElement('span');
+      text.className = 'app-toast__text';
+      text.textContent = message;
+
+      toast.appendChild(icon);
+      toast.appendChild(text);
 
       document.body.appendChild(toast);
       // Trigger fade-in
-      requestAnimationFrame(() => { toast.style.opacity = '1'; });
+      requestAnimationFrame(() => {
+        toast.classList.add('is-visible');
+      });
 
       // Auto-remove after duration
       this.toastTimeout = setTimeout(() => {
-        toast.style.opacity = '0';
+        toast.classList.remove('is-visible');
         setTimeout(() => toast.remove(), 300);
       }, duration);
 
-      console.log(`[TOAST ${duration}ms]: ${message}`);
+      console.log(`[TOAST ${type} ${duration}ms]: ${message}`);
     } catch (error) {
       console.error('Error showing notification:', error);
     }
@@ -62,27 +66,27 @@ export class NotificationService {
    * Show error notification
    */
   async showError(message: string): Promise<void> {
-    await this.showToast(`❌ ${message}`, 3000);
+    await this.showToast('error', `${message}`, 3000);
   }
 
   /**
    * Show success notification
    */
   async showSuccess(message: string): Promise<void> {
-    await this.showToast(`✓ ${message}`, 2000);
+    await this.showToast('success', `${message}`, 2000);
   }
 
   /**
    * Show warning notification
    */
   async showWarning(message: string): Promise<void> {
-    await this.showToast(`⚠️ ${message}`, 2500);
+    await this.showToast('warning', `${message}`, 2500);
   }
 
   /**
    * Show info notification
    */
   async showInfo(message: string): Promise<void> {
-    await this.showToast(`ℹ️ ${message}`, 2000);
+    await this.showToast('info', `${message}`, 2000);
   }
 }

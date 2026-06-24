@@ -24,6 +24,10 @@ public class ProxyController {
     public ResponseEntity<?> proxy(HttpServletRequest request, 
                                 @RequestBody(required = false) String body) {
         String path = request.getRequestURI().replaceFirst(apiProperties.getPrefixApi(), "");
+        String queryString = request.getQueryString();
+        if (queryString != null && !queryString.isBlank()) {
+            path = path + "?" + queryString;
+        }
         String method = request.getMethod();
         return routingService.forward(path, method, body, request);
     }

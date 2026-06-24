@@ -3,25 +3,39 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AlarmService } from '../../../../services/alarm.service';
-import { NotificationService } from '../../../../services/notification.service';
+import { NotificationService } from '../../../../services/notification-toast.service';
 import { Subscription } from 'rxjs';
+import { ConfigService } from '@app/services/config.service';
+import { AttempsCheckComponent } from '../../../common/components/attemps-check/attemps-check.component';
+import { PinCheckComponent } from '../../../common/components/pin-check/pin-check.component';
+import { PasswordCheckComponent } from '../../../common/components/password-check/password-check.component';
+import { ActivationConfigComponent } from "@app/modules/settings/components/activation-config/activation-config.component";
 
 @Component({
   selector: 'app-alarm-cancellation',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AttempsCheckComponent,
+    PinCheckComponent,
+    PasswordCheckComponent,
+    ActivationConfigComponent,
+  ],
   templateUrl: './alarm-cancellation.component.html',
-  styleUrl: './alarm-cancellation.component.css'
+  styleUrl: './alarm-cancellation.component.css',
 })
 export class AlarmCancellationComponent implements OnInit, OnDestroy {
   // ─── Credential fields ─────────────
-  cancelMethod: 'password' | 'pin' = 'password';
+  cancelMethod: 'password' | 'pin' | 'pattern' = 'password';
   password = '';
   pin = '';
+  pattern = '';
   loading = false;
   error = '';
   attempts = 0;
   maxAttempts = 3;
+  pinLength = 4;
   showPassword = false;
 
   // ─── View state ────────────────────
@@ -29,7 +43,7 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
   showCredentials = false;
 
   /** Edge-case: alarm already sent (navigated here from external deep link) */
-  isDeactivation = false;
+  isAlarmActive = false;
 
   // ─── Countdown circle ──────────────
   totalSeconds = 15;
@@ -41,16 +55,19 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
   constructor(
     private alarmService: AlarmService,
     private notificationService: NotificationService,
+    private configService: ConfigService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.isDeactivation = this.alarmService.isAlarmActive();
+    this.loadConfig();
+    this.isAlarmActive = this.alarmService.isAlarmActive();
 
     // Subscribe to the service-level pre-alarm countdown
     this.countdownSub = this.alarmService.preAlarmCountdown$.subscribe((remaining) => {
       this.countdownRemaining = remaining;
-      if (remaining <= 0 && !this.isDeactivation) {
+      if (remaining <= 0 && !this.isAlarmActive) {
+        console.log('Alarm-cancellation: Pre-alarm countdown expired, confirming alarm');
         this.alarmService.confirmAlarm();
         this.router.navigate(['/alarm/lock']);
       }
@@ -59,6 +76,15 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.countdownSub?.unsubscribe();
+  }
+
+  private loadConfig(): void {
+    const config = this.configService.getCurrentConfig();
+    if (config?.activation) {
+      this.totalSeconds = config.activation.tiempoCancelacionSeg;
+      this.countdownRemaining = config.activation.tiempoCancelacionSeg;
+      this.maxAttempts = config.security.nroIntentosFallidos;
+    }
   }
 
   // ─── Circle countdown getters ──────
@@ -96,12 +122,12 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
    *  - Deactivation mode → back to lock screen
    */
   goBack(): void {
-    if (this.showCredentials && !this.isDeactivation) {
+    if (this.showCredentials && !this.isAlarmActive) {
       this.showCredentials = false;
       this.error = '';
       this.password = '';
       this.pin = '';
-    } else if (this.isDeactivation) {
+    } else if (this.isAlarmActive) {
       this.router.navigate(['/alarm/lock']);
     } else {
       this.alarmService.cancelPreAlarm();
@@ -116,25 +142,7 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
       this.error = 'Ingresa tu contraseña';
       return;
     }
-    this.loading = true;
-    this.error = '';
-    try {
-      if (this.isDeactivation) {
-        const result = await this.alarmService.finalizeAlarm('PASSWORD', this.password);
-        if (result) {
-          this.router.navigate(['/main']);
-        } else {
-          this.handleFailedAttempt('Contraseña incorrecta');
-        }
-      } else {
-        this.alarmService.cancelPreAlarm();
-        this.router.navigate(['/main']);
-      }
-    } catch {
-      this.handleFailedAttempt('Error al verificar credenciales');
-    } finally {
-      this.loading = false;
-    }
+    this.cancelAlarm('PASSWORD');
   }
 
   async cancelWithPin(): Promise<void> {
@@ -142,15 +150,24 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
       this.error = 'PIN debe ser de 4 dígitos';
       return;
     }
+    this.cancelAlarm('PIN');
+  }
+
+  async cancelAlarm(tipoCancel: 'PIN' | 'PASSWORD'): Promise<void> {
     this.loading = true;
     this.error = '';
     try {
-      if (this.isDeactivation) {
-        const result = await this.alarmService.finalizeAlarm('PIN', this.pin);
+      if (this.isAlarmActive) {
+        const result = await this.alarmService.finalizeAlarm(
+          tipoCancel,
+          tipoCancel === 'PIN' ? this.pin : this.password
+        );
         if (result) {
           this.router.navigate(['/main']);
         } else {
-          this.handleFailedAttempt('PIN incorrecto');
+          this.handleFailedAttempt(
+            tipoCancel === 'PIN' ? 'PIN incorrecto' : 'Contraseña incorrecta'
+          );
         }
       } else {
         this.alarmService.cancelPreAlarm();
@@ -169,10 +186,12 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     this.password = '';
     this.pin = '';
     if (this.attempts >= this.maxAttempts) {
-      this.notificationService.showError('Demasiados intentos. Alarma bloqueada.');
-      if (!this.isDeactivation) {
+      this.notificationService.showError('Demasiados intentos.');
+      if (!this.isAlarmActive) {
+        console.log('Alarm-cancellation: handleFailedAttempt');
         this.alarmService.confirmAlarm();
       }
+      //this.router.navigate(['/alarm/lock']);
       setTimeout(() => this.router.navigate(['/alarm/lock']), 1500);
     }
   }
@@ -205,5 +224,25 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
 
   getRemainingAttempts(): number {
     return this.maxAttempts - this.attempts;
+  }
+
+  onPinSubmit(pin: { pin: number; complete: boolean; valid: boolean }): void {
+    if (pin.complete && pin.valid) {
+      if (pin.valid) {
+        this.cancelAlarm('PIN');
+      } else {
+        this.handleFailedAttempt('PIN incorrecto');
+      }
+    }
+  }
+
+  onPasswordSubmit(pass: string): void {
+    //validar el password con la función de validación de credenciales
+    this.password = pass;
+    if (pass.trim().length >= 6 && pass.trim().length <= 20) {
+      this.cancelAlarm('PASSWORD');
+    } else {
+      this.handleFailedAttempt('Contraseña incorrecta');
+    }
   }
 }

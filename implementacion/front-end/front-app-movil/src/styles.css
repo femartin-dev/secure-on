@@ -45,3 +45,61 @@ button {
 body {
   overscroll-behavior-y: contain;
 }
+
+/* App toast notifications */
+.app-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(28, 31, 38, 0.95);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: 'Public Sans', sans-serif;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  z-index: 99999;
+  max-width: 90vw;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.app-toast.is-visible {
+  opacity: 1;
+}
+
+.app-toast__icon {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.app-toast__text {
+  line-height: 1.3;
+}
+
+/* Type variants: only background changes */
+.toast-error {
+  background: rgba(188, 52, 70, 0.95);
+  color: #ffff;
+}
+
+.toast-success {
+  background: rgba(34, 139, 110, 0.95);
+  color: #ffff;
+}
+
+.toast-warning {
+  background: rgba(176, 120, 34, 0.95);
+  color: #1c1c1c;
+}
+
+.toast-info {
+  background: rgba(30, 94, 163, 0.95);
+  color: #ffff;
+}

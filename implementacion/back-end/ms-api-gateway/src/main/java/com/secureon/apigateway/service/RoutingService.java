@@ -51,7 +51,8 @@ public class RoutingService {
 
     public ResponseEntity<String> forward(String path, String method, String body, HttpServletRequest request) {
         String url = getTargetUrl(path);
-        boolean loginRequest = path.endsWith(AUTH_LOGIN_SUFFIX);
+        String pathWithoutQuery = path.split("\\?", 2)[0];
+        boolean loginRequest = pathWithoutQuery.endsWith(AUTH_LOGIN_SUFFIX);
         log.info("URL forwarder " + url);
         HttpHeaders headers = new HttpHeaders();
         Enumeration<String> headerNames = request.getHeaderNames();

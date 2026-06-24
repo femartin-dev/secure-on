@@ -14,8 +14,10 @@ import org.springframework.web.client.RestTemplate;
 
 import com.secureon.common.dto.AlarmaDTO;
 import com.secureon.common.dto.EventoDTO;
+import com.secureon.common.dto.EvidenciaDTO;
 import com.secureon.common.dto.UbicacionDTO;
 import com.secureon.common.model.entity.Alarma;
+import com.secureon.common.model.entity.Evidencia;
 import com.secureon.common.model.entity.Ubicacion;
 import com.secureon.common.property.WsDestinoEnum;
 
@@ -61,6 +63,11 @@ public class WsMensajeriaService {
     public void publicarUbicacion(Ubicacion ubicacion) {
         this.enviarMensajeHttp(EventoDTO.fromObject(UbicacionDTO.fromEntity(ubicacion), 
                                             WsDestinoEnum.TOPIC_UBICACION_REALTIME));
+    }
+
+    public void publicarEvidencia(Evidencia evidencia) {
+        this.enviarMensajeHttp(EventoDTO.fromObject(EvidenciaDTO.fromEntity(evidencia), 
+                                            WsDestinoEnum.TOPIC_EVIDENCIA_REALTIME));
     }
 
     public void publicarFinalizacion(Alarma alarma) {

@@ -1,0 +1,74 @@
+<div class="page flex h-full flex-col bg-background-light dark:bg-background-dark text-[#111317] dark:text-white">
+  <main class="flex-1 overflow-y-auto px-4 pt-6 pb-4 w-full max-w-md mx-auto space-y-6">
+    <section class="flex flex-col gap-2">
+      <label class="ml-1 text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" for="language-select">
+        Idioma
+      </label>
+      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <select
+          id="language-select"
+          [(ngModel)]="settings.idiomaId"
+          (ngModelChange)="onSettingsChange()"
+          title="Idioma de la aplicacion"
+          aria-label="Idioma de la aplicacion"
+          class="block w-full h-14 pl-4 pr-10 py-3 text-base border-none rounded-xl bg-transparent text-gray-900 dark:text-white dark:bg-background-dark focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]"
+        >
+          <option *ngFor="let lang of languages" [value]="lang.id">{{ lang.descripcion }}</option>
+        </select>
+      </div>
+      <p class="ml-1 text-xs text-gray-500 dark:text-gray-400">
+        Seleccione el idioma preferido para la aplicacion.
+      </p>
+    </section>
+
+    <section class="flex flex-col gap-2">
+      <span class="ml-1 text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        Apariencia
+      </span>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300">
+            <span class="material-symbols-outlined text-xl">dark_mode</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Modo Dark</span>
+        </div>
+
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="settings.modoDarkActivo" (ngModelChange)="onSettingsChange()" title="Activar modo dark" aria-label="Activar modo dark" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300">
+            <span class="material-symbols-outlined text-xl">domino_mask</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Modo Sigiloso</span>
+        </div>
+
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [(ngModel)]="settings.modoSigilosoActivo" (ngModelChange)="onSettingsChange()" title="Activar modo sigiloso" aria-label="Activar modo sigiloso" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+  </main>
+  <!--
+  <footer class="shrink-0 bg-background-light dark:bg-background-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+    <div class="flex flex-col gap-3 px-4 py-4 w-full max-w-md mx-auto">
+      <div class="grid grid-cols-3 gap-3">
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+          <span class="truncate">Cancelar</span>
+        </button>
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+          <span class="truncate">Restablecer</span>
+        </button>
+        <button class="flex w-full items-center justify-center rounded-lg h-12 bg-[#1e3a8a] border border-transparent text-white text-sm font-bold shadow-sm">
+          <span class="truncate">Guardar</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+  -->
+</div>

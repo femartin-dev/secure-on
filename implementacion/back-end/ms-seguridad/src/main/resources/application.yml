@@ -1,18 +1,14 @@
 spring:
+    config:
+        import: optional:classpath:global-props.yml
     application:
         name: ms-seguridad
-    datasource:
-        url: jdbc:postgresql://localhost:5432/secure_on_db
-        username: secure_on_admin
-        password: admin-123
-        driver-class-name: org.postgresql.Driver
     jpa:
         hibernate:
             ddl-auto: validate
         show-sql: true
         properties:
             hibernate:
-                dialect: org.hibernate.dialect.PostgreSQLDialect
                 default_schema: secure_on_movil
                 jdbc:
                     lob:
@@ -37,18 +33,18 @@ spring:
 server:
     port: 8093
 
+
 app:
     audit:
         enabled: true
-    jwt:
-        secret: "rN3tF0nX5kK7d8JmP4z6Ww2Xb3L0E9A5R8Q1sHjDkC7ZP2M4J9F6LQYtE8gVwUSecret34frt34EMUIrsCore45"
-        expiration: 86400000     # 24 horas en milisegundos
-        refresh-expiration: 604800000 # 7 días
     role:
         usuario: "USUARIO"
         admin: "ADMIN_CDM"
         operador: "OPERADOR_CDM"
         prefijo: "ROLE_"
+    code-expiration:
+        mail: 600 # 10 minutos en segundos
+        sms: 120 # 2 minutos en segundos
 
 logging:
     level:

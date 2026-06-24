@@ -9,6 +9,8 @@ import com.secureon.appmovil.service.EstadoAlarmaService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -75,6 +77,11 @@ public class CatalogoController {
                                                     .prioridades(catalogoService.getPrioridades())
                                                     .build();
         return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/relaciones")
+    public ResponseEntity<List<String>> getRelaciones() {
+        return ResponseEntity.ok().body(catalogoService.getRelaciones());
     }
 
 }

@@ -23,10 +23,12 @@ public class ConfiguracionService {
     private final UsuarioService usuarioService;
     private final DispositivoService dispositivoService;
     private final MessagesService messagesService;  
+    private final CatalogoService catalogoService;
 
     public ConfiguracionUsuario getConfiguracionUsuario(UUID usuarioId, UUID dispositivoId) {
-        return configuracionRepository.findByUsuarioIdAndDispositivoId(usuarioId, dispositivoId)
-                        .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.configuracion.not-found")));
+        Usuario usuario = usuarioService.getUsuario(usuarioId);
+        Dispositivo dispositivo = dispositivoService.getDispositivo(dispositivoId);
+        return getConfiguracionUsuario(usuario, dispositivo);
     }
 
     public ConfiguracionUsuario getConfiguracionUsuario(Usuario usuario, Dispositivo dispositivo) {
@@ -53,31 +55,59 @@ public class ConfiguracionService {
     }
 
 
-    private void setConfiguracion(ConfiguracionUsuario configuracionUsuario, ConfiguracionRequest request) {
-        configuracionUsuario.setBorrarAntiguas(request.getBorrarAntiguas());
-        configuracionUsuario.setBorrarEnviadas(request.getBorrarEnviadas());
-        configuracionUsuario.setCompresionAudio(request.getCompresionAudio());
-        configuracionUsuario.setConservarEvidencias(request.getConservarEvidencias());
-        configuracionUsuario.setConservarHistorialLocal(request.getConservarHistorialLocal());
-        configuracionUsuario.setEnvioSoloWifi(request.getEnvioSoloWifi());
-        configuracionUsuario.setEspacioCriticoPct(request.getEspacioCriticoPct());
-        configuracionUsuario.setFraseActivacionVoz(request.getFraseActivacionVoz());
-        configuracionUsuario.setFrecuenciaCapturaFotos(request.getFrecuenciaCapturaFotos());
-        configuracionUsuario.setFrecuenciaGrabaAudio(request.getFrecuenciaGrabaAudio());
-        configuracionUsuario.setFrecuenciaUbicacion(request.getFrecuenciaUbicacion());
-        configuracionUsuario.setLimiteDatos(request.getLimiteDatos());
-        configuracionUsuario.setLimiteEspacioEvidencias(request.getLimiteEspacioEvidencias());
-        configuracionUsuario.setModoSigilosoActivo(request.getModoSigilosoActivo());
-        configuracionUsuario.setNotificarSiempreSms(request.getNotificarSiempreSms());
-        configuracionUsuario.setNroIntentosFallidos(request.getNroIntentosFallidos());
-        configuracionUsuario.setPrecisionRed(request.getPrecisionRed());
-        configuracionUsuario.setResolucionFotosDpi(request.getResolucionFotosDpi());
-        configuracionUsuario.setRetencionEvidenciasDias(request.getRetencionEvidenciasDias());
-        configuracionUsuario.setTiempoCancelacionSeg(request.getTiempoCancelacionSeg());
-        configuracionUsuario.setUbicacionWifi(request.getUbicacionWifi());
-        configuracionUsuario.setUmbralBateriaBaja(request.getUmbralBateriaBaja());
-        configuracionUsuario.setUmbralBateriaMedia(request.getUmbralBateriaMedia());
-        configuracionUsuario.setUmbralBateriaCritica(request.getUmbralBateriaCritica());
+    private void setConfiguracion(ConfiguracionUsuario config, ConfiguracionRequest request) {
+        config.setBorrarAntiguas(request.getBorrarAntiguas());
+        config.setBorrarEnviadas(request.getBorrarEnviadas());
+        config.setCompresionAudio(request.getCompresionAudio());
+        config.setConservarEvidencias(request.getConservarEvidencias());
+        config.setConservarHistorialLocal(request.getConservarHistorialLocal());
+        config.setEnvioSoloWifi(request.getEnvioSoloWifi());
+        config.setEspacioCriticoPct(request.getEspacioCriticoPct());
+        config.setFraseActivacionVoz(request.getFraseActivacionVoz());
+        config.setFrecuenciaCapturaFotos(request.getFrecuenciaCapturaFotos());
+        config.setFrecuenciaGrabaAudio(request.getFrecuenciaGrabaAudio());
+        config.setFrecuenciaUbicacion(request.getFrecuenciaUbicacion());
+        config.setIdioma(request.getIdiomaId() == null ? null : catalogoService.getIdioma(request.getIdiomaId()));
+        config.setLimiteDatos(request.getLimiteDatos());
+        config.setLimiteEspacioEvidencias(request.getLimiteEspacioEvidencias());
+        config.setModoDark(request.getModoDark());
+        config.setModoSigilosoActivo(request.getModoSigilosoActivo());
+        config.setNotificarSiempreSms(request.getNotificarSiempreSms());
+        config.setNroIntentosFallidos(request.getNroIntentosFallidos());
+        config.setPassDesbloqueo(request.getPassDesbloqueo());
+        config.setPatronActivacion(request.getPatronActivacion());
+        config.setPatronDesbloqueo(request.getPatronDesbloqueo());
+        config.setPinDesbloqueo(request.getPinDesbloqueo());  
+        config.setPrecisionRed(request.getPrecisionRed());
+        config.setResolucionFotosDpi(request.getResolucionFotosDpi());
+        config.setRetencionEvidenciasDias(request.getRetencionEvidenciasDias());
+        config.setSensibilidadMovimiento(request.getSensibilidadMovimiento());
+        config.setTiempoActivacionSeg(request.getTiempoActivacionSeg());
+        config.setTiempoCancelacionSeg(request.getTiempoCancelacionSeg());
+        config.setUbicacionWifi(request.getUbicacionWifi());
+        config.setUmbralBateriaBaja(request.getUmbralBateriaBaja());
+        config.setUmbralBateriaMedia(request.getUmbralBateriaMedia());
+        config.setUmbralBateriaCritica(request.getUmbralBateriaCritica());
+        config.setUmbralMinimoLux(request.getUmbralMinimoLux());
+        config.setUsarDatosMoviles(request.getUsarDatosMoviles());
+        config.setUsarFiltrosRuido(request.getUsarFiltrosRuido());
+    }
+
+    @Transactional
+    public void eliminarConfiguracion(UUID configuracionId) {
+        ConfiguracionUsuario configuracion = configuracionRepository.findById(configuracionId)
+            .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.configuracion.not-found")));
+        configuracionRepository.delete(configuracion);
+    }
+
+    @Transactional
+    public ConfiguracionUsuario resetearConfiguracion(UUID configuracionId) {
+        ConfiguracionUsuario configuracion = configuracionRepository.findById(configuracionId)
+            .orElseThrow(() -> new ResourceNotFoundException(messagesService.getMessage("error.configuracion.not-found")));
+        ConfiguracionRequest defaultConfig = new ConfiguracionRequest();
+        setConfiguracion(configuracion, defaultConfig);
+        configuracionRepository.save(configuracion);
+        return configuracion;
     }
 }
 

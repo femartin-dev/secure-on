@@ -3,10 +3,11 @@ import { BehaviorSubject, Observable, interval } from 'rxjs';
 import { switchMap, filter, takeUntil } from 'rxjs/operators';
 import { Geolocation, Position } from '@capacitor/geolocation';
 
-import { LocationData } from '../models/alarm.models';
+import { LocationData, Ubicacion } from '../models/alarm.models';
+import { BatteryService } from './battery.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GeolocationService {
   private locationSubject = new BehaviorSubject<LocationData | null>(null);
@@ -20,7 +21,7 @@ export class GeolocationService {
   private lastLocation: LocationData | null = null;
   private updateInterval = 5000; // 5 seconds default
 
-  constructor() {
+  constructor(private batteryService: BatteryService) {
     this.getCurrentLocation();
   }
 
@@ -32,7 +33,7 @@ export class GeolocationService {
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 0
+        maximumAge: 0,
       });
 
       return this.positionToLocationData(position);
@@ -52,13 +53,17 @@ export class GeolocationService {
         resolve(null);
         return;
       }
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const location: LocationData = {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
+            altitude: pos.coords.altitude || undefined,
+            batteryLevel: undefined, // Browser API doesn't provide battery level
+            locationMethod: this.getLocationMethodByAccuracy(pos),
             accuracy: pos.coords.accuracy || 0,
-            timestamp: new Date().toISOString()
+            timestamp: Date.now(),
           };
           this.lastLocation = location;
           this.locationSubject.next(location);
@@ -84,9 +89,7 @@ export class GeolocationService {
     return interval(this.updateInterval).pipe(
       switchMap(() => this.getLocationAsObservable()),
       filter((location) => location !== null) as any,
-      takeUntil(this.stopTracking$.asObservable().pipe(
-        filter((stop) => stop === true)
-      ))
+      takeUntil(this.stopTracking$.asObservable().pipe(filter((stop) => stop === true)))
     );
   }
 
@@ -110,10 +113,10 @@ export class GeolocationService {
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 0
+        maximumAge: 0,
       });
 
-      const location = this.positionToLocationData(position);
+      const location = await this.positionToLocationData(position);
       this.lastLocation = location;
       this.locationSubject.next(location);
 
@@ -140,16 +143,16 @@ export class GeolocationService {
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 0
+          maximumAge: 0,
         },
-        (position, err) => {
+        async (position, err) => {
           if (err) {
             console.error('Watch position error:', err);
             return;
           }
 
           if (position) {
-            const location = this.positionToLocationData(position);
+            const location = await this.positionToLocationData(position);
             this.lastLocation = location;
             callback(location);
           }
@@ -177,12 +180,7 @@ export class GeolocationService {
   /**
    * Calculate distance between two locations (Haversine formula)
    */
-  calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ): number {
+  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371; // Earth's radius in km
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -199,12 +197,19 @@ export class GeolocationService {
   /**
    * Convert Capacitor Position to LocationData
    */
-  private positionToLocationData(position: Position): LocationData {
+  private async positionToLocationData(position: Position): Promise<LocationData> {
     return {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
       accuracy: position.coords.accuracy || 0,
-      timestamp: new Date().toISOString()
+      altitude: position.coords.altitude || undefined,
+      batteryLevel: await this.batteryService.getBatteryLevel(),
+      locationMethod: this.getLocationMethodByAccuracy(position),
+      timestamp: new Date().toISOString(),
     };
+  }
+
+  private getLocationMethodByAccuracy(position: Position): number {
+    return position.coords.accuracy > 50 ? 3 : position.coords.accuracy > 10 ? 2 : 1; // Default to GPS for now
   }
 }

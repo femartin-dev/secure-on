@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/fo
 import { Router } from '@angular/router';
 import { Device } from '@capacitor/device';
 import { AuthService } from '@app/services/auth.service';
-import { NotificationService } from '@app/services/notification.service';
+import { NotificationService } from '@app/services/notification-toast.service';
 import { DeviceInfo } from '@app/models/auth.models';
 import { getClipboard } from '../../../../utils/clipboard-util.util';
 

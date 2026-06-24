@@ -19,6 +19,7 @@ export class AlarmActivationComponent implements OnInit, OnDestroy {
   /** SVG circle circumference for r=45 */
   circumference = 2 * Math.PI * 45; // ~283
   cancelled = false;
+  private countdownStarted = false;
 
   private countdownSub?: Subscription;
 
@@ -32,7 +33,12 @@ export class AlarmActivationComponent implements OnInit, OnDestroy {
     // so the timer keeps running even if the user navigates to the cancel screen
     this.countdownSub = this.alarmService.preAlarmCountdown$.subscribe((remaining) => {
       this.remainingSeconds = remaining;
-      if (remaining <= 0 && !this.cancelled) {
+      if (remaining > 0) {
+        this.countdownStarted = true;
+      }
+
+      // Only auto-confirm when a real countdown previously started.
+      if (this.countdownStarted && remaining <= 0 && !this.cancelled) {
         this.onTimeExpired();
       }
     });
@@ -66,6 +72,7 @@ export class AlarmActivationComponent implements OnInit, OnDestroy {
 
   /** Timer expired — alarm confirmed, navigate to lock screen */
   private onTimeExpired(): void {
+    console.log('Alarm-activation:Pre-alarm countdown expired, confirming alarm');
     this.alarmService.confirmAlarm();
     this.router.navigate(['/alarm/lock']);
   }

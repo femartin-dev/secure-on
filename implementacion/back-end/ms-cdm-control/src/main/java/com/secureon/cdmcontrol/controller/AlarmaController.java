@@ -23,15 +23,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.secureon.cdmcontrol.dto.request.AlarmaRequest;
 import com.secureon.cdmcontrol.dto.response.AlarmaResponse;
+import com.secureon.cdmcontrol.dto.response.EvidenciaResponse;
 import com.secureon.cdmcontrol.dto.response.UbicacionResponse;
 import com.secureon.common.model.entity.Alarma;
 import com.secureon.common.model.entity.AlarmaOperador;
+import com.secureon.common.model.entity.Evidencia;
 import com.secureon.common.model.entity.Ubicacion;
 import com.secureon.cdmcontrol.service.AlarmaService;
 import com.secureon.cdmcontrol.service.AsignacionService;
+import com.secureon.cdmcontrol.service.EvidenciaService;
 
 @RestController
-@RequestMapping("/api/cdm-control/v1/dashboard")
+@RequestMapping("/api/cdm-control/v1/dashboard/alarma")
 @CrossOrigin(origins = "*")
 public class AlarmaController {
 
@@ -41,7 +44,10 @@ public class AlarmaController {
     @Autowired
     private AsignacionService asignacionService;
 
-    @GetMapping("/filtrar-alarmas")
+    @Autowired
+    private EvidenciaService evidenciaService;
+
+    @GetMapping("/filtrar")
     public ResponseEntity<Page<AlarmaResponse>> listarAlarmas (
             @RequestParam(required = false) Integer estadoId,
             @RequestParam(required = false) Integer prioridad,
@@ -55,35 +61,46 @@ public class AlarmaController {
         return ResponseEntity.ok(dtoPage);
     }
 
-    @GetMapping("/alarma/{id}")
+    @GetMapping("/{id}/obtener")
     public ResponseEntity<AlarmaResponse> obtenerAlarma(@PathVariable UUID id) {
         return ResponseEntity.ok(AlarmaResponse.fromEntity(alarmaService.obtenerAlarma(id)));
     }
 
-    @GetMapping("/alarma/{id}/ubicaciones")
+    @GetMapping("/{id}/ubicaciones")
     public ResponseEntity<List<UbicacionResponse>> obtenerUbicaciones(@PathVariable UUID id) {
         List<Ubicacion> ubicaciones = alarmaService.obtenerUbicaciones(id);
         List<UbicacionResponse> dtoList = ubicaciones.stream().map(UbicacionResponse::fromEntity).collect(Collectors.toList());
         return ResponseEntity.ok(dtoList);
     }
 
-    @PutMapping("/alarma/{id}/prioridad")
+    @PutMapping("/{id}/cambiar-prioridad")
     public ResponseEntity<AlarmaResponse> actualizarPrioridad(@PathVariable UUID id, @RequestBody AlarmaRequest dto) {
         Alarma alarma = alarmaService.actualizarPrioridad(id, dto.getPrioridadId());
         return ResponseEntity.ok(AlarmaResponse.fromEntity(alarma));
     }
 
-    @PutMapping("/alarma/{id}/estado-alarma")
+    @PutMapping("/{id}/cambiar-estado")
     public ResponseEntity<AlarmaResponse> actualizarEstadoAlarma(@PathVariable UUID id, @RequestBody AlarmaRequest dto) {
 
         Alarma alarma = alarmaService.actualizarEstado(id, dto.getEstadoId());
         return ResponseEntity.ok(AlarmaResponse.fromEntity(alarma));
     }
 
-    @PostMapping("/alarma/{id}/asignar/{operadorId}")
+    @PostMapping("/{id}/asignar/{operadorId}")
     public ResponseEntity<AlarmaResponse> asignarOperador(@PathVariable UUID id, @PathVariable UUID operadorId) {
         AlarmaOperador asignacion = asignacionService.reasignarAlarma(id, operadorId);
         return ResponseEntity.ok(AlarmaResponse.fromEntity(asignacion));
     }
+
+    @GetMapping("/{id}/evidencias")
+    public ResponseEntity<List<EvidenciaResponse>> obtenerEvidencias(@PathVariable UUID id, 
+                                                                    @RequestParam(required = false, defaultValue = "false") boolean cargarArchivo) {
+        Alarma alarma = alarmaService.obtenerAlarma(id);
+        List<Evidencia> evidencias = evidenciaService.obtenerEvidenciasPorAlarma(alarma, cargarArchivo);
+        List<EvidenciaResponse> dtoList = evidencias.stream().map(EvidenciaResponse::fromEntity).collect(Collectors.toList());
+        return ResponseEntity.ok(dtoList);
+    }
+
+
 
 }

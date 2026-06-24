@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError, delay, retry } from 'rxjs/operators';
 import { extractServerError } from '../utils/error-handler.util';
@@ -8,6 +8,7 @@ import { Preferences } from '@capacitor/preferences';
 
 import { API_CONFIG } from '../config/api-config';
 import { getClipboard } from '../utils/clipboard-util.util';
+import { ConfigService } from './config.service';
 import {
   LoginRequest,
   LoginResponse,
@@ -32,9 +33,12 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  private authReadySubject = new BehaviorSubject<boolean>(false);
+  public authReady$ = this.authReadySubject.asObservable();
+
   private deviceAppId: string | null = null;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private configService: ConfigService) {
     this.initializeAuth();
   }
 
@@ -60,6 +64,8 @@ export class AuthService {
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
+    } finally {
+      this.authReadySubject.next(true);
     }
   }
 
@@ -156,7 +162,7 @@ export class AuthService {
   /**
    * Login user
    */
-  async login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+  async login(usuario: string, tipo: string, password: string): Promise<{ success: boolean; error?: string }> {
     try {
       // Ensure device ID is available
       if (!this.deviceAppId) {
@@ -164,9 +170,9 @@ export class AuthService {
       }
 
       const loginRequest: LoginRequest = {
-        email,
+        [tipo]: usuario,
         password,
-        dispositivoAppId: this.deviceAppId
+        dispositivoAppId: this.deviceAppId,
       };
 
       console.log('Login request payload:', JSON.stringify(loginRequest));
@@ -178,7 +184,6 @@ export class AuthService {
         )
         .pipe(
           retry(API_CONFIG.RETRY_ATTEMPTS),
-          tap((res) => this.handleLoginSuccess(res)),
           catchError((error: HttpErrorResponse) => {
             console.error('Login error:', error);
             return throwError(
@@ -188,14 +193,16 @@ export class AuthService {
         )
         .toPromise();
 
-      // after successful login, fetch configuration
-      const user = this.currentUserSubject.value;
-      if (user) {
-        try {
-          await this.loadDeviceConfig(user.id, user.dispositivoId);
-        } catch (cfgErr) {
-          console.warn('Unable to load device config:', cfgErr);
-        }
+      if (!response) {
+        throw new Error('No se recibió respuesta de login');
+      }
+
+      // Persist user/token before using auth state in the rest of the flow
+      await this.handleLoginSuccess(response);
+      try {
+        await this.loadDeviceConfig(response.id, response.dispositivoId);
+      } catch (cfgErr) {
+        console.warn('Unable to load device config:', cfgErr);
       }
 
       return { success: true };
@@ -233,19 +240,32 @@ export class AuthService {
 
   /**
    * Logout user
-   * POST /seguridad/v1/app/auth/logout?dispositivoAppId=...
+   * GET /seguridad/v1/app/auth/logout
    */
   async logout(): Promise<void> {
     try {
       const user = this.currentUserSubject.value;
       if (user) {
-        // Call logout endpoint with dispositivoAppId as query param
+        // Call logout endpoint with Bearer token in Authorization header
+        const headers = new HttpHeaders({
+          Authorization: `Bearer ${user.token}`,
+        });
+
         await this.http
-          .post(
-            `${API_CONFIG.MS_SECURITY.baseUrl}${API_CONFIG.ENDPOINTS.LOGOUT}?dispositivoAppId=${this.deviceAppId}`,
-            {}
+          .get(
+            `${API_CONFIG.MS_SECURITY.baseUrl}${API_CONFIG.ENDPOINTS.LOGOUT}`,
+            { headers }
           )
-          .toPromise();
+          .pipe(
+            tap((mensaje) => { console.log(mensaje); }),
+            catchError((error: HttpErrorResponse) => {
+              console.error('Logout API error:', error);
+              // swallow errors to ensure logout proceeds
+              return throwError(
+                () => new Error(extractServerError(error, 'Error al cerrar sesión'))
+              );
+            })
+          );
       }
 
       // Clear storage
@@ -358,18 +378,22 @@ export class AuthService {
     try {
       // Try to get from storage
       const result = await Preferences.get({ key: API_CONFIG.DEVICE_ID_KEY });
+      console.log("result:", result);
       if (result.value) {
         return result.value;
       }
 
+
       // Get device info
       const info = await Device.getId();
       const deviceId = info.identifier;
-
+      console.log('device info:', info, ' - ID:', deviceId);
       // Get from clipboard if on web (for testing multiple browser sessions)
       const isWeb = typeof window !== 'undefined' && !!window.document;
+      console.log('web?:', isWeb);
       if (!deviceId && isWeb) {
         const clipboardText = await getClipboard();
+        console.log('clipboardText:', clipboardText);
         if (clipboardText) {
           await Preferences.set({ key: API_CONFIG.DEVICE_ID_KEY, value: clipboardText });
           return clipboardText;
@@ -399,29 +423,11 @@ export class AuthService {
    */
   private async loadDeviceConfig(usuarioId: string, dispositivoId: string): Promise<void> {
     try {
-      const config = await this.http
-        .post<any>(`${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.GET_CONFIG}`, {
-          usuarioId: usuarioId,
-          dispositivoId: dispositivoId,
-        })
-        .toPromise();
-
-      if (config) {
-        this.configSubject.next(config);
-        return;
-      }
-      // no config returned -> create default
-      console.warn('No device config found, creating default');
-    } catch (error: any) {
-      console.warn('Error fetching device config, creating default', error);
-      // fall through to create default
-    }
-
-    try {
-      const newCfg = await this.registerDefaultConfig(usuarioId, dispositivoId).toPromise();
-      this.configSubject.next(newCfg || {});
-    } catch (regErr) {
-      console.error('Error creating default config:', regErr);
+      await this.configService.loadConfigForUser(usuarioId, dispositivoId, true);
+      const loadedConfig = this.configService.getCurrentConfig();
+      this.configSubject.next(loadedConfig);
+    } catch (error) {
+      console.error('Error loading configuration on login:', error);
     }
   }
 

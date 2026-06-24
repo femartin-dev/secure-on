@@ -2,6 +2,7 @@ package com.secureon.appmovil.service;
 
 import java.time.OffsetDateTime;
 
+import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,11 +26,22 @@ public class UbicacionService {
     public Ubicacion actualizarUbicacion(Alarma alarma, UbicacionRequest request) {
         Ubicacion ubicacion = new Ubicacion();
         ubicacion.setAlarma(alarma);
-        ubicacion.setPosicion(GeometryUtils.createPoint(request.getLongitud(), request.getLatitud()));
+        ubicacion.setPosicion(getPuntoCoordenadasFromRequest(request));
+        ubicacion.setAltura(request.getAltitud());
         ubicacion.setPrecision(request.getPrecision());
-        ubicacion.setMetodoUbicacion(catalogoService.getMetodoUbicacion(request.getMetodo()));
+        ubicacion.setMetodoUbicacion(catalogoService.getMetodoUbicacion(request.getMetodoUbicacionId()));
         ubicacion.setBateriaNivel(request.getBateria());
+        ubicacion.setVelocidad(request.getVelocidad());
+        ubicacion.setRumbo(request.getRumbo());
         ubicacion.setFechaToma(request.getFecha() != null ? request.getFecha() : OffsetDateTime.now());
         return ubicacionRepository.save(ubicacion);
+    }
+
+    public Point getPuntoCoordenadasFromRequest(UbicacionRequest request) {
+        return GeometryUtils.createPoint(request.getLongitud(), request.getLatitud());
+    }
+
+    public Ubicacion getUltimaUbicacion(Alarma alarma) {
+        return ubicacionRepository.findByAlarmaIdOrderByFechaTomaDesc(alarma.getId()).stream().findFirst().orElse(null);
     }
 }

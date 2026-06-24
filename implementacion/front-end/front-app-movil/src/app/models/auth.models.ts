@@ -3,7 +3,9 @@
  */
 
 export interface LoginRequest {
-  email: string;
+  /** Puede ser email o número de teléfono */
+  email?: string;
+  telefono?: string;
   password: string;
   dispositivoAppId: string;
 }

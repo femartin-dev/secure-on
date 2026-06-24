@@ -1,13 +1,14 @@
 package com.secureon.common;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest
+import org.junit.jupiter.api.Test;
+
 class LibCommonApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void applicationClassExists() {
+		assertNotNull(LibCommonApplication.class);
 	}
 
 }

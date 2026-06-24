@@ -4,7 +4,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,14 +16,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(schema = "secure_on_movil", name = "alarmas")
 @Data
-@Setter
-@Getter
 public class Alarma {
 
     @Id
@@ -69,4 +64,11 @@ public class Alarma {
 
     @OneToMany(mappedBy = "alarma", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<AlarmaOperador> alarmaOperador;
+
+    @OneToMany(mappedBy = "alarma", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Cuestionario> cuestionario;
+
+    @OneToMany(mappedBy = "alarma", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Evidencia> evidencias;
 }
+

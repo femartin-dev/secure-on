@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { filter, take } from 'rxjs/operators';
 
 import { AuthService } from './services/auth.service';
 
@@ -22,7 +23,15 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.checkAuthStatus();
+    // Wait until the auth state has been restored from storage before checking
+    this.authService.authReady$.pipe(
+      filter(ready => ready),
+      take(1)
+    ).subscribe(() => {
+      if (!this.authService.getToken()) {
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   async initializeApp(): Promise<void> {
@@ -62,6 +71,7 @@ export class AppComponent implements OnInit {
   }
 
   checkAuthStatus(): void {
+    // Used when the app returns to foreground (auth is already initialized)
     const token = this.authService.getToken();
     if (!token) {
       this.router.navigate(['/login']);

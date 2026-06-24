@@ -6,10 +6,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.secureon.common.model.entity.CanalNotificacion;
 import com.secureon.common.model.entity.EstadoAlarma;
 import com.secureon.common.model.entity.EstadoEnvio;
+import com.secureon.common.model.entity.EstadoSalud;
 import com.secureon.common.model.entity.Idioma;
 import com.secureon.common.model.entity.MetodoActivacion;
 import com.secureon.common.model.entity.MetodoUbicacion;
+import com.secureon.common.model.entity.MotivoActivacion;
 import com.secureon.common.model.entity.PrioridadAlarma;
+import com.secureon.common.model.entity.TipoEvidencia;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,5 +35,8 @@ public class CatalogoResponse {
     private List<PrioridadAlarma> prioridades;
     private List<CanalNotificacion> canalesNotificacion;
     private List<EstadoEnvio> estadosEnvio;
+    private List<MotivoActivacion> motivosActivacion;
+    private List<TipoEvidencia> tipoEvidencias;
+    private List<EstadoSalud> estadosSalud;
 
 }

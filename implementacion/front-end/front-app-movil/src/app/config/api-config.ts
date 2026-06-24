@@ -17,19 +17,19 @@ export const API_CONFIG = {
   // Microservice base URLs (all routed through API Gateway)
   MS_SECURITY: {
     baseUrl: 'http://localhost:8090/api/secure-on',
-    version: 'v1'
+    version: 'v1',
   },
   MS_APP_MOVIL: {
     baseUrl: 'http://localhost:8090/api/secure-on',
-    version: 'v1'
+    version: 'v1',
   },
   MS_CDM_CONTROL: {
     baseUrl: 'http://localhost:8090/api/secure-on',
-    version: 'v1'
+    version: 'v1',
   },
   MS_API_GATEWAY: {
     baseUrl: 'http://localhost:8090/api/secure-on',
-    version: 'v1'
+    version: 'v1',
   },
 
   // Endpoints paths (all through API Gateway)
@@ -39,15 +39,15 @@ export const API_CONFIG = {
     // ──────────────────────────────────────────────
 
     // Auth - POST /api/seguridad/v1/app/...
-    REGISTER: '/seguridad/v1/app/usuario/registrar',           // POST - No auth
-    LOGIN: '/seguridad/v1/app/auth/login',                     // POST - No auth
-    LOGOUT: '/seguridad/v1/app/auth/logout',                   // POST - Auth (query: dispositivoAppId)
-    REFRESH_TOKEN: '/seguridad/v1/app/auth/refrescar-token',   // POST - Auth
+    REGISTER: '/seguridad/v1/app/usuario/registrar', // POST - No auth
+    LOGIN: '/seguridad/v1/app/auth/login', // POST - No auth
+    LOGOUT: '/seguridad/v1/app/auth/logout', // GET - Auth (Authorization: Bearer <token>)
+    REFRESH_TOKEN: '/seguridad/v1/app/auth/refrescar-token', // POST - Auth
     FORGOT_PASSWORD: '/seguridad/v1/app/auth/olvide-password', // POST - No auth
-    RESET_PASSWORD: '/seguridad/v1/app/auth/resetear-password',// POST - Auth
+    RESET_PASSWORD: '/seguridad/v1/app/auth/resetear-password', // POST - Auth
 
     // User profile - /seguridad/v1/app/usuario/...
-    GET_USER_DATA: '/seguridad/v1/app/usuario/mis-datos',      // GET - Auth
+    GET_USER_DATA: '/seguridad/v1/app/usuario/mis-datos', // GET - Auth
     UPDATE_USER_DATA: '/seguridad/v1/app/usuario/actualizar-datos', // PUT - Auth
 
     // Device - /seguridad/v1/app/dispositivo/...
@@ -58,8 +58,8 @@ export const API_CONFIG = {
     // ──────────────────────────────────────────────
 
     // Alarms - /servicios-moviles/v1/alarma/...
-    NEW_ALARM: '/servicios-moviles/v1/alarma/nueva',           // POST - Auth
-    ALARM_BASE: '/servicios-moviles/v1/alarma',                // Base for path-param endpoints:
+    NEW_ALARM: '/servicios-moviles/v1/alarma/nueva', // POST - Auth
+    ALARM_BASE: '/servicios-moviles/v1/alarma', // Base for path-param endpoints:
     // POST /{alarmaId}/ubicacion   - Update alarm location
     // PUT  /{alarmaId}/finalizar   - Finalize alarm
     // POST /{alarmaId}/reactivar   - Reactivate alarm
@@ -69,8 +69,8 @@ export const API_CONFIG = {
     // ──────────────────────────────────────────────
 
     // Contacts - /servicios-moviles/v1/contacto/...
-    ADD_CONTACT: '/servicios-moviles/v1/contacto/nuevo',       // POST - Auth
-    CONTACT_BASE: '/servicios-moviles/v1/contacto',            // Base for path-param endpoints:
+    ADD_CONTACT: '/servicios-moviles/v1/contacto/nuevo', // POST - Auth
+    CONTACT_BASE: '/servicios-moviles/v1/contacto', // Base for path-param endpoints:
     // POST /{contactoId}/editar    - Edit contact
     // PUT  /{contactoId}/eliminar  - Delete contact
 
@@ -79,10 +79,10 @@ export const API_CONFIG = {
     // ──────────────────────────────────────────────
 
     // Configuration - /servicios-moviles/v1/config/...
-    CREATE_CONFIG: '/servicios-moviles/v1/config/nuevo',       // POST - Auth
-    NEW_CONFIG: '/servicios-moviles/v1/config/nueva',          // POST - Auth (default config)
-    GET_CONFIG: '/servicios-moviles/v1/config/obtener',        // POST - Auth (fetch local config)
-    CONFIG_BASE: '/servicios-moviles/v1/config',               // Base for path-param endpoints:
+    CREATE_CONFIG: '/servicios-moviles/v1/config/nuevo', // POST - Auth
+    NEW_CONFIG: '/servicios-moviles/v1/config/nueva', // POST - Auth (default config)
+    GET_CONFIG: '/servicios-moviles/v1/config/obtener', // POST - Auth (fetch local config)
+    CONFIG_BASE: '/servicios-moviles/v1/config', // Base for path-param endpoints:
     // POST /{configId}/editar      - Edit config
 
     // ──────────────────────────────────────────────
@@ -97,6 +97,7 @@ export const API_CONFIG = {
     CATALOG_ACTIVATION_METHODS: '/servicios-moviles/v1/catalogo/metodos-activacion',
     CATALOG_LOCATION_METHODS: '/servicios-moviles/v1/catalogo/metodos-ubicacion',
     CATALOG_ALARM_PRIORITIES: '/servicios-moviles/v1/catalogo/prioridades-alarma',
+    CATALOG_RELATIONSHIPS: '/servicios-moviles/v1/catalogo/relaciones',
   },
 
   // WebSocket STOMP (MS-CDM-CONTROL Port 8092, through gateway)
@@ -108,7 +109,7 @@ export const API_CONFIG = {
     ALARM_NEW: '/app/topic/alarma/nueva',
     ALARM_UPDATED: '/app/topic/alarma/actualizada',
     LOCATION_UPDATED: '/app/topic/ubicacion/actualizada',
-    LOCATION_REALTIME: '/topic/ubicacion/realtime',
+    LOCATION_REALTIME: '/app/topic/ubicacion/realtime',
     OPERATOR_CONNECTED: '/app/topic/operador/conectado',
     OPERATOR_DISCONNECTED: '/app/topic/operador/desconectado',
     NOTIFICATIONS_QUEUE: '/app/queue/notificaciones',
@@ -123,7 +124,7 @@ export const API_CONFIG = {
   // Token
   TOKEN_STORAGE_KEY: 'auth_token',
   USER_STORAGE_KEY: 'user_data',
-  DEVICE_ID_KEY: 'device_app_id'
+  DEVICE_ID_KEY: 'device_app_id',
 };
 
 export const isDevelopment = true; // Set to false in production

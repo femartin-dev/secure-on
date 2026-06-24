@@ -3,7 +3,9 @@
  * Based on: secureon-endpoints-payload.txt v1.0
  */
 
-export type AlarmStatus = 'ACTIVA' | 'INACTIVA' | 'PENDIENTE';
+import { MetodoActivacion, MetodoUbicacion, PrioridadAlarma } from "./catalog.models";
+
+export type AlarmStatus = 'ACTIVA' | 'CANCELADA' | 'FINALIZADA' | 'PENDIENTE';
 export type CancellationMethod = 'PASSWORD' | 'PIN' | 'PATTERN' | 'FINGERPRINT' | 'FACE_ID';
 
 // ──────────────────────────────────────────────
@@ -11,27 +13,39 @@ export type CancellationMethod = 'PASSWORD' | 'PIN' | 'PATTERN' | 'FINGERPRINT' 
 // ──────────────────────────────────────────────
 
 export interface Ubicacion {
+  ubicacionId?: string;
   latitud: number;
   longitud: number;
-  altura?: number;
+  altitud?: number;
   precision?: number;
+  metodoUbicacionId?: number; // ID from catalogo/metodos-ubicacion
+  fecha?: string | number;
+  bateria?: number; // 0-100
+  velocidad?: number;
+  rumbo?: number;
 }
 
-/** Legacy alias – kept for backward compat in geolocation service */
 export interface LocationData {
   latitude: number;
   longitude: number;
-  accuracy: number;
-  timestamp: string;
+  altitude?: number;
+  accuracy?: number;
+  timestamp?: string | number;
+  batteryLevel?: number; // 0-100
+  locationMethod?: number;
+  speed?: number;
+  heading?: number;
 }
 
-/** Convert front-end LocationData → backend Ubicacion */
-export function toUbicacion(loc: LocationData): Ubicacion {
+export function toUbicacion(location: LocationData): Ubicacion {
   return {
-    latitud: loc.latitude,
-    longitud: loc.longitude,
-    altura: 0,
-    precision: loc.accuracy ?? 0
+    latitud: location.latitude,
+    longitud: location.longitude,
+    altitud: location.altitude,
+    precision: location.accuracy,
+    fecha: location.timestamp,
+    bateria: location.batteryLevel,
+    metodoUbicacionId: location.locationMethod,
   };
 }
 
@@ -42,10 +56,9 @@ export function toUbicacion(loc: LocationData): Ubicacion {
 export interface AlarmActivationRequest {
   usuarioId: string;
   dispositivoId: string;         // DB-generated device ID (from login response)
-  metodosActivacion: number[];   // IDs from catalogo/metodos-activacion
-  metodoUbicacion: number;       // ID from catalogo/metodos-ubicacion
+  metodoActivacion: number;   // IDs from catalogo/metodos-activacion
   prioridad: number;             // ID from catalogo/prioridades-alarma
-  ubicacion: Ubicacion;
+  ubicacion?: Ubicacion;
 }
 
 export interface EstadoAlarma {
@@ -59,16 +72,6 @@ export interface AlarmActivationResponse {
   estadoAlarma: EstadoAlarma;
 }
 
-// ──────────────────────────────────────────────
-// POST /alarma/{alarmaId}/ubicacion
-// ──────────────────────────────────────────────
-
-export interface LocationUpdate {
-  latitud: number;
-  longitud: number;
-  altura?: number;
-  precision?: number;
-}
 
 // ──────────────────────────────────────────────
 // PUT /alarma/{alarmaId}/finalizar
@@ -96,7 +99,7 @@ export interface AlarmCancellationRequest {
   usuarioId: string;
   metodo: CancellationMethod;
   valor: string;
-  ubicacion: LocationData;
+  ubicacion: Ubicacion;
   timestamp: string;
 }
 
@@ -110,7 +113,7 @@ export interface AlarmBlockRequest {
   alarmaId: string;
   usuarioId: string;
   dispositivoAppId: string;
-  ubicacion: LocationData;
+  ubicacion: Ubicacion;
   timestamp: string;
 }
 
@@ -123,8 +126,8 @@ export interface AlarmIncident {
   fechaFin?: string;
   motivo?: string;
   metodoFinalizacion?: CancellationMethod;
-  ubicacionInicio: LocationData;
-  ubicacionFin?: LocationData;
+  ubicacionInicio: Ubicacion;
+  ubicacionFin?: Ubicacion;
 }
 
 export interface AlarmConfig {

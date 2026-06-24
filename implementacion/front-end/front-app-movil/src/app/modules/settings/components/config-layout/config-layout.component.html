@@ -3,29 +3,53 @@
   <!-- Header -->
   <header class="shrink-0 bg-background-light dark:bg-background-dark shadow-md z-10">
     <div class="flex items-center justify-between p-4 h-16">
+      <!--
       <button (click)="goBack()"
         class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer">
         <span class="material-symbols-outlined text-2xl">arrow_back</span>
       </button>
-      <h2 class="text-lg font-bold leading-tight tracking-[-0.015em] text-center truncate px-2 flex-1">
-        {{ currentPage.label }}
-      </h2>
-      <div class="flex gap-1">
-        <button (click)="goPrev()" [disabled]="!canGoPrev"
+      -->
+      <button (click)="goPrev()" [disabled]="!canGoPrev"
           class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default">
           <span class="material-symbols-outlined text-2xl">chevron_left</span>
-        </button>
-        <button (click)="goNext()" [disabled]="!canGoNext"
-          class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default">
-          <span class="material-symbols-outlined text-2xl">chevron_right</span>
-        </button>
+      </button>
+      <div class="flex items-center justify-between p-4 h-16">
+        <h2 class="text-base sm:text-lg font-bold leading-tight tracking-[-0.015em] text-center truncate px-2 flex-1">
+          {{ currentSection.label }}
+        </h2>
+        <span class="material-symbols-outlined text-2xl">{{ currentSection.icon }}</span>
       </div>
+      <button (click)="goNext()" [disabled]="!canGoNext"
+        class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default">
+        <span class="material-symbols-outlined text-2xl">chevron_right</span>
+      </button>
     </div>
   </header>
 
   <!-- Child content -->
-  <main class="flex-1 overflow-y-auto relative flex flex-col w-full">
+  <main class="flex-1 items-center overflow-y-auto relative flex flex-col w-full">
     <router-outlet></router-outlet>
   </main>
 
+  <!-- Footer -->
+  <ng-container *ngIf="actionButtonsVisible">
+    <footer class="shrink-0 bg-background-light dark:bg-background-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div class="flex flex-col gap-3 px-4 py-4 w-full max-w-md mx-auto">
+        <div class="grid grid-cols-3 gap-3">
+          <button (click)="cancelForm()"
+                  class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+            <span class="truncate">Cancelar</span>
+          </button>
+          <button (click)="resetForm()"
+                  class="flex w-full items-center justify-center rounded-lg h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-bold shadow-sm">
+            <span class="truncate">Restablecer</span>
+          </button>
+          <button (click)="saveForm()"
+                  class="flex w-full items-center justify-center rounded-lg h-12 bg-[#1e3a8a] border border-transparent text-white text-sm font-bold shadow-sm">
+            <span class="truncate">Guardar</span>
+          </button>
+        </div>
+      </div>
+    </footer>
+  </ng-container>
 </div>

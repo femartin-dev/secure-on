@@ -8,18 +8,19 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { API_CONFIG } from '../config/api-config';
 import { AuthService } from './auth.service';
 import { GeolocationService } from './geolocation.service';
-import { NotificationService } from './notification.service';
+import { NotificationService } from './notification-toast.service';
 import { WebSocketService } from './websocket.service';
 import {
   AlarmActivationRequest,
   AlarmActivationResponse,
   AlarmFinalizationRequest,
   AlarmBlockRequest,
-  LocationUpdate,
   AlarmStatus,
+  Ubicacion,
   LocationData,
   toUbicacion
 } from '../models/alarm.models';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +52,7 @@ export class AlarmService {
     private authService: AuthService,
     private geolocationService: GeolocationService,
     private notificationService: NotificationService,
+    private configService: ConfigService,
     private webSocketService: WebSocketService
   ) {}
 
@@ -83,20 +85,24 @@ export class AlarmService {
    */
   async initiateAlarmActivation(): Promise<void> {
     try {
-      // Start 3-second countdown
-      this.startActivationCountdown(3);
+      const config = this.configService.getCurrentConfig();
+      const activationTimer = config?.activation.tiempoActivacionSeg || 3; // Ensure config is loaded
+      const cancelTimer = config?.activation.tiempoCancelacionSeg || 15;
 
-      // Start the 15-second pre-alarm countdown (persists across navigation)
-      this.startPreAlarmCountdown(15);
+      // Start activation countdown (3s)
+      //this.startActivationCountdown(activationTimer);
+
+      // Start the pre-alarm countdown (persists across navigation)
+      this.startPreAlarmCountdown(cancelTimer);
 
       // Vibrate device
       await this.vibrateAlarm();
 
       // Show notification
-      this.notificationService.showToast('Alarma activada - 15 segundos para cancelar');
+      this.notificationService.showInfo(`Alarma activada - ${cancelTimer} segundos para cancelar`);
     } catch (error) {
       console.error('Error initiating alarm:', error);
-      this.notificationService.showToast('Error al activar alarma');
+      this.notificationService.showError('Error al activar alarma');
     }
   }
 
@@ -150,7 +156,7 @@ export class AlarmService {
 
       if (count <= 0) {
         clearInterval(this.activationTimerId);
-        this.completeActivation();
+        //this.completeActivation();
       }
     }, 1000);
   }
@@ -171,10 +177,10 @@ export class AlarmService {
       const request: AlarmActivationRequest = {
         usuarioId: user.id,
         dispositivoId: user.dispositivoId ?? '',
-        metodosActivacion: [1],        // Default: BOTÓN DE PÁNICO
-        metodoUbicacion: 1,            // Default: GPS
+        metodoActivacion: 1,        // Default: BOTÓN DE PÁNICO
         prioridad: 2,                  // Default: ALTA
         ubicacion: toUbicacion(location)
+
       };
 
       const response = await this.http
@@ -195,13 +201,13 @@ export class AlarmService {
         this.startLocationUpdates(response.alarmaId, 5000);
 
         // Show notification
-        this.notificationService.showToast(
+        this.notificationService.showInfo(
           `Alarma activa - 15 segundos para cancelar`
         );
       }
     } catch (error) {
       console.error('Error completing alarm activation:', error);
-      this.notificationService.showToast('Error al activar alarma');
+      this.notificationService.showError('Error al activar alarma');
     }
   }
 
@@ -250,17 +256,17 @@ export class AlarmService {
         )
         .toPromise();
 
-      this.alarmStatusSubject.next('INACTIVA');
-      this.notificationService.showToast('Dispositivo bloqueado - Alarma enviada al CDM');
+      this.alarmStatusSubject.next('FINALIZADA');
+      this.notificationService.showInfo('Dispositivo bloqueado - Alarma enviada al CDM');
 
       // Stop location updates
       this.stopLocationUpdates();
 
       // Log to local storage
-      await this.logIncident(alarm.alarmaId, 'INACTIVA', location);
+      await this.logIncident(alarm.alarmaId, 'FINALIZADA', location);
     } catch (error) {
       console.error('Error handling alarm expiration:', error);
-      this.notificationService.showToast('Error al bloquear dispositivo');
+      this.notificationService.showError('Error al bloquear dispositivo');
     }
   }
 
@@ -290,14 +296,14 @@ export class AlarmService {
         )
         .toPromise();
 
-      this.alarmStatusSubject.next('INACTIVA');
+      this.alarmStatusSubject.next('CANCELADA');
       this.stopAlarmTimers();
       this.stopLocationUpdates();
 
-      this.notificationService.showToast('Alarma cancelada correctamente');
+      this.notificationService.showSuccess('Alarma cancelada correctamente');
 
       // Log to local storage
-      await this.logIncident(alarm.alarmaId, 'INACTIVA', location, method);
+      await this.logIncident(alarm.alarmaId, 'CANCELADA', location, method);
 
       // Reset state
       this.resetAlarmState();
@@ -305,7 +311,7 @@ export class AlarmService {
       return true;
     } catch (error) {
       console.error('Error cancelling alarm:', error);
-      this.notificationService.showToast('Error al cancelar alarma');
+      this.notificationService.showError('Error al cancelar alarma');
       return false;
     }
   }
@@ -328,11 +334,16 @@ export class AlarmService {
 
         if (!user || !location) return;
 
-        const update: LocationUpdate = {
+        const update: Ubicacion = {
           latitud: location.latitude,
           longitud: location.longitude,
-          altura: 0,
-          precision: location.accuracy
+          altitud: location.altitude,
+          precision: location.accuracy,
+          fecha: location.timestamp,
+          bateria: location.batteryLevel,
+          velocidad: location.speed,
+          rumbo: location.heading,
+          metodoUbicacionId: location.locationMethod
         };
 
         // 1) Send via WebSocket (real-time for CDM)
@@ -351,7 +362,7 @@ export class AlarmService {
         // 2) Also POST via HTTP (persistence / fallback)
         await this.http
           .post(
-            `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.ALARM_BASE}/${alarmaId}/ubicacion`,
+            `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.ALARM_BASE}/${alarmaId}/enviar/ubicacion`,
             update
           )
           .toPromise();
@@ -422,7 +433,7 @@ export class AlarmService {
     this.stopPreAlarmCountdown();
     this.stopAlarmTimers();
     this.resetAlarmState();
-    this.notificationService.showToast('Alarma cancelada');
+    this.notificationService.showInfo('Alarma cancelada');
   }
 
   /**
@@ -452,14 +463,14 @@ export class AlarmService {
         )
         .toPromise();
 
-      this.alarmStatusSubject.next('INACTIVA');
+      this.alarmStatusSubject.next('FINALIZADA');
       this.stopAlarmTimers();
       this.stopLocationUpdates();
 
-      this.notificationService.showToast('Alarma desactivada correctamente');
+      this.notificationService.showSuccess('Alarma desactivada correctamente');
 
       // Log to local storage
-      await this.logIncident(alarm.alarmaId, 'INACTIVA', location, method);
+      await this.logIncident(alarm.alarmaId, 'FINALIZADA', location, method);
 
       // Reset state
       this.resetAlarmState();
@@ -467,7 +478,7 @@ export class AlarmService {
       return true;
     } catch (error) {
       console.error('Error finalizing alarm:', error);
-      this.notificationService.showToast('Error al desactivar alarma');
+      this.notificationService.showError('Error al desactivar alarma');
       return false;
     }
   }
@@ -484,10 +495,9 @@ export class AlarmService {
       const request: AlarmActivationRequest = {
         usuarioId: user?.id ?? '',
         dispositivoId: user?.dispositivoId ?? '',
-        metodosActivacion: [1],
-        metodoUbicacion: 1,
+        metodoActivacion: 1,
         prioridad: 2,
-        ubicacion: location ? toUbicacion(location) : { latitud: 0, longitud: 0, altura: 0, precision: 0 }
+        ubicacion: location ? toUbicacion(location) : undefined
       };
 
       const response = await this.http
@@ -551,9 +561,9 @@ export class AlarmService {
   /**
    * Get alarm history (not documented in payload – kept for future use)
    */
-  getAlarmHistory(): Observable<any> {
+  getAlarmHistory(usuarioId: string): Observable<any> {
     return this.http.get(
-      `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.ALARM_BASE}`
+      `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.ALARM_BASE}/listado/${usuarioId}`
     );
   }
 

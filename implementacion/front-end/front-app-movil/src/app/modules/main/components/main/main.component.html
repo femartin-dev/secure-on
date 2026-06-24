@@ -52,7 +52,7 @@
             [style.stroke-dasharray]="'302'"
             [style.stroke-dashoffset]="panicProgress"
             [style.opacity]="pressing ? '1' : '0'"
-            [style.transition]="pressing ? 'stroke-dashoffset 3s linear, opacity 0.1s ease-in' : 'stroke-dashoffset 0.25s ease-out, opacity 0.2s ease-out'"
+            [style.transition]="pressing ? 'stroke-dashoffset ' + activationCountdown + 's linear, opacity 0.1s ease-in' : 'stroke-dashoffset 0.25s ease-out, opacity 0.2s ease-out'"
           ></circle>
         </svg>
 
@@ -61,7 +61,7 @@
       </button>
 
       <p class="text-blue-100/70 text-sm font-medium tracking-wider uppercase text-center max-w-[240px]">
-        Mantenga presionado por 3 segundos para activar
+        Mantenga presionado por {{ activationCountdown }} segundos para activar
       </p>
     </div>
   </main>

@@ -12,6 +12,7 @@ import com.secureon.common.exception.UnauthorizedException;
 public class SecurityUtils {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final int VERIFICATION_CODE_LENGTH = 6;
 
     @Autowired
     private static MessagesService messageService;
@@ -24,7 +25,24 @@ public class SecurityUtils {
         throw new UnauthorizedException(messageService.getMessage("err.user.not-auth"));
     }
 
+    public static String generateVerificationCode() {
+        return generateNumericCode(VERIFICATION_CODE_LENGTH);
+    }
+
     public static String generateVerificationCode6Digits() {
-        return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+        return generateVerificationCode();
+    }
+
+    public static String generateEmailVerificationCode() {
+        return generateVerificationCode();
+    }
+
+    public static String generateDeviceVerificationCode() {
+        return generateVerificationCode();
+    }
+
+    private static String generateNumericCode(int digits) {
+        int upperBound = (int) Math.pow(10, digits);
+        return String.format("%0" + digits + "d", SECURE_RANDOM.nextInt(upperBound));
     }
 }

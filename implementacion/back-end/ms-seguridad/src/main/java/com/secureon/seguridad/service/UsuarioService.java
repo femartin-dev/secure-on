@@ -58,8 +58,10 @@ public class UsuarioService {
         usuario.setDireccion(request.getDireccion());
         usuario.setHashContrasena(passwordEncoder.encode(request.getPassword()));
         usuario.setFechaRegistro(OffsetDateTime.now());
+        usuario.setEstaActivo(false);
 
-        return usuarioRepository.save(usuario);
+        Usuario savedUsuario = usuarioRepository.save(usuario);
+        return savedUsuario;
     }
 
     @Transactional
@@ -107,5 +109,14 @@ public class UsuarioService {
     protected Usuario getUsuarioPorId(UUID usuarioId) {
         return usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.user.not-found.id")));
+    }
+
+    public void activarUsuario(UUID usuarioId) {
+        Usuario usuario = getUsuarioPorId(usuarioId);
+        if (usuario.getEstaActivo()) {
+            throw new BadRequestException(messageService.getMessage("err.user.already-active"));
+        }
+        usuario.setEstaActivo(true);
+        usuarioRepository.save(usuario);
     }
 }

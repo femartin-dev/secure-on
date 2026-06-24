@@ -6,7 +6,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
 import { GeolocationService } from '../../../../services/geolocation.service';
 import { AlarmService } from '../../../../services/alarm.service';
-import { NotificationService } from '../../../../services/notification.service';
+import { NotificationService } from '../../../../services/notification-toast.service';
 import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocationData } from '../../../../models/alarm.models';

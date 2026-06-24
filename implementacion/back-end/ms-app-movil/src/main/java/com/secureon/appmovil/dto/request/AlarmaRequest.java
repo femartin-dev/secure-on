@@ -1,23 +1,21 @@
 package com.secureon.appmovil.dto.request;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
-@Getter
-@Setter
 public class AlarmaRequest {
     @NotNull
-    private UUID userId;
+    private UUID usuarioId;
 
     @NotNull
     private UUID dispositivoId;
     
     @NotNull
     private Integer metodoActivacion; 
-    private UbicacionRequest ubicacionInicial;
+    private UbicacionRequest ubicacion;
+    private OffsetDateTime fechaActivacion = OffsetDateTime.now();
 }

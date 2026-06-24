@@ -3,7 +3,10 @@ package com.secureon.common.model.entity;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.secureon.common.model.converter.OffsetDateTimeConverter;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,12 +26,14 @@ public class Sesion {
     private UUID sesionId;
 
     @Column(name = "fecha_login")
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime fechaLogin;
 
     @Column(name = "token_restablecimiento", length = 255)
     private String tokenRestablecimiento; 
 
     @Column(name = "expiracion_token")
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime expiracionToken;
 
     @Column(name = "mfa_habilitado")

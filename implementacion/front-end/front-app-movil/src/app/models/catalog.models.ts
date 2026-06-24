@@ -4,27 +4,16 @@
  * MS-APP-MOVIL - CatalogoController
  */
 
-// ──────────────────────────────────────────────
-// Paginated response wrapper
-// ──────────────────────────────────────────────
-
-export interface PaginatedResponse<T> {
-  contenido: T[];
-  totalElementos: number;
-  numeroPagina: number;
-  tamanioPagina: number;
-  totalPaginas: number;
-  primeraPagina: boolean;
-  ultimaPagina: boolean;
-}
+export type CatalogType = {
+  id: number;
+  descripcion: string;
+};
 
 // ──────────────────────────────────────────────
 // GET /catalogo/estados-alarma
 // ──────────────────────────────────────────────
 
-export interface EstadoAlarma {
-  id: number;
-  descripcion: string;
+export interface EstadoAlarma extends CatalogType {
   color: string;
   icono: string;
 }
@@ -33,21 +22,20 @@ export interface EstadoAlarma {
 // GET /catalogo/canales-notificacion
 // ──────────────────────────────────────────────
 
-export interface CanalNotificacion {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  activo: boolean;
+export interface CanalNotificacion extends CatalogType {
+  icono: string;
+  svgIcono?: string;
+  color: string;
+  orden: number;
 }
 
 // ──────────────────────────────────────────────
 // GET /catalogo/estados-envio
 // ──────────────────────────────────────────────
 
-export interface EstadoEnvio {
-  id: number;
-  nombre: string;
-  descripcion: string;
+export interface EstadoEnvio extends CatalogType {
+  icono: string;
+  orden: number;
 }
 
 // ──────────────────────────────────────────────
@@ -55,31 +43,27 @@ export interface EstadoEnvio {
 // ──────────────────────────────────────────────
 
 export interface Idioma {
-  id: number;
-  codigo: string;
-  nombre: string;
-  activo: boolean;
+  id: string;
+  icono: string;
+  color: string;
+  descripcion: string;
+  habilitada: boolean;
 }
 
 // ──────────────────────────────────────────────
 // GET /catalogo/metodos-activacion
 // ──────────────────────────────────────────────
 
-export interface MetodoActivacion {
-  id: number;
-  nombre: string;
-  descripcion: string;
+export interface MetodoActivacion extends CatalogType {
   icono: string;
+  orden: number;
 }
 
 // ──────────────────────────────────────────────
 // GET /catalogo/metodos-ubicacion
 // ──────────────────────────────────────────────
 
-export interface MetodoUbicacion {
-  id: number;
-  nombre: string;
-  descripcion: string;
+export interface MetodoUbicacion extends CatalogType {
   precision: number;
 }
 
@@ -87,10 +71,17 @@ export interface MetodoUbicacion {
 // GET /catalogo/prioridades-alarma
 // ──────────────────────────────────────────────
 
-export interface PrioridadAlarma {
-  id: number;
-  nombre: string;
-  descripcion: string;
+export interface PrioridadAlarma extends CatalogType {
   nivel: number;
   color: string;
+}
+
+export interface CatalogsResponse {
+    estadosAlarma?: EstadoAlarma[];
+    metodosUbicacion?: MetodoUbicacion[];
+    metodosActivacion?: MetodoActivacion[];
+    idiomas?: Idioma[];
+    prioridades?: PrioridadAlarma[];
+    canalesNotificacion?: CanalNotificacion[];
+    estadosEnvio?: EstadoEnvio[];
 }

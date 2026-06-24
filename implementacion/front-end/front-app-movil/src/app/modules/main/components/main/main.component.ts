@@ -3,7 +3,8 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../services/auth.service';
 import { AlarmService } from '../../../../services/alarm.service';
-import { NotificationService } from '../../../../services/notification.service';
+import { NotificationService } from '../../../../services/notification-toast.service';
+import { ConfigService } from '@app/services/config.service';
 
 @Component({
   selector: 'app-main',
@@ -18,6 +19,7 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
   panicProgress = 302; // full offset = circle not drawn
   private panicTimer: any;
   private animationFrame: any;
+  activationCountdown: number = 3;
 
   @ViewChild('drawerToggle') drawerToggle!: ElementRef;
   @ViewChild('bgVideo') bgVideo!: ElementRef<HTMLVideoElement>;
@@ -26,11 +28,13 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
     private authService: AuthService,
     private alarmService: AlarmService,
     private notificationService: NotificationService,
+    private configService: ConfigService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadUserData();
+    this.loadActivationCountdown();
   }
 
   ngAfterViewInit(): void {
@@ -48,6 +52,13 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  private loadActivationCountdown(): void {
+    const config = this.configService.getCurrentConfig();
+    if (config?.activation?.tiempoActivacionSeg) {
+      this.activationCountdown = config.activation.tiempoActivacionSeg;
+    }
+  }
+
   /**
    * Panic button press start — begin 3-second countdown
    */
@@ -58,7 +69,7 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
     this.panicTimer = setTimeout(() => {
       // 3 seconds elapsed — trigger alarm
       this.triggerAlarm();
-    }, 3000);
+    }, this.activationCountdown * 1000);
   }
 
   /**

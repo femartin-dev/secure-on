@@ -35,7 +35,10 @@ public class AlarmaService {
     @Autowired
     private PrioridadService prioridadService;
 
+    @Autowired
     private MessagesService messagesService;
+
+
 
     public Page<Alarma> listarAlarmas(Integer estadoId, Integer prioridadId,
                                     OffsetDateTime fechaDesde, OffsetDateTime fechaHasta,
@@ -73,6 +76,7 @@ public class AlarmaService {
         if (estadoId != null)
             alarma.setEstadoAlarma(catalogoService.getEstadoAlarma(estadoId));
         Alarma saved = alarmaRepository.save(alarma);
+        
         //notificationService.notificarCambioAlerta(saved);
         return saved;
     }

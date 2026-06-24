@@ -119,7 +119,7 @@
                  placeholder="••••••••"
                  class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-11 placeholder:text-text-muted text-base transition-all shadow-sm"
                  [class.border-red-500]="submitted && f['password'].invalid" />
-          <button type="button" (click)="togglePasswordVisibility()"
+          <button type="button" tabindex="-1" (click)="togglePasswordVisibility()"
                   class="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-text-muted hover:text-white transition-colors focus:outline-none">
             <span class="material-symbols-outlined" style="font-size: 20px;">{{ passwordVisible ? 'visibility_off' : 'visibility' }}</span>
           </button>
@@ -140,7 +140,7 @@
                  placeholder="••••••••"
                  class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-11 placeholder:text-text-muted text-base transition-all shadow-sm"
                  [class.border-red-500]="submitted && (f['confirmPassword'].invalid || registerForm.errors?.['passwordMismatch'])" />
-          <button type="button" (click)="toggleConfirmPasswordVisibility()"
+          <button type="button" tabindex="-1" (click)="toggleConfirmPasswordVisibility()"
                   class="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-text-muted hover:text-white transition-colors focus:outline-none">
             <span class="material-symbols-outlined" style="font-size: 20px;">{{ confirmPasswordVisible ? 'visibility_off' : 'visibility' }}</span>
           </button>

@@ -1,8 +1,10 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@app/services/auth.service';
-import { NotificationService } from '@app/services/notification.service';
+import { NotificationService } from '@app/services/notification-toast.service';
+import { Constants } from '@app/utils/constants.util';
+
 
 @Component({
   selector: 'app-login',
@@ -34,9 +36,19 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.bgVideo?.nativeElement?.play().catch(() => {});
   }
 
+  /** Acepta email válido o número de teléfono (7-15 dígitos, opcionalmente con +, espacios, guiones o paréntesis) */
+  private emailOrPhoneValidator(): ValidatorFn {
+
+    return (control: AbstractControl): ValidationErrors | null => {
+      const val: string = (control.value ?? '').trim();
+      if (!val) return null; // required se encarga del vacío
+      return Constants.EMAIL_REGEXP.test(val) || Constants.PHONE_REGEXP.test(val) ? null : { usuarioInvalido: true };
+    };
+  }
+
   private initForm(): void {
     this.loginForm = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
+      usuario: ['', [Validators.required, this.emailOrPhoneValidator()]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -58,7 +70,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
     try {
       const result = await this.authService.login(
-        this.f['email'].value,
+        this.f['usuario'].value.trim(),
+        Constants.EMAIL_REGEXP.test(this.f['usuario'].value.trim()) ? 'email' : 'telefono',
         this.f['password'].value
       );
 

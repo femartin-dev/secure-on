@@ -11,4 +11,5 @@ import com.secureon.common.model.entity.Dispositivo;
 @Repository
 public interface DispositivoRepository extends JpaRepository<Dispositivo, UUID>{
     Optional<Dispositivo> findById(UUID id);
+    Optional<Dispositivo> findByDispositivoAppId(UUID dispositivoAppId);
 }

@@ -1,0 +1,29 @@
+<div class="pattern-container bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+  <svg #svg
+       width="300" height="300" viewBox="0 0 300 300"
+       class="pattern-svg"
+       (touchstart)="onSvgTouch($event)">
+
+    <!-- Línea del patrón (detrás de los puntos) -->
+    <polyline [attr.points]="patternPoints"
+              class="pattern-line"
+              fill="none" />
+
+    <!-- Puntos de la cuadrícula -->
+    <g *ngFor="let dot of dots">
+      <!-- Círculo decorativo (sin eventos de puntero) -->
+      <circle [attr.cx]="dot.cx" [attr.cy]="dot.cy" r="15"
+              class="dot dark:dot-dark"
+              [class.selected]="isSelected(dot.id)"
+              pointer-events="none" />
+
+      <!-- Área táctil ampliada (transparente, captura los eventos) -->
+      <circle [attr.cx]="dot.cx" [attr.cy]="dot.cy" r="25"
+              fill="transparent"
+              class="dot-hitarea"
+              (mousedown)="onDotMouseDown($event, dot.id)"
+              (touchstart)="onDotTouchStart($event, dot.id)" />
+    </g>
+  </svg>
+</div>
+

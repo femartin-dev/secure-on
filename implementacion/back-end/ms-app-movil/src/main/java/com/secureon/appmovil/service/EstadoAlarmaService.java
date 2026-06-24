@@ -23,13 +23,13 @@ public class EstadoAlarmaService {
     private final EstadoAlarmaRepository estadoAlarmaRepository;
     private final MessagesService messagesService;
 
-    @Value("${app.static-values.estado-alarma.activa}")
+    @Value("${app.static-data.estado-alarma.activa}")
     private Integer estadoActivaId;
 
-    @Value("${app.static-values.estado-alarma.finalizada}")
+    @Value("${app.static-data.estado-alarma.finalizada}")
     private Integer estadoFinalizadaId;
 
-    @Value("${app.static-values.estado-alarma.cancelada}")
+    @Value("${app.static-data.estado-alarma.cancelada}")
     private Integer estadoCanceladaId;
 
     @Getter

@@ -254,8 +254,8 @@ CREATE TABLE secure_on_movil.configuracion_usuario (
 
 COMMENT ON TABLE secure_on_movil.configuracion_usuario IS 'Configuración extensible de preferencias y umbrales por usuario.';
 
--- 2.5 Tabla CUESTIONARIO
-CREATE TABLE secure_on_movil.cuestionario (
+-- 2.5 Tabla CUESTIONARIOS
+CREATE TABLE secure_on_movil.cuestionarios (
     cuestionario_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     alarma_id UUID NOT NULL
         REFERENCES secure_on_movil.alarmas(alarma_id) ON DELETE RESTRICT,
@@ -269,13 +269,11 @@ CREATE TABLE secure_on_movil.cuestionario (
     autoridades_contactadas VARCHAR(500),
     evaluacion_autoridades INTEGER,
     danios_materiales VARCHAR(500),
-	evaluacion_sistema TEXT,
+	evaluacion_sistema INTEGER,
 	observaciones TEXT,
     -- Sección: Metadatos
-    fecha_completado TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    ip_completado VARCHAR(45), 
-    tiempo_completar INTEGER,
-	completado_pct DOUBLE PRECISION 
+	fecha_incio TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    fecha_fin TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 COMMENT ON TABLE secure_on_movil.cuestionario IS 'Respuestas estructuradas del usuario tras finalizar una alarma.';
@@ -315,12 +313,9 @@ CREATE TABLE secure_on_movil.evidencias (
     evidencia_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     alarma_id UUID NOT NULL REFERENCES secure_on_movil.alarmas(alarma_id) ON DELETE CASCADE,
     evidencia_tipo_id INTEGER REFERENCES secure_on_utils.tipos_evidencias(tipo_id) ON DELETE CASCADE,
-    ruta_archivo TEXT,
-    duracion_segundos INTEGER,
     fecha_toma TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ubicacion_toma GEOGRAPHY(POINT, 4326),
     bateria_nivel INTEGER,
-    luz_ambiente_lux INTEGER,
     enviado_cdm BOOLEAN DEFAULT FALSE,
     fecha_envio_cdm TIMESTAMP WITH TIME ZONE
 );
@@ -337,9 +332,9 @@ CREATE TABLE secure_on_movil.ubicaciones (
     precision_toma INTEGER,
     metodo_ubic_id INTEGER REFERENCES secure_on_utils.metodos_ubicacion(metodo_id) ON DELETE CASCADE,
     bateria_nivel INTEGER,
-    es_estimada BOOLEAN DEFAULT FALSE,
-    velocidad DECIMAL(5, 2),
+    velocidad DECIMAL(7,2),
 	altura DECIMAL(7,2),
+	rumbo DECIMAL(7,2),
 	fecha_toma TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

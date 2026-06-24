@@ -1,5 +1,6 @@
 package com.secureon.common.model.entity;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -15,15 +16,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 
 @Entity
 @Table(schema = "secure_on_movil", name = "ubicaciones")
 @Data
-@Setter
-@Getter
 public class Ubicacion {
 
     @Id
@@ -48,8 +45,14 @@ public class Ubicacion {
     @Column(name = "bateria_nivel")
     private Integer bateriaNivel;
 
-    @Column(name = "es_estimada")
-    private Boolean esEstimada = false;
+    @Column(name = "altura")
+    private BigDecimal altura;
+
+    @Column(name = "velocidad")
+    private BigDecimal velocidad;
+
+    @Column(name = "rumbo")
+    private BigDecimal rumbo;
 
     @Column(name = "fecha_toma")
     private OffsetDateTime fechaToma;

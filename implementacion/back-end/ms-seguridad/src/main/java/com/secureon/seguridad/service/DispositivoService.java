@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.secureon.common.exception.BadRequestException;
 import com.secureon.common.exception.ResourceNotFoundException;
 import com.secureon.common.model.entity.Dispositivo;
 import com.secureon.common.model.entity.Idioma;
@@ -41,38 +42,35 @@ public class DispositivoService {
         Usuario usuario = getUsuarioPorId(request.getUsuarioId());
         Optional<Dispositivo> existente = dispositivoRepository
             .findByUsuarioAndDispositivoAppId(usuario, request.getDispositivoAppId());
-        
+        boolean esPrincipal = false;
+        Dispositivo dispositivo = null;
         if (existente.isPresent()) {
-            Dispositivo dispositivo = existente.get();
-            // Actualizar datos del dispositivo
-            dispositivo.setNumero(request.getNumero());
-            dispositivo.setFabricante(request.getFabricante());
-            dispositivo.setModelo(request.getModelo());
-            dispositivo.setPlataforma(request.getPlataforma());
-            dispositivo.setSistemaOperativo(request.getSistemaOperativo());
-            dispositivo.setVersionSO(request.getVersionDelSO());
-            dispositivo.setZonaHoraria(request.getZonaHoraria());
-            dispositivo.setIdioma(getIdiomaPorId(request.getIdiomaId()));
-            dispositivo.setEsPrincipal(request.getEsPrincipal());
-            dispositivo.setEstaActivo(true);
-            return dispositivoRepository.save(dispositivo);
+            esPrincipal = request.getEsPrincipal();
+            dispositivo = existente.get();
         } else {
-            boolean esPrincipal = dispositivoRepository.findByUsuarioAndEstaActivoTrue(usuario).stream().count() == 0;
-            Dispositivo nuevo = new Dispositivo();
-            nuevo.setUsuario(usuario);
-            nuevo.setDispositivoAppId(request.getDispositivoAppId());
-            nuevo.setNumero(request.getNumero());
-            nuevo.setFabricante(request.getFabricante());
-            nuevo.setModelo(request.getModelo());
-            nuevo.setPlataforma(request.getPlataforma());
-            nuevo.setSistemaOperativo(request.getSistemaOperativo());
-            nuevo.setVersionSO(request.getVersionDelSO());
-            nuevo.setZonaHoraria(request.getZonaHoraria());
-            nuevo.setIdioma(getIdiomaPorId(request.getIdiomaId()));
-            nuevo.setEsPrincipal(esPrincipal); // Se puede marcar como principal si es el primero
-            nuevo.setFechaCreacion(OffsetDateTime.now());
-            return dispositivoRepository.save(nuevo);
+            esPrincipal = dispositivoRepository.findByUsuarioAndEstaActivoTrue(usuario).stream().count() == 0;
+            dispositivo = new Dispositivo();
+            dispositivo.setFechaCreacion(OffsetDateTime.now());
+            dispositivo.setUsuario(usuario);
+            dispositivo.setDispositivoAppId(request.getDispositivoAppId());
         }
+        dispositivo.setNumero(request.getNumero());
+        dispositivo.setFabricante(request.getFabricante());
+        dispositivo.setModelo(request.getModelo());
+        dispositivo.setPlataforma(request.getPlataforma());
+        dispositivo.setSistemaOperativo(request.getSistemaOperativo());
+        dispositivo.setVersionSO(request.getVersionDelSO());
+        dispositivo.setZonaHoraria(request.getZonaHoraria());
+        dispositivo.setIdioma(getIdiomaPorId(request.getIdiomaId()));
+        dispositivo.setEsPrincipal(esPrincipal);
+        dispositivo.setEstaActivo(false);
+        Dispositivo savedDispositivo = dispositivoRepository.save(dispositivo);
+        return savedDispositivo;
+    }
+
+    public Dispositivo getDispositivo(UUID dispositivoId) {
+        return dispositivoRepository.findById(dispositivoId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.device.not-found")));
     }
 
     public Dispositivo obtenerPorAppId(Usuario usuario, UUID dispositivoAppId) {
@@ -99,6 +97,15 @@ public class DispositivoService {
     private Idioma getIdiomaPorId(String idiomaId) {
         idiomaId = StringUtils.isBlank(idiomaId) ? messageService.getMessage("user.default.language") : idiomaId;
         return idiomaRepository.findById(idiomaId)
-            .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.language.not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.language.not-found")));
+    }
+
+    public void activarDispositivo(UUID dispositivoId) {
+        Dispositivo dispositivo = getDispositivo(dispositivoId);
+        if (dispositivo.getEstaActivo()) {
+            throw new BadRequestException(messageService.getMessage("err.device.already-active"));
+        }
+        dispositivo.setEstaActivo(true);
+        dispositivoRepository.save(dispositivo);
     }
 }

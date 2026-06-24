@@ -13,7 +13,7 @@ import lombok.Data;
 
 @Data
 @Component
-@PropertySource(value = "classpath:ws-gateway.yml", factory = YamlPropertySourceFactory.class)
+@PropertySource(value = "classpath:global-props.yml", factory = YamlPropertySourceFactory.class)
 @ConfigurationProperties(prefix = "ws-gateway.routes")
 public class WsDestinoProperty {
 

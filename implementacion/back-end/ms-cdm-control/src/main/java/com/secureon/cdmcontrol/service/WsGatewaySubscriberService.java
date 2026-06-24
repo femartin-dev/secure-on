@@ -30,10 +30,10 @@ public class WsGatewaySubscriberService {
     private final WebSocketStompClient stompClient;
     private final AlarmaWsProcessor alarmaWsProcessor;
 
-    @Value("${ws-gateway.server-urls.http}${ws-gateway.endpoints}")
+    @Value("${ws-gateway.config.server-url}${ws-gateway.config.endpoint-ws}")
     private String wsGatewayUrl;
 
-    @Value("${ws-gateway.auth-token:}")
+    @Value("${ws-gateway.config.auth-token:}")
     private String authToken;
 
     private volatile StompSession session;
