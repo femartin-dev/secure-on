@@ -42,6 +42,7 @@ export class PatternTouchComponent implements OnInit {
   selectedDots: number[] = [];
   drawing = false;
   currentPointer: { x: number; y: number } | null = null;
+  @Input() error: string | null = null;
 
   private svgRect: DOMRect | null = null;
 

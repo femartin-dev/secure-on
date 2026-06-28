@@ -32,13 +32,27 @@
   stroke: #26345d;
 }
 
+.dot.error {
+  fill: #d30000;
+  stroke: #670000;
+}
+
 .dot-hitarea {
   cursor: pointer;
 }
 
 .pattern-line {
   stroke: #183daa;
-  stroke-width: 4;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  /* La línea no interfiere con los eventos de los puntos */
+}
+
+.pattern-line.error {
+  stroke: #d30000;
+  stroke-width: 6;
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;
@@ -47,7 +61,7 @@
 
 .pattern-line-dark {
   stroke: #ffff;
-  stroke-width: 4;
+  stroke-width: 6;
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;

@@ -10,7 +10,8 @@ import { AttempsCheckComponent } from '../../../common/components/attemps-check/
 import { PinCheckComponent } from '../../../common/components/pin-check/pin-check.component';
 import { PasswordCheckComponent } from '../../../common/components/password-check/password-check.component';
 import { ActivationConfigComponent } from "@app/modules/settings/components/activation-config/activation-config.component";
-
+import { PatternTouchComponent } from '@app/modules/common/components/pattern-touch/pattern-touch.component';
+import { ValidationService } from '@app/services/validation.service';
 @Component({
   selector: 'app-alarm-cancellation',
   standalone: true,
@@ -20,17 +21,18 @@ import { ActivationConfigComponent } from "@app/modules/settings/components/acti
     AttempsCheckComponent,
     PinCheckComponent,
     PasswordCheckComponent,
-    ActivationConfigComponent,
+    PatternTouchComponent,
   ],
   templateUrl: './alarm-cancellation.component.html',
   styleUrl: './alarm-cancellation.component.css',
 })
 export class AlarmCancellationComponent implements OnInit, OnDestroy {
   // ─── Credential fields ─────────────
-  cancelMethod: 'password' | 'pin' | 'pattern' = 'password';
+  cancelMethodSelected: string = 'password';;
+  cancelMethods: string[] = ['password', 'pin', 'pattern'];
   password = '';
   pin = '';
-  pattern = '';
+  pattern: number[] = [];
   loading = false;
   error = '';
   attempts = 0;
@@ -56,6 +58,7 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     private alarmService: AlarmService,
     private notificationService: NotificationService,
     private configService: ConfigService,
+    private validationService: ValidationService,
     private router: Router
   ) {}
 
@@ -153,20 +156,21 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     this.cancelAlarm('PIN');
   }
 
-  async cancelAlarm(tipoCancel: 'PIN' | 'PASSWORD'): Promise<void> {
+  async cancelAlarm(tipoCancel: 'PIN' | 'PASSWORD' | 'PATTERN'): Promise<void> {
     this.loading = true;
     this.error = '';
     try {
       if (this.isAlarmActive) {
         const result = await this.alarmService.finalizeAlarm(
-          tipoCancel,
-          tipoCancel === 'PIN' ? this.pin : this.password
+          tipoCancel, ''
         );
         if (result) {
           this.router.navigate(['/main']);
         } else {
           this.handleFailedAttempt(
-            tipoCancel === 'PIN' ? 'PIN incorrecto' : 'Contraseña incorrecta'
+            tipoCancel === 'PIN' ? 'PIN incorrecto' :
+            tipoCancel === 'PASSWORD' ? 'Contraseña incorrecta' :
+            tipoCancel === 'PATTERN' ? 'Patrón incorrecto' : 'Credenciales incorrectas'
           );
         }
       } else {
@@ -212,7 +216,25 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
   }
 
   switchMethod(): void {
-    this.cancelMethod = this.cancelMethod === 'password' ? 'pin' : 'password';
+    this.cancelMethodSelected = this.cancelMethodSelected === 'password' ? 'pin' :
+                                this.cancelMethodSelected === 'pin' ? 'pattern' :
+                                'password';
+    this.error = '';
+    this.password = '';
+    this.pin = '';
+  }
+
+  /*
+  switchMethods(switch: string): void {
+    this.cancelMethod = switch;
+    this.error = '';
+    this.password = '';
+    this.pin = '';
+  }
+  */
+
+  switchMethods(value: string): void {
+    this.cancelMethodSelected = value;
     this.error = '';
     this.password = '';
     this.pin = '';
@@ -226,23 +248,35 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     return this.maxAttempts - this.attempts;
   }
 
-  onPinSubmit(pin: { pin: number; complete: boolean; valid: boolean }): void {
-    if (pin.complete && pin.valid) {
-      if (pin.valid) {
+  onPinSubmit(pin: { pin: number; complete: boolean }): void {
+    if (pin.complete) {
+      let validationError = this.validationService.validatePinFormat(pin.pin, this.pinLength);
+      let validationResult = this.validationService.validatePin(pin.pin);
+      if (!validationError && validationResult) {
         this.cancelAlarm('PIN');
       } else {
-        this.handleFailedAttempt('PIN incorrecto');
+        this.handleFailedAttempt(validationError || 'PIN incorrecto');
       }
     }
   }
 
   onPasswordSubmit(pass: string): void {
     //validar el password con la función de validación de credenciales
+    const validationErrors = this.validationService.validatePasswordFormat(pass);
     this.password = pass;
-    if (pass.trim().length >= 6 && pass.trim().length <= 20) {
+    if (validationErrors.length === 0 && this.validationService.validatePassword(pass)) {
       this.cancelAlarm('PASSWORD');
     } else {
-      this.handleFailedAttempt('Contraseña incorrecta');
+      this.handleFailedAttempt(validationErrors.length === 0 ? 'Contraseña incorrecta' : validationErrors.join('\n'));
+    }
+  }
+
+  onPatternSubmit(pattern: number[]): void {
+    this.pattern = pattern;
+    if (!!pattern && pattern.length > 0 && this.validationService.validatePattern(pattern)) {
+      this.cancelAlarm('PATTERN');
+    } else {
+      this.handleFailedAttempt('Patrón incorrecto');
     }
   }
 }

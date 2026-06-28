@@ -3,7 +3,6 @@ import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({
   name: 'phoneFormat',
   standalone: true,
-  pure: false,
 })
 export class PhoneFormatPipe implements PipeTransform {
   private countryConfigs: { [key: string]: any } = {
@@ -143,19 +142,28 @@ export class PhoneFormatPipe implements PipeTransform {
     },
   };
 
-  transform(value: string | number): string {
+  transform(value: string | number, countryCode?: string | number): string {
     if (!value) return '';
 
     const clean = value.toString().replace(/\D/g, '');
 
-    // Detectar el país por el prefijo
+    if (!countryCode) {
+
+    } else {
+      for (const [prefix, config] of Object.entries(this.countryConfigs)) {
+        if (clean.startsWith(prefix)) {
+          return config.format(clean);
+        }
+      }
+    }
     for (const [prefix, config] of Object.entries(this.countryConfigs)) {
-      if (clean.startsWith(prefix)) {
+      if (!!countryCode && (countryCode.toString() === config.code || countryCode.toString() === prefix)) {
+        return config.format(clean);
+      } else if (!countryCode && clean.startsWith(prefix)) {
         return config.format(clean);
       }
     }
 
-    // Si no se detecta país, devolver el número limpio
     return clean;
   }
 }

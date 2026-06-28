@@ -232,29 +232,50 @@
     </div>
     -->
     <!-- ======== PASSWORD VIEW ======== -->
-    <app-password-check *ngIf="cancelMethod === 'password'"
+    <app-password-check *ngIf="cancelMethodSelected === 'password'"
       [loadingAuth]="loading"
       [error]="error"
       (pinOutput)="onPasswordSubmit($event)">
     </app-password-check>
 
     <!-- ======== PIN VIEW ======== -->
-    <app-pin-check *ngIf="cancelMethod === 'pin'"
+    <app-pin-check *ngIf="cancelMethodSelected === 'pin'"
       [loadingAuth]="loading"
       [error]="error"
       [maxPinLength]="pinLength"
       (pinOutput)="onPinSubmit($event)">
     </app-pin-check>
 
-    <!-- Attempts -->
-    <app-attemps-check [maxAttempts]="maxAttempts"
-      [remaining]="getRemainingAttempts()">
-    </app-attemps-check>
+    <!-- ======== PATTERN VIEW ======== -->
+    <app-pattern-touch *ngIf="cancelMethodSelected === 'pattern'"
+      (patternDrawn)="onPatternSubmit($event)"
+      [editable]="true"
+      [error]="error"
+      [pattern]="pattern || []">
+    </app-pattern-touch>
 
-    <!-- Switch to PIN -->
+    <!-- Attempts -->
+    <div class="flex-1 flex flex-col items-center justify-start pt-2 pb-4 px-6 z-10 w-full max-w-md mx-auto">
+      <app-attemps-check [maxAttempts]="maxAttempts"
+        [remaining]="getRemainingAttempts()">
+      </app-attemps-check>
+    </div>
+
+    <!-- Switch to PIN
     <button (click)="switchMethod()" class="text-primary/80 hover:text-white text-sm font-semibold transition-colors py-2">
       Usar código PIN en su lugar
     </button>
+  -->
+    <div class="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex gap-1">
+      <label *ngFor="let cm of cancelMethods" class="flex-1">
+        <input class="hidden peer" name="cancel-method" type="radio" (click)="switchMethods(cm)" [checked]="cancelMethodSelected === cm"
+              [value]="cm" title="Usar {{ cm }} para cancelar alarma"/>
+        <div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white dark:peer-checked:bg-gray-600 peer-checked:text-blue-900 dark:peer-checked:text-white text-gray-500 dark:text-gray-300 cursor-pointer uppercase">
+          {{ cm | titlecase }}
+        </div>
+      </label>
+    </div>
+
 
     <!-- Background Glow Elements -->
     <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[120px] rounded-full pointer-events-none z-0"></div>

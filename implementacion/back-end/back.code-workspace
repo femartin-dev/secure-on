@@ -20,5 +20,6 @@
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "interactive",
     "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "markdown.validate.enabled": true,
   }
 }

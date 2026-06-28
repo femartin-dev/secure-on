@@ -5,6 +5,9 @@ export class Constants {
 
   public static readonly EMAIL_REGEXP = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   public static readonly PHONE_REGEXP = /^\+?[\d\s\-().]{7,15}$/;
+
+  public static readonly MIN_PASSWORD_LENGTH = 8;
+  public static readonly MAX_PASSWORD_LENGTH = 20;
 }
 
 export const notificationChannelsConfig: Record<number, { icon: string; svgIcon?: string; color: string; title: string }> = {

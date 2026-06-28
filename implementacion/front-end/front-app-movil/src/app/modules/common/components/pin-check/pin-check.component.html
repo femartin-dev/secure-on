@@ -18,6 +18,7 @@
       <div *ngFor="let i of pinDigits" class="w-6 h-8 flex items-center justify-center rounded-md bg-white/10">
         {{ pinValue.charAt(i) }}
       </div>
+    </div>
     <div class="flex" >
       <button (click)="togglePinValueVisibility()"
         class="text-white/30 hover:text-white transition-colors ml-4">

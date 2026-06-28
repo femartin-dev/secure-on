@@ -164,7 +164,9 @@
       <!-- Modal Body -->
       <div class="p-6 flex flex-col items-center justify-center min-h-[500px]">
         <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 text-center">Dibuja un patrón de 4 a 9 puntos tocando los círculos</p>
-        <app-pattern-touch (patternDrawn)="onPatternDrawn($event)" [pattern]="showPatternTrace ? touchPatternValue : []" [editable]="!showPatternTrace"></app-pattern-touch>
+        <app-pattern-touch (patternDrawn)="onPatternDrawn($event)"
+                           [pattern]="showPatternTrace ? touchPatternValue : []"
+                           [editable]="!showPatternTrace"></app-pattern-touch>
       </div>
 
       <!-- Modal Footer -->

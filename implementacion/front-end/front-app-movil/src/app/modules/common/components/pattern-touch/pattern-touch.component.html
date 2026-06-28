@@ -6,7 +6,8 @@
 
     <!-- Línea del patrón (detrás de los puntos) -->
     <polyline [attr.points]="patternPoints"
-              class="pattern-line"
+              class="pattern-line dark:pattern-line-dark"
+              [class.error]="!!error"
               fill="none" />
 
     <!-- Puntos de la cuadrícula -->
@@ -15,6 +16,7 @@
       <circle [attr.cx]="dot.cx" [attr.cy]="dot.cy" r="15"
               class="dot dark:dot-dark"
               [class.selected]="isSelected(dot.id)"
+              [class.error]="!!error"
               pointer-events="none" />
 
       <!-- Área táctil ampliada (transparente, captura los eventos) -->
@@ -26,4 +28,6 @@
     </g>
   </svg>
 </div>
-
+<div *ngIf="!!error" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm mb-4 animate-shake">
+  {{ error }}
+</div>

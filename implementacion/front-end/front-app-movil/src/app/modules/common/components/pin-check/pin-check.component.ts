@@ -5,7 +5,6 @@ import { arrayGenerator } from '../../../../utils/constants.util';
 export type PinCheckComponentOutput = {
   pin: number;
   complete: boolean;
-  valid: boolean;
 }
 
 
@@ -61,42 +60,11 @@ export class PinCheckComponent {
 
   private emitPin(): void {
     const complete = this.pinValue.length === this.maxPinLength;
-    this.error = complete ? this.validatePin() : '';
-    const valid = complete && this.error === '';
     const output = {
       pin: parseInt(this.pinValue),
       complete,
-      valid,
     };
     this.pinOutput.emit(output);
-  }
-
-  private validatePin(): string {
-    return !this.validateDigitFrequency() ? `El PIN no puede contener más de ${Math.floor(this.maxPinLength / 2)} dígitos iguales`
-        : !this.validateSequentialDigits() ? 'El PIN no puede contener dígitos secuenciales' : '';
-  }
-
-  private validateDigitFrequency(): boolean {
-    const frecuencia: Record<string, number> = {};
-    for (const digito of this.pinValue) {
-      frecuencia[digito] = (frecuencia[digito] || 0) + 1;
-      // Si ya superó la mitad, se invalida inmediatamente
-      if (frecuencia[digito] > this.maxPinLength / 2) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private validateSequentialDigits(): boolean {
-    for (let i = 0; i < this.pinValue.length - 1; i++) {
-      const currentDigit = parseInt(this.pinValue[i]);
-      const nextDigit = parseInt(this.pinValue[i + 1]);
-      if (nextDigit === currentDigit + 1 || nextDigit === currentDigit - 1) {
-        return false;
-      }
-    }
-    return true;
   }
 
 

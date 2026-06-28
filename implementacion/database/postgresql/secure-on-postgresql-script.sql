@@ -212,8 +212,10 @@ CREATE TABLE secure_on_movil.configuracion_usuario (
     patron_activacion JSONB, -- Patron tactil en formato JSON
     sensibilidad_movimiento VARCHAR(10),
     -- PARÁMETROS DE ALARMA
+    tiempo_activacion_seg INTEGER DEFAULT 3,
     tiempo_cancelacion_seg INTEGER DEFAULT 15,
     modo_sigiloso_activo BOOLEAN DEFAULT FALSE,
+    modo_dark BOOLEAN DEFAULT TRUE,
     notificar_siempre_sms BOOLEAN DEFAULT FALSE,
 	-- PARÁMETROS DE SEGURIDAD
 	patron_desbloqueo JSONB,
@@ -272,12 +274,12 @@ CREATE TABLE secure_on_movil.cuestionarios (
 	evaluacion_sistema INTEGER,
 	observaciones TEXT,
     -- Sección: Metadatos
-	fecha_incio TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	fecha_inicio TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     fecha_fin TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE secure_on_movil.cuestionario IS 'Respuestas estructuradas del usuario tras finalizar una alarma.';
-CREATE INDEX idx_cuestionario_alarma ON secure_on_movil.cuestionario(alarma_id);
+COMMENT ON TABLE secure_on_movil.cuestionarios IS 'Respuestas estructuradas del usuario tras finalizar una alarma.';
+CREATE INDEX idx_cuestionario_alarma ON secure_on_movil.cuestionarios(alarma_id);
 
 
 -- 2.6 Tabla CONTACTOS_EMERGENCIA
@@ -466,7 +468,7 @@ INSERT INTO secure_on_utils.tablas_auditoria (tipo_id, nombre, esquema) VALUES
 (2, 'alarmas', 'secure_on_movil'),
 (3, 'dispositivos', 'secure_on_movil'),
 (4, 'configuracion_usuario', 'secure_on_movil'),
-(5, 'cuestionario', 'secure_on_movil'),
+(5, 'cuestionarios', 'secure_on_movil'),
 (6, 'contactos', 'secure_on_movil'),
 (7, 'alarmas_contactos', 'secure_on_movil'),
 (8, 'evidencias', 'secure_on_movil'),
@@ -648,8 +650,8 @@ CREATE TRIGGER tr_auditoria_configuracion_usuario
 AFTER INSERT OR UPDATE OR DELETE ON secure_on_movil.configuracion_usuario
 FOR EACH ROW EXECUTE FUNCTION secure_on_utils.fn_auditoria_generica();
 
-CREATE TRIGGER tr_auditoria_cuestionario
-AFTER INSERT OR UPDATE OR DELETE ON secure_on_movil.cuestionario
+CREATE TRIGGER tr_auditoria_cuestionarios
+AFTER INSERT OR UPDATE OR DELETE ON secure_on_movil.cuestionarios
 FOR EACH ROW EXECUTE FUNCTION secure_on_utils.fn_auditoria_generica();
 
 CREATE TRIGGER tr_auditoria_contactos
@@ -968,7 +970,7 @@ SELECT
     COUNT(e.evidencia_id) as total_evidencias,
     COUNT(ac.contacto_id) as contactos_notificados
 FROM secure_on_movil.alarmas a
-LEFT JOIN secure_on_movil.cuestionario cq ON a.alarma_id = cq.alarma_id
+LEFT JOIN secure_on_movil.cuestionarios cq ON a.alarma_id = cq.alarma_id
 LEFT JOIN secure_on_movil.evidencias e ON a.alarma_id = e.alarma_id
 LEFT JOIN secure_on_movil.alarmas_contactos ac ON a.alarma_id = ac.alarma_id
 LEFT JOIN secure_on_utils.estados_alarma ea ON a.estado_id = ea.estado_id
@@ -992,7 +994,7 @@ GRANT SELECT, INSERT, UPDATE ON
     secure_on_movil.contactos,
     secure_on_movil.evidencias,
     secure_on_movil.ubicaciones,
-    secure_on_movil.cuestionario,
+    secure_on_movil.cuestionarios,
 	secure_on_movil.dispositivos,
     secure_on_movil.alarmas_contactos,
 	secure_on_movil.sesiones_usuario,

@@ -27,7 +27,7 @@
         <div class="absolute inset-0 bg-gradient-to-r from-primary/80 to-background-dark/80 mix-blend-multiply"></div>
         <div class="absolute inset-0 flex flex-col justify-end p-4">
           <div class="flex items-center gap-2 text-white/90 mb-1">
-            <img alt="Secureon Logo" class="white-logo h-5 w-4 brightness-0 invert" src="assets/secureon-iso-logo.png" />
+            <img alt="Secureon Logo" class="white-logo h-5 w-4 brightness-0 invert" src="assets/securion-iso-logo.png" />
             <span class="text-xs font-bold uppercase tracking-wider text-white/70">Secure ON</span>
           </div>
           <h2 class="text-white text-xl font-bold leading-tight">Creación de Usuario</h2>
@@ -76,10 +76,12 @@
         <div class="relative group">
           <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors material-symbols-outlined" style="font-size: 20px;">call</span>
           <input formControlName="telefono" type="tel" placeholder="+54 11 1234 5678"
+
                  class="form-input flex w-full rounded-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-dark bg-surface-dark focus:border-primary h-12 pl-11 pr-4 placeholder:text-text-muted text-base transition-all shadow-sm"
                  [class.border-red-500]="submitted && f['telefono'].invalid" />
         </div>
         <div *ngIf="submitted && f['telefono'].invalid" class="text-xs text-red-400 mt-1 ml-1">
+          <span *ngIf="f['telefono'].errors?.['required']">Teléfono requerido</span>
           <span *ngIf="f['telefono'].errors?.['pattern']">Formato de teléfono inválido</span>
         </div>
       </div>
@@ -126,7 +128,9 @@
         </div>
         <div *ngIf="submitted && f['password'].invalid" class="text-xs text-red-400 mt-1 ml-1">
           <span *ngIf="f['password'].errors?.['required']">Contraseña requerida</span>
-          <span *ngIf="f['password'].errors?.['minlength']">Mínimo 8 caracteres</span>
+          <ng-container *ngIf="f['password'].errors?.['passwordFormat'] as passwordErrors">
+            <div *ngFor="let error of passwordErrors">{{ error }}</div>
+          </ng-container>
         </div>
       </div>
 

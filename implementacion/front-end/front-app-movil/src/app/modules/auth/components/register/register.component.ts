@@ -1,16 +1,19 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Device } from '@capacitor/device';
 import { AuthService } from '@app/services/auth.service';
 import { NotificationService } from '@app/services/notification-toast.service';
+import { ValidationService } from '@app/services/validation.service';
 import { DeviceInfo } from '@app/models/auth.models';
 import { getClipboard } from '../../../../utils/clipboard-util.util';
+import { PhoneFormatPipe } from '@app/modules/common/pipes/phone/phone-format.pipe';
+import { Constants } from '@app/utils/constants.util';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.css']
+  styleUrls: ['./register.component.css'],
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
   registerForm!: FormGroup;
@@ -23,12 +26,14 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
   deviceInfo: DeviceInfo | null = null;
   deviceInfoLoaded = false;
+  private telefonoPipe: PhoneFormatPipe = new PhoneFormatPipe();
 
   @ViewChild('bgVideo') bgVideo!: ElementRef<HTMLVideoElement>;
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
+    private validationService: ValidationService,
     private router: Router,
     private notificationService: NotificationService
   ) {}
@@ -48,11 +53,11 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         nombre: ['', [Validators.required, Validators.minLength(2)]],
         apellido: ['', [Validators.required, Validators.minLength(2)]],
         email: ['', [Validators.required, Validators.email]],
-        telefono: ['', [Validators.pattern(/^[0-9+\-\s()]*$/)]],
+        telefono: ['', [Validators.required, Validators.pattern(Constants.PHONE_REGEXP)]],
         direccion: [''],
-        password: ['', [Validators.required, Validators.minLength(8)]],
+        password: ['', [Validators.required, this.passwordFormatValidator]],
         confirmPassword: ['', [Validators.required]],
-        aceptarTerminos: [false, [Validators.requiredTrue]]
+        aceptarTerminos: [false, [Validators.requiredTrue]],
       },
       { validators: this.passwordMatchValidator }
     );
@@ -63,10 +68,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
    */
   private async loadDeviceInfo(): Promise<void> {
     try {
-      const [deviceId, deviceInfoRaw] = await Promise.all([
-        Device.getId(),
-        Device.getInfo()
-      ]);
+      const [deviceId, deviceInfoRaw] = await Promise.all([Device.getId(), Device.getInfo()]);
 
       const platform = deviceInfoRaw.platform; // 'ios' | 'android' | 'web'
       let tipoDispositivo = 'SMARTPHONE';
@@ -84,7 +86,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         versionSO: deviceInfoRaw.osVersion || 'Desconocido',
         fabricante: deviceInfoRaw.manufacturer || 'Desconocido',
         esVirtual: deviceInfoRaw.isVirtual,
-        tipoDispositivo
+        tipoDispositivo,
       };
 
       this.deviceInfoLoaded = true;
@@ -106,6 +108,17 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     return password.value === confirmPassword.value ? null : { passwordMismatch: true };
   }
+
+  private passwordFormatValidator = (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value ?? '';
+
+    if (!value) {
+      return null;
+    }
+
+    const errors = this.validationService.validatePasswordFormat(value);
+    return errors.length > 0 ? { passwordFormat: errors } : null;
+  };
 
   get f() {
     return this.registerForm.controls;
@@ -137,26 +150,30 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     try {
       // 1) Register user
-      const response = await this.authService.register({
-        nombre: this.f['nombre'].value.trim(),
-        apellido: this.f['apellido'].value.trim(),
-        email: this.f['email'].value.trim(),
-        password: this.f['password'].value,
-        telefono: this.f['telefono'].value?.trim() || undefined,
-        direccion: this.f['direccion'].value?.trim() || undefined,
-        dispositivo: this.deviceInfo
-      }).toPromise();
+      const response = await this.authService
+        .register({
+          nombre: this.f['nombre'].value.trim(),
+          apellido: this.f['apellido'].value.trim(),
+          email: this.f['email'].value.trim(),
+          password: this.f['password'].value,
+          telefono: this.f['telefono'].value?.trim() || undefined,
+          direccion: this.f['direccion'].value?.trim() || undefined,
+          dispositivo: this.deviceInfo,
+        })
+        .toPromise();
 
       if (response) {
         await this.notificationService.showSuccess('Cuenta creada exitosamente');
 
         // register the device immediately for the new user
         try {
-          await this.authService.registerDeviceForUser(
-            response.userId, // userId returned from registration
-            this.deviceInfo!.dispositivoAppId,
-            this.f['telefono'].value?.trim() || ''
-          ).toPromise();
+          await this.authService
+            .registerDeviceForUser(
+              response.userId, // userId returned from registration
+              this.deviceInfo!.dispositivoAppId,
+              this.f['telefono'].value?.trim() || ''
+            )
+            .toPromise();
         } catch (err) {
           console.warn('Device registration failed:', err);
         }
@@ -166,9 +183,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         this.router.navigate(['/login']);
       }
     } catch (error: any) {
-      this.showError(
-        error?.message || error?.error?.mensaje || 'Error al crear la cuenta'
-      );
+      this.showError(error?.message || error?.error?.mensaje || 'Error al crear la cuenta');
     } finally {
       this.loading = false;
     }
@@ -193,4 +208,14 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       this.errorMessage = '';
     }, 5000);
   }
+
+  phoneFormatter() {
+    const valor = this.f['telefono']?.value || '';
+    let digits = valor.toString().replace(/\D/g, '');
+    const formateado = this.telefonoPipe.transform(digits, 'ar'); // Formatear el número usando el pipe
+    if (formateado !== valor) {
+      this.f['telefono'].setValue(formateado, { emitEvent: false });
+    }
+  }
+
 }
