@@ -43,11 +43,10 @@ export class GeneralConfigComponent {
             console.log('draft:', draft);
             this.settings = { ...draft.general };
           });
-        this.catalogService
-          .getIdiomas()
+        this.catalogService.idiomas$
           .pipe(takeUntil(this.destroy$))
           .subscribe((langs) => {
-            this.languages = langs;
+            this.languages = langs || [];
           });
   }
 

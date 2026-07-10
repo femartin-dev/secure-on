@@ -184,16 +184,24 @@
               <span class="text-white">{{ deviceInfo?.plataforma || '—' }}</span>
             </div>
             <div class="flex flex-col">
-              <span class="text-text-muted">Versión SO</span>
-              <span class="text-white">{{ deviceInfo?.versionSO || '—' }}</span>
-            </div>
-            <div class="flex flex-col">
               <span class="text-text-muted">Fabricante</span>
               <span class="text-white">{{ deviceInfo?.fabricante || '—' }}</span>
             </div>
             <div class="flex flex-col">
-              <span class="text-text-muted">Tipo</span>
-              <span class="text-white">{{ deviceInfo?.tipoDispositivo || '—' }}</span>
+              <span class="text-text-muted">SO</span>
+              <span class="text-white">{{ deviceInfo?.sistemaOperativo || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Versión SO</span>
+              <span class="text-white">{{ deviceInfo?.versionDelSO || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Zona Horaria</span>
+              <span class="text-white">{{ deviceInfo?.zonaHoraria || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-text-muted">Idioma</span>
+              <span class="text-white">{{ deviceInfo?.idiomaId || '—' }}</span>
             </div>
           </div>
         </div>

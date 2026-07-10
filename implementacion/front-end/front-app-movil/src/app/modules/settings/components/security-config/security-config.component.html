@@ -13,9 +13,10 @@
           <span class="toggle"></span>
         </label>
       </div>
-      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
-        <button class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
-          DEFINIR HUELLA
+      <div *ngIf="fingerprintEnabled" class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <button (click)="openFingerprintModal()"
+                class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
+          Definir Huella
         </button>
       </div>
     </section>
@@ -33,8 +34,9 @@
           <span class="toggle"></span>
         </label>
       </div>
-      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
-        <button class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
+      <div *ngIf="patternEnabled"
+            class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <button (click)="openPatternModal()" class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
           Definir Patron
         </button>
       </div>
@@ -53,8 +55,13 @@
           <span class="toggle"></span>
         </label>
       </div>
-      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+      <div *ngIf="pinEnabled" class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <!--
         <input [(ngModel)]="pin" title="PIN de seguridad" aria-label="PIN de seguridad" class="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-[#1e3a8a] focus:border-[#1e3a8a] dark:text-white" placeholder="INGRESAR PIN (4-6 DIGITOS)" type="password" />
+        -->
+        <button (click)="openPinModal()" class="flex w-full items-center justify-center rounded-lg h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[#1e3a8a] dark:text-blue-400 text-sm font-bold shadow-sm">
+          Definir PIN
+        </button>
       </div>
     </section>
 
@@ -64,16 +71,21 @@
           <div class="size-8 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400">
             <span class="material-symbols-outlined text-xl">lock</span>
           </div>
-          <span class="text-base font-medium text-gray-900 dark:text-white">Contrasena</span>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Contraseña</span>
         </div>
         <label class="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" class="sr-only" [(ngModel)]="passwordEnabled" title="Activar contrasena" aria-label="Activar contrasena" />
           <span class="toggle"></span>
         </label>
       </div>
-      <div class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
-        <input [(ngModel)]="password" title="Contrasena de seguridad" aria-label="Contrasena de seguridad" class="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-[#1e3a8a] focus:border-[#1e3a8a] dark:text-white" placeholder="INGRESAR CONTRASENA" type="password" />
+      <div *ngIf="passwordEnabled" class="bg-gray-50/50 dark:bg-gray-700/20 p-4 border-t border-gray-100 dark:border-gray-700">
+        <input [(ngModel)]="password" title="Contrasena de seguridad" aria-label="Contrasena de seguridad" class="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-[#1e3a8a] focus:border-[#1e3a8a] dark:text-white" placeholder="Ingresa tu contraseña" type="password" />
       </div>
+      <!--
+      <div *ngIf="!!passErrors && passErrors.length > 0" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm mb-4 animate-shake">
+        <div *ngFor="let err of passErrors">{{ err }}</div>
+      </div>
+    -->
     </section>
 
     <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -109,4 +121,55 @@
     </div>
   </footer>
   -->
+  <div *ngIf="showModal" class="fixed inset-0 bg-black/50 z-40 flex items-end animate-in fade-in">
+    <div [ngSwitch]="modalType" class="w-full bg-white dark:bg-gray-800 rounded-t-2xl shadow-2xl animate-in slide-in-from-bottom-5">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+          {{ modalTitle }}
+        </h2>
+        <button (click)="closeModal()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" aria-label="Cerrar modal">
+          <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
+        </button>
+      </div>
+
+      <!-- Pattern Body -->
+      <div *ngSwitchCase="'pattern'" class="p-6 flex flex-col items-center justify-center min-h-[500px]">
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 text-center">Dibuja un patrón tocando los círculos</p>
+        <app-pattern-touch (patternDrawn)="onPatternDrawn($event)"
+                           [pattern]="[]"
+                           [editable]="true">
+        </app-pattern-touch>
+      </div>
+
+      <!-- Pin Body -->
+      <div *ngSwitchCase="'pin'" class="p-6 flex flex-col items-center justify-center min-h-[500px]">
+        <app-pin-check (pinOutput)="onPinEntered($event)"
+                      [error]="error"
+                      [showHeadline]="false"
+                      [maxPinLength]="4"
+                      [loading]="false"
+                      [pinSubtitle]="'Defina su PIN de seguridad'">
+        </app-pin-check>
+      </div>
+
+      <div *ngSwitchDefault>
+        <p class="p-6 text-sm text-gray-600 dark:text-gray-300 text-center">Seleccione una opción para configurar la seguridad</p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <button (click)="closeModal()" class="flex-1 py-3 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          Cancelar
+        </button>
+        <button (click)="clearValue()" class="flex-1 py-3 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          Limpiar
+        </button>
+        <button (click)="confirmValue()" class="flex-1 py-3 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+          Confirmar
+        </button>
+      </div>
+    </div>
+
+  </div>
 </div>

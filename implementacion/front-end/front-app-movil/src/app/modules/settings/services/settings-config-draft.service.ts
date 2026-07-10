@@ -60,12 +60,14 @@ export class SettingsConfigDraftService {
     if (!draft) {
       return;
     }
+    //console.log('Before update draft:', draft);
 
     const updated = {
       ...draft,
       [section]: { ...(draft[section] as object), ...patch },
     } as AppSettings;
 
+    //console.log('Updated draft:', updated);
     this.draftSubject.next(updated);
     this.persistDraftToStorage(updated);
   }

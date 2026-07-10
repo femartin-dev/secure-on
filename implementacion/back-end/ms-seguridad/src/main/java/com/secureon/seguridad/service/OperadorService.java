@@ -110,4 +110,10 @@ public class OperadorService {
         return sesionCdm.getOperador();
     }
 
+    @Transactional
+    public String refreshToken(String token) {
+        String newToken = sessionService.refreshToken(token);
+        return newToken;
+    }
+
 }

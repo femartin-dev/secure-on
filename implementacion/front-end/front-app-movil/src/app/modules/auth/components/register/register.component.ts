@@ -5,10 +5,14 @@ import { Device } from '@capacitor/device';
 import { AuthService } from '@app/services/auth.service';
 import { NotificationService } from '@app/services/notification-toast.service';
 import { ValidationService } from '@app/services/validation.service';
-import { DeviceInfo } from '@app/models/auth.models';
+import { RegisterRequest, RegisterResponse } from '@app/models/auth.models';
+import { DeviceInformation,  DeviceRegistration } from '@app/models/device.models';
 import { getClipboard } from '../../../../utils/clipboard-util.util';
 import { PhoneFormatPipe } from '@app/modules/common/pipes/phone/phone-format.pipe';
 import { Constants } from '@app/utils/constants.util';
+import { DeviceService } from '@app/services/device.service';
+import { catchError } from 'rxjs';
+import { ConfigService } from '@app/services/config.service';
 
 @Component({
   selector: 'app-register',
@@ -24,7 +28,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   errorMessage = '';
   private errorTimeout: any;
 
-  deviceInfo: DeviceInfo | null = null;
+  deviceInfo: DeviceInformation | null = null;
   deviceInfoLoaded = false;
   private telefonoPipe: PhoneFormatPipe = new PhoneFormatPipe();
 
@@ -35,7 +39,9 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     private authService: AuthService,
     private validationService: ValidationService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private deviceService: DeviceService,
+    private configService: ConfigService
   ) {}
 
   ngOnInit(): void {
@@ -68,32 +74,11 @@ export class RegisterComponent implements OnInit, AfterViewInit {
    */
   private async loadDeviceInfo(): Promise<void> {
     try {
-      const [deviceId, deviceInfoRaw] = await Promise.all([Device.getId(), Device.getInfo()]);
-
-      const platform = deviceInfoRaw.platform; // 'ios' | 'android' | 'web'
-      let tipoDispositivo = 'SMARTPHONE';
-      let dispositivoAppId = deviceId.identifier;
-      if (platform === 'web') {
-        tipoDispositivo = 'WEB_BROWSER';
-        const clipboardText = await getClipboard();
-        dispositivoAppId = clipboardText || deviceId.identifier;
-      }
-
-      this.deviceInfo = {
-        dispositivoAppId,
-        modelo: deviceInfoRaw.model || 'Desconocido',
-        plataforma: platform,
-        versionSO: deviceInfoRaw.osVersion || 'Desconocido',
-        fabricante: deviceInfoRaw.manufacturer || 'Desconocido',
-        esVirtual: deviceInfoRaw.isVirtual,
-        tipoDispositivo,
-      };
-
+      this.deviceInfo = await this.deviceService.getDeviceInformation();
       this.deviceInfoLoaded = true;
       console.log('Device info loaded:', this.deviceInfo);
     } catch (error) {
       console.error('Error loading device info:', error);
-      // Fallback for browser testing
       this.deviceInfoLoaded = false;
     }
   }
@@ -126,54 +111,29 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
   async onSubmit(): Promise<void> {
     this.submitted = true;
-    this.errorMessage = '';
-
-    if (this.registerForm.invalid) {
-      if (!this.f['aceptarTerminos'].value) {
-        this.showError('Debes aceptar los términos y condiciones');
-      } else {
-        this.showError('Completa todos los campos correctamente');
-      }
+    const valid = await this.validateSubmitForm();
+    if (!valid) {
       return;
     }
-
-    if (!this.deviceInfo) {
-      this.showError('No se pudo obtener la información del dispositivo. Reintentando...');
-      await this.loadDeviceInfo();
-      if (!this.deviceInfo) {
-        this.showError('Error al obtener información del dispositivo');
-        return;
-      }
-    }
-
     this.loading = true;
 
     try {
       // 1) Register user
-      const response = await this.authService
-        .register({
-          nombre: this.f['nombre'].value.trim(),
-          apellido: this.f['apellido'].value.trim(),
-          email: this.f['email'].value.trim(),
-          password: this.f['password'].value,
-          telefono: this.f['telefono'].value?.trim() || undefined,
-          direccion: this.f['direccion'].value?.trim() || undefined,
-          dispositivo: this.deviceInfo,
-        })
-        .toPromise();
+      const respUser = await this.registerUser();
 
-      if (response) {
+      const respDevice = await this.registerDevice(respUser?.userId || '');
+
+      await this.configService.createConfig(respUser?.userId || '', respDevice?.id || '').toPromise();
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      /*
+      this.router.navigate(['/login']);
+      if (respUser) {
         await this.notificationService.showSuccess('Cuenta creada exitosamente');
-
+        //const deviceRequest = toDeviceRegistration(this.deviceInfo!, response.userId, this.f['telefono'].value?.trim() || '');
         // register the device immediately for the new user
         try {
-          await this.authService
-            .registerDeviceForUser(
-              response.userId, // userId returned from registration
-              this.deviceInfo!.dispositivoAppId,
-              this.f['telefono'].value?.trim() || ''
-            )
-            .toPromise();
+          //await this.authService.registerDevice(deviceRequest).toPromise();
         } catch (err) {
           console.warn('Device registration failed:', err);
         }
@@ -181,13 +141,59 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         // without logging in auto, send user to login screen
         await new Promise((resolve) => setTimeout(resolve, 1500));
         this.router.navigate(['/login']);
-      }
+      }*/
     } catch (error: any) {
       this.showError(error?.message || error?.error?.mensaje || 'Error al crear la cuenta');
     } finally {
       this.loading = false;
     }
   }
+
+  private async validateSubmitForm(): Promise<boolean> {
+    this.errorMessage = '';
+    if (this.registerForm.invalid) {
+      if (!this.f['aceptarTerminos'].value) {
+        this.showError('Debes aceptar los términos y condiciones');
+      } else {
+        this.showError('Completa todos los campos correctamente');
+      }
+      return false;
+    }
+
+    if (!this.deviceInfo) {
+      this.showError('No se pudo obtener la información del dispositivo. Reintentando...');
+      await this.loadDeviceInfo();
+      if (!this.deviceInfo) {
+        this.showError('Error al obtener información del dispositivo');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private async registerUser(): Promise<RegisterResponse | undefined> {
+    const userData: RegisterRequest = {
+      nombre: this.f['nombre'].value.trim(),
+      apellido: this.f['apellido'].value.trim(),
+      email: this.f['email'].value.trim(),
+      password: this.f['password'].value,
+      telefono: this.f['telefono'].value?.trim() || undefined,
+      direccion: this.f['direccion'].value?.trim() || undefined,
+    };
+    return this.authService
+        .registerUser(userData).toPromise();
+  }
+
+  private async registerDevice(usuarioId: string): Promise<DeviceRegistration | undefined> {
+    this.deviceInfo
+    const deviceRequest = {
+      ...this.deviceInfo,
+      numero: this.f['telefono'].value?.trim() || '',
+      usuarioId,
+    }
+    return await this.authService.registerDevice(deviceRequest).toPromise();
+  }
+
 
   togglePasswordVisibility(): void {
     this.passwordVisible = !this.passwordVisible;

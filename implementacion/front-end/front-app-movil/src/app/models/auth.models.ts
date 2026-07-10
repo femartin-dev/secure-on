@@ -20,16 +20,6 @@ export interface LoginResponse {
   expiracion: string;
 }
 
-export interface DeviceInfo {
-  dispositivoAppId: string;
-  modelo: string;
-  plataforma: string;
-  versionSO: string;
-  fabricante: string;
-  esVirtual: boolean;
-  tipoDispositivo: string;
-}
-
 export interface RegisterRequest {
   email: string;
   password: string;
@@ -37,7 +27,6 @@ export interface RegisterRequest {
   apellido: string;
   telefono?: string;
   direccion?: string;
-  dispositivo: DeviceInfo;
 }
 
 export interface RegisterResponse {
@@ -78,3 +67,7 @@ export interface TokenResponse {
   token: string;
   nuevoToken: string;
 }
+
+
+
+

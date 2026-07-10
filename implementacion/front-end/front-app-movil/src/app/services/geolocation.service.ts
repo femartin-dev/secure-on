@@ -3,8 +3,8 @@ import { BehaviorSubject, Observable, interval } from 'rxjs';
 import { switchMap, filter, takeUntil } from 'rxjs/operators';
 import { Geolocation, Position } from '@capacitor/geolocation';
 
-import { LocationData, Ubicacion } from '../models/alarm.models';
-import { BatteryService } from './battery.service';
+import { LocationData, Ubicacion } from '../models/evidence.models';
+import { DeviceService } from './device.service';
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +21,7 @@ export class GeolocationService {
   private lastLocation: LocationData | null = null;
   private updateInterval = 5000; // 5 seconds default
 
-  constructor(private batteryService: BatteryService) {
+  constructor(private deviceService: DeviceService) {
     this.getCurrentLocation();
   }
 
@@ -203,7 +203,7 @@ export class GeolocationService {
       longitude: position.coords.longitude,
       accuracy: position.coords.accuracy || 0,
       altitude: position.coords.altitude || undefined,
-      batteryLevel: await this.batteryService.getBatteryLevel(),
+      batteryLevel: await this.deviceService.getBatteryLevel(),
       locationMethod: this.getLocationMethodByAccuracy(position),
       timestamp: new Date().toISOString(),
     };

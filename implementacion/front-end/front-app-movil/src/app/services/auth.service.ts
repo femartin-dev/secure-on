@@ -3,12 +3,12 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError, delay, retry } from 'rxjs/operators';
 import { extractServerError } from '../utils/error-handler.util';
-import { Device } from '@capacitor/device';
+
 import { Preferences } from '@capacitor/preferences';
 
 import { API_CONFIG } from '../config/api-config';
-import { getClipboard } from '../utils/clipboard-util.util';
 import { ConfigService } from './config.service';
+import { DeviceService } from './device.service';
 import {
   LoginRequest,
   LoginResponse,
@@ -19,6 +19,7 @@ import {
   AuthUser,
   TokenResponse
 } from '../models/auth.models';
+import { DeviceRegistration } from '../models/device.models';
 
 @Injectable({
   providedIn: 'root',
@@ -26,9 +27,6 @@ import {
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
-
-  private configSubject = new BehaviorSubject<any>(null);
-  public config$ = this.configSubject.asObservable();
 
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
@@ -38,7 +36,11 @@ export class AuthService {
 
   private deviceAppId: string | null = null;
 
-  constructor(private http: HttpClient, private configService: ConfigService) {
+  constructor(
+    private http: HttpClient,
+    private configService: ConfigService,
+    private deviceService: DeviceService
+  ) {
     this.initializeAuth();
   }
 
@@ -48,7 +50,7 @@ export class AuthService {
   private async initializeAuth(): Promise<void> {
     try {
       // Get device app ID
-      this.deviceAppId = await this.getOrCreateDeviceId();
+      this.deviceAppId = await this.getDeviceAppId();
 
       // Try to restore session from storage
       const result = await Preferences.get({ key: API_CONFIG.TOKEN_STORAGE_KEY });
@@ -72,7 +74,7 @@ export class AuthService {
   /**
    * Register new user
    */
-  register(data: RegisterRequest): Observable<RegisterResponse> {
+  registerUser(data: RegisterRequest): Observable<RegisterResponse> {
     return this.http
       .post<RegisterResponse>(
         `${API_CONFIG.MS_SECURITY.baseUrl}${API_CONFIG.ENDPOINTS.REGISTER}`,
@@ -96,14 +98,9 @@ export class AuthService {
   /**
    * Register device using authenticated user
    */
-  registerDevice(deviceInfo: {
-    modelo: string;
-    numeroSerie: string;
-    versionSO: string;
-    tipoDispositivo: string;
-  }): Observable<any> {
+  registerDevice(deviceInfo: Partial<DeviceRegistration>): Observable<DeviceRegistration> {
     return this.http
-      .post<any>(
+      .post<DeviceRegistration>(
         `${API_CONFIG.MS_SECURITY.baseUrl}${API_CONFIG.ENDPOINTS.REGISTER_DEVICE}`,
         deviceInfo
       )
@@ -118,51 +115,13 @@ export class AuthService {
   }
 
   /**
-   * Register device by user id without requiring a bearer token.
-   * Used immediately after account creation so login can succeed.
-   */
-  registerDeviceForUser(usuarioId: string, dispositivoAppId: string, numero: string): Observable<any> {
-    return this.http
-      .post<any>(`${API_CONFIG.MS_SECURITY.baseUrl}${API_CONFIG.ENDPOINTS.REGISTER_DEVICE}`, {
-        usuarioId,
-        dispositivoAppId,
-        numero,
-      })
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          console.error('Device registration (unauth) error:', error);
-          // swallow errors so registration can continue
-          return throwError(
-            () => new Error(extractServerError(error, 'Error al registrar dispositivo'))
-          );
-        })
-      );
-  }
-
-  /**
-   * Register default configuration for the newly created device.
-   * POST /servicios-moviles/v1/config/nueva
-   */
-  registerDefaultConfig(usuarioId: string, dispositivoId: string): Observable<any> {
-    return this.http
-      .post<any>(`${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.NEW_CONFIG}`, {
-        usuarioId,
-        dispositivoId,
-      })
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          console.error('Default config registration error:', error);
-          return throwError(
-            () => new Error(extractServerError(error, 'Error al registrar configuración'))
-          );
-        })
-      );
-  }
-
-  /**
    * Login user
    */
-  async login(usuario: string, tipo: string, password: string): Promise<{ success: boolean; error?: string }> {
+  async login(
+    usuario: string,
+    tipo: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       // Ensure device ID is available
       if (!this.deviceAppId) {
@@ -200,7 +159,7 @@ export class AuthService {
       // Persist user/token before using auth state in the rest of the flow
       await this.handleLoginSuccess(response);
       try {
-        await this.loadDeviceConfig(response.id, response.dispositivoId);
+        await this.configService.loadConfigForUser(response.id, response.dispositivoId, true);
       } catch (cfgErr) {
         console.warn('Unable to load device config:', cfgErr);
       }
@@ -252,12 +211,11 @@ export class AuthService {
         });
 
         await this.http
-          .get(
-            `${API_CONFIG.MS_SECURITY.baseUrl}${API_CONFIG.ENDPOINTS.LOGOUT}`,
-            { headers }
-          )
+          .get(`${API_CONFIG.MS_SECURITY.baseUrl}${API_CONFIG.ENDPOINTS.LOGOUT}`, { headers })
           .pipe(
-            tap((mensaje) => { console.log(mensaje); }),
+            tap((mensaje) => {
+              console.log(mensaje);
+            }),
             catchError((error: HttpErrorResponse) => {
               console.error('Logout API error:', error);
               // swallow errors to ensure logout proceeds
@@ -374,23 +332,19 @@ export class AuthService {
   /**
    * Get or create device ID
    */
-  private async getOrCreateDeviceId(): Promise<string> {
+  private async getDeviceAppId(): Promise<string> {
     try {
       // Try to get from storage
+      /*
       const result = await Preferences.get({ key: API_CONFIG.DEVICE_ID_KEY });
-      console.log("result:", result);
+      console.log('result:', result);
       if (result.value) {
         return result.value;
       }
-
-
-      // Get device info
-      const info = await Device.getId();
-      const deviceId = info.identifier;
-      console.log('device info:', info, ' - ID:', deviceId);
-      // Get from clipboard if on web (for testing multiple browser sessions)
+      const deviceId = (await this.deviceService.getDeviceIdentifier()) ?? '';
+      */
+      /*
       const isWeb = typeof window !== 'undefined' && !!window.document;
-      console.log('web?:', isWeb);
       if (!deviceId && isWeb) {
         const clipboardText = await getClipboard();
         console.log('clipboardText:', clipboardText);
@@ -399,35 +353,14 @@ export class AuthService {
           return clipboardText;
         }
       }
-
+      */
       // Save to storage
-      await Preferences.set({ key: API_CONFIG.DEVICE_ID_KEY, value: deviceId });
+      //await Preferences.set({ key: API_CONFIG.DEVICE_ID_KEY, value: deviceId });
 
-      return deviceId;
+      return (await this.deviceService.getDeviceIdentifier()) ?? '';
     } catch (error) {
       console.error('Error getting device ID, using mock UUID for browser:', error);
-      // Mock UUID for browser testing
       return '';
-    }
-  }
-
-  /**
-   * Get device app ID
-   */
-  async getDeviceAppId() {
-    return this.deviceAppId || getClipboard();
-  }
-
-  /**
-   * Load configuration from server for the specified user/device
-   */
-  private async loadDeviceConfig(usuarioId: string, dispositivoId: string): Promise<void> {
-    try {
-      await this.configService.loadConfigForUser(usuarioId, dispositivoId, true);
-      const loadedConfig = this.configService.getCurrentConfig();
-      this.configSubject.next(loadedConfig);
-    } catch (error) {
-      console.error('Error loading configuration on login:', error);
     }
   }
 

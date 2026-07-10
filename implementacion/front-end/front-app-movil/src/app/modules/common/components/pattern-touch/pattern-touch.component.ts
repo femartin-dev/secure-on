@@ -30,11 +30,6 @@ export class PatternTouchComponent implements OnInit {
     }
   }
 
-
-  @Input() set resetTrigger(_val: any) {
-    this.clearPattern();
-  }
-
   /** Si es false, el patrón es de solo lectura (no editable). */
   @Input() editable:boolean = true;
 

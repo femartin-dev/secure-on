@@ -44,14 +44,19 @@ export class ValidationService {
   }
 
   private validateSequentialDigits(value: number[]): boolean {
+    let error = 0;
     for (let i = 0; i < value.length - 1; i++) {
       const currentDigit = value[i];
       const nextDigit = value[i + 1];
-      if (nextDigit === currentDigit + 1 || nextDigit === currentDigit - 1) {
-        return false;
+      if (nextDigit === currentDigit + 1) {
+        error = error + 1;
+      }
+      if (nextDigit === currentDigit - 1) {
+        error = error - 1;
       }
     }
-    return true;
+    error = (error > 0 ? error : error * -1) + 1;
+    return value.length !== error;
   }
 
   validatePasswordFormat(value: string): string [] {

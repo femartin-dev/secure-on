@@ -42,7 +42,7 @@ export const API_CONFIG = {
     REGISTER: '/seguridad/v1/app/usuario/registrar', // POST - No auth
     LOGIN: '/seguridad/v1/app/auth/login', // POST - No auth
     LOGOUT: '/seguridad/v1/app/auth/logout', // GET - Auth (Authorization: Bearer <token>)
-    REFRESH_TOKEN: '/seguridad/v1/app/auth/refrescar-token', // POST - Auth
+    REFRESH_TOKEN: '/seguridad/v1/app/auth/refresh', // POST - Auth
     FORGOT_PASSWORD: '/seguridad/v1/app/auth/olvide-password', // POST - No auth
     RESET_PASSWORD: '/seguridad/v1/app/auth/resetear-password', // POST - Auth
 
@@ -79,8 +79,7 @@ export const API_CONFIG = {
     // ──────────────────────────────────────────────
 
     // Configuration - /servicios-moviles/v1/config/...
-    CREATE_CONFIG: '/servicios-moviles/v1/config/nuevo', // POST - Auth
-    NEW_CONFIG: '/servicios-moviles/v1/config/nueva', // POST - Auth (default config)
+    CREATE_CONFIG: '/servicios-moviles/v1/config/nueva', // POST - Auth
     GET_CONFIG: '/servicios-moviles/v1/config/obtener', // POST - Auth (fetch local config)
     CONFIG_BASE: '/servicios-moviles/v1/config', // Base for path-param endpoints:
     // POST /{configId}/editar      - Edit config
@@ -125,6 +124,10 @@ export const API_CONFIG = {
   TOKEN_STORAGE_KEY: 'auth_token',
   USER_STORAGE_KEY: 'user_data',
   DEVICE_ID_KEY: 'device_app_id',
+  LOCATION_QUEUE_KEY: 'location_queue',
+  PHOTO_QUEUE_KEY: 'photo_queue',
+  AUDIO_QUEUE_KEY: 'audio_queue',
+  ALARM_STATUS_KEY: 'alarm_status',
 };
 
 export const isDevelopment = true; // Set to false in production

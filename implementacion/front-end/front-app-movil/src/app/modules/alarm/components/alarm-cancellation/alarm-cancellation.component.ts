@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,11 +7,12 @@ import { NotificationService } from '../../../../services/notification-toast.ser
 import { Subscription } from 'rxjs';
 import { ConfigService } from '@app/services/config.service';
 import { AttempsCheckComponent } from '../../../common/components/attemps-check/attemps-check.component';
-import { PinCheckComponent } from '../../../common/components/pin-check/pin-check.component';
+import { PinCheckComponent, PinCheckOutput } from '../../../common/components/pin-check/pin-check.component';
 import { PasswordCheckComponent } from '../../../common/components/password-check/password-check.component';
 import { ActivationConfigComponent } from "@app/modules/settings/components/activation-config/activation-config.component";
 import { PatternTouchComponent } from '@app/modules/common/components/pattern-touch/pattern-touch.component';
 import { ValidationService } from '@app/services/validation.service';
+import { AppSettings, SecuritySettings } from '@app/models/config.models';
 @Component({
   selector: 'app-alarm-cancellation',
   standalone: true,
@@ -27,9 +28,13 @@ import { ValidationService } from '@app/services/validation.service';
   styleUrl: './alarm-cancellation.component.css',
 })
 export class AlarmCancellationComponent implements OnInit, OnDestroy {
+  @ViewChild(PatternTouchComponent) patternTouch?: PatternTouchComponent;
+  @ViewChild(PinCheckComponent) pinCheckComponent?: PinCheckComponent;
+  @ViewChild(PasswordCheckComponent) passwordCheckComponent?: PasswordCheckComponent;
+
   // ─── Credential fields ─────────────
-  cancelMethodSelected: string = 'password';;
-  cancelMethods: string[] = ['password', 'pin', 'pattern'];
+  cancelMethodSelected: string = '';
+  cancelMethod: string[] = [];
   password = '';
   pin = '';
   pattern: number[] = [];
@@ -46,6 +51,7 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
 
   /** Edge-case: alarm already sent (navigated here from external deep link) */
   isAlarmActive = false;
+  isAlarmCancelled = false;
 
   // ─── Countdown circle ──────────────
   totalSeconds = 15;
@@ -64,14 +70,16 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadConfig();
+    this.preventNavigation();
     this.isAlarmActive = this.alarmService.isAlarmActive();
 
     // Subscribe to the service-level pre-alarm countdown
     this.countdownSub = this.alarmService.preAlarmCountdown$.subscribe((remaining) => {
       this.countdownRemaining = remaining;
-      if (remaining <= 0 && !this.isAlarmActive) {
+      if (remaining <= 0 && !this.isAlarmActive && !this.isAlarmCancelled) {
         console.log('Alarm-cancellation: Pre-alarm countdown expired, confirming alarm');
         this.alarmService.confirmAlarm();
+        this.isAlarmActive = this.alarmService.isAlarmActive();
         this.router.navigate(['/alarm/lock']);
       }
     });
@@ -86,7 +94,34 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     if (config?.activation) {
       this.totalSeconds = config.activation.tiempoCancelacionSeg;
       this.countdownRemaining = config.activation.tiempoCancelacionSeg;
+    }
+    if (config?.security) {
       this.maxAttempts = config.security.nroIntentosFallidos;
+      this.setCancelMethods(config.security);
+    }
+  }
+
+  private preventNavigation(): void {
+    const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', handlePopState);
+    window.history.pushState(null, '', window.location.href);
+  }
+
+  private setCancelMethods(secConfig: SecuritySettings): void {
+    if (secConfig.passDesbloqueoActivo) {
+      this.cancelMethod.push('password');
+    }
+    if (secConfig.pinDesbloqueoActivo) {
+      this.cancelMethod.push('pin');
+    }
+    if (secConfig.patronDesbloqueoActivo) {
+      this.cancelMethod.push('pattern');
+    }
+    if (this.cancelMethod.length > 0) {
+      this.cancelMethodSelected = this.cancelMethod[0];
     }
   }
 
@@ -133,6 +168,7 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     } else if (this.isAlarmActive) {
       this.router.navigate(['/alarm/lock']);
     } else {
+      this.isAlarmCancelled = true;
       this.alarmService.cancelPreAlarm();
       this.router.navigate(['/main']);
     }
@@ -149,8 +185,8 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
   }
 
   async cancelWithPin(): Promise<void> {
-    if (!this.pin.trim() || this.pin.length !== 4) {
-      this.error = 'PIN debe ser de 4 dígitos';
+    if (!this.pin.trim() || this.pin.length !== this.pinLength) {
+      this.error = `PIN debe ser de ${this.pinLength} dígitos`;
       return;
     }
     this.cancelAlarm('PIN');
@@ -161,19 +197,23 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     this.error = '';
     try {
       if (this.isAlarmActive) {
-        const result = await this.alarmService.finalizeAlarm(
-          tipoCancel, ''
-        );
+        const result = await this.alarmService.finalizeAlarm(tipoCancel, '');
         if (result) {
+          this.isAlarmCancelled = true;
           this.router.navigate(['/main']);
         } else {
           this.handleFailedAttempt(
-            tipoCancel === 'PIN' ? 'PIN incorrecto' :
-            tipoCancel === 'PASSWORD' ? 'Contraseña incorrecta' :
-            tipoCancel === 'PATTERN' ? 'Patrón incorrecto' : 'Credenciales incorrectas'
+            tipoCancel === 'PIN'
+              ? 'PIN incorrecto'
+              : tipoCancel === 'PASSWORD'
+                ? 'Contraseña incorrecta'
+                : tipoCancel === 'PATTERN'
+                  ? 'Patrón incorrecto'
+                  : 'Credenciales incorrectas'
           );
         }
       } else {
+        this.isAlarmCancelled = true;
         this.alarmService.cancelPreAlarm();
         this.router.navigate(['/main']);
       }
@@ -191,49 +231,17 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     this.pin = '';
     if (this.attempts >= this.maxAttempts) {
       this.notificationService.showError('Demasiados intentos.');
-      if (!this.isAlarmActive) {
+      /*if (!this.isAlarmActive) {
         console.log('Alarm-cancellation: handleFailedAttempt');
         this.alarmService.confirmAlarm();
-      }
+        this.isAlarmActive = this.alarmService.isAlarmActive();
+      }*/
       //this.router.navigate(['/alarm/lock']);
       setTimeout(() => this.router.navigate(['/alarm/lock']), 1500);
     }
   }
 
-  addPinDigit(digit: string): void {
-    if (this.pin.length < 4) {
-      this.pin += digit;
-      if (this.pin.length === 4) {
-        setTimeout(() => this.cancelWithPin(), 200);
-      }
-    }
-  }
-
-  removePinDigit(): void {
-    if (this.pin.length > 0) {
-      this.pin = this.pin.slice(0, -1);
-    }
-  }
-
-  switchMethod(): void {
-    this.cancelMethodSelected = this.cancelMethodSelected === 'password' ? 'pin' :
-                                this.cancelMethodSelected === 'pin' ? 'pattern' :
-                                'password';
-    this.error = '';
-    this.password = '';
-    this.pin = '';
-  }
-
-  /*
-  switchMethods(switch: string): void {
-    this.cancelMethod = switch;
-    this.error = '';
-    this.password = '';
-    this.pin = '';
-  }
-  */
-
-  switchMethods(value: string): void {
+  switchMethod(value: string): void {
     this.cancelMethodSelected = value;
     this.error = '';
     this.password = '';
@@ -248,26 +256,26 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     return this.maxAttempts - this.attempts;
   }
 
-  onPinSubmit(pin: { pin: number; complete: boolean }): void {
-    if (pin.complete) {
-      let validationError = this.validationService.validatePinFormat(pin.pin, this.pinLength);
-      let validationResult = this.validationService.validatePin(pin.pin);
-      if (!validationError && validationResult) {
-        this.cancelAlarm('PIN');
-      } else {
-        this.handleFailedAttempt(validationError || 'PIN incorrecto');
-      }
+  onPinSubmit(pin: PinCheckOutput): void {
+    if (!pin.complete) return;
+    let validationResult = this.validationService.validatePin(pin.pin);
+    if (validationResult) {
+      this.cancelAlarm('PIN');
+    } else {
+      this.handleFailedAttempt('PIN incorrecto');
+      setTimeout(() => this.resetOnFail('PIN'), 1000);
     }
   }
 
   onPasswordSubmit(pass: string): void {
     //validar el password con la función de validación de credenciales
-    const validationErrors = this.validationService.validatePasswordFormat(pass);
+    //const validationErrors = this.validationService.validatePasswordFormat(pass);
     this.password = pass;
-    if (validationErrors.length === 0 && this.validationService.validatePassword(pass)) {
+    if (this.validationService.validatePassword(pass)) {
       this.cancelAlarm('PASSWORD');
     } else {
-      this.handleFailedAttempt(validationErrors.length === 0 ? 'Contraseña incorrecta' : validationErrors.join('\n'));
+      this.handleFailedAttempt('Contraseña incorrecta');
+      setTimeout(() => this.resetOnFail('PASSWORD'), 1000);
     }
   }
 
@@ -277,6 +285,24 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
       this.cancelAlarm('PATTERN');
     } else {
       this.handleFailedAttempt('Patrón incorrecto');
+      setTimeout(() => this.resetOnFail('PASSWORD'), 1000);
     }
   }
+
+  private resetOnFail(tipoCancel: 'PIN' | 'PASSWORD' | 'PATTERN') : void {
+    switch(tipoCancel) {
+      case 'PIN':
+        this.pinCheckComponent?.clearPin();
+        break;
+      case 'PASSWORD':
+        this.passwordCheckComponent?.clearPassword();
+        break;
+      case 'PATTERN':
+        this.patternTouch?.clearPattern();
+        break;
+      default: break;
+    }
+    this.error = '';
+  }
+
 }

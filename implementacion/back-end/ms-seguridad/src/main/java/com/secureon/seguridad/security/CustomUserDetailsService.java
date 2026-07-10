@@ -44,8 +44,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             username = Normalizer.normalize(username, Normalizer.Form.NFC);
         }
 
-        
-
         // Primero intentamos como usuario móvil
         Usuario usuario = usuarioRepository.findById(username != null && username.matches(messageService.getMessage("pattern.uuid")) ? UUID.fromString(username) : UUID.fromString(messageService.getMessage("mock.uuid"))).orElse(
                         usuarioRepository.findByEmail(username).orElse( 

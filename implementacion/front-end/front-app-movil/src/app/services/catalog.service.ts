@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
 import { API_CONFIG } from '../config/api-config';
@@ -27,7 +27,47 @@ import { CatalogType } from '../models/catalog.models';
   providedIn: 'root',
 })
 export class CatalogService {
+  private estadosAlarmaSubject = new BehaviorSubject<EstadoAlarma[] | null>(null);
+  public estadosAlarma$ = this.estadosAlarmaSubject.asObservable();
+  private canalesNotificacionSubject = new BehaviorSubject<CanalNotificacion[] | null>(null);
+  public canalesNotificacion$ = this.canalesNotificacionSubject.asObservable();
+  private estadosEnvioSubject = new BehaviorSubject<EstadoEnvio[] | null>(null);
+  public estadosEnvio$ = this.estadosEnvioSubject.asObservable();
+  private idiomasSubject = new BehaviorSubject<Idioma[] | null>(null);
+  public idiomas$ = this.idiomasSubject.asObservable();
+  private metodosActivacionSubject = new BehaviorSubject<MetodoActivacion[] | null>(null);
+  public metodosActivacion$ = this.metodosActivacionSubject.asObservable();
+  private metodosUbicacionSubject = new BehaviorSubject<MetodoUbicacion[] | null>(null);
+  public metodosUbicacion$ = this.metodosUbicacionSubject.asObservable();
+  private prioridadAlarmaSubject = new BehaviorSubject<PrioridadAlarma[] | null>(null);
+  public prioridadAlarma$ = this.prioridadAlarmaSubject.asObservable();
+  private relacionSubject = new BehaviorSubject<string[] | null>(null);
+  public relacion$ = this.relacionSubject.asObservable();
+
+  private isLoaded = false;
+
   constructor(private http: HttpClient) {}
+
+
+  async loadCatalogs(): Promise<void> {
+    try {
+      console.log('Loading catalogs...');
+      if (this.isLoaded) {
+        return;
+      }
+      await this.getEstadosAlarma().toPromise();
+      await this.getCanalesNotificacionHabilitados().toPromise();
+      await this.getEstadosEnvio().toPromise();
+      await this.getIdiomas().toPromise();
+      await this.getMetodosActivacion().toPromise();
+      await this.getMetodosUbicacion().toPromise();
+      await this.getPrioridadesAlarma().toPromise();
+      await this.getRelaciones().toPromise();
+      this.isLoaded = true;
+    } catch (error) {
+      console.error('Error loading catalogs:', error);
+    }
+  }
 
   /**
    * GET /servicios-moviles/v1/catalogo/estados-alarma
@@ -51,6 +91,9 @@ export class CatalogService {
               }) as EstadoAlarma
           );
         }),
+        tap((estadosAlarma: EstadoAlarma[]) => {
+          this.estadosAlarmaSubject.next(estadosAlarma);
+        }),
         catchError((error) => {
           console.error('Error fetching alarm states:', error);
           return throwError(() => new Error('Error al obtener estados de alarma'));
@@ -65,7 +108,9 @@ export class CatalogService {
 
   getCanalesNotificacionHabilitados(): Observable<CanalNotificacion[]> {
     return this.http
-      .get<CatalogsResponse>(`${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CATALOG_NOTIFICATION_CHANNELS}`)
+      .get<CatalogsResponse>(
+        `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CATALOG_NOTIFICATION_CHANNELS}`
+      )
       .pipe(
         map((response: CatalogsResponse) => {
           // Backend returns { canalesNotificacion: [...] }
@@ -83,6 +128,9 @@ export class CatalogService {
                 orden: item.orden ?? item.id,
               } as CanalNotificacion;
             });
+        }),
+        tap((canalesNotificacion: CanalNotificacion[]) => {
+          this.canalesNotificacionSubject.next(canalesNotificacion);
         }),
         catchError((error) => {
           console.error('Error getting notification channels:', error);
@@ -112,6 +160,9 @@ export class CatalogService {
               }) as EstadoEnvio
           );
         }),
+        tap((estadosEnvio: EstadoEnvio[]) => {
+          this.estadosEnvioSubject.next(estadosEnvio);
+        }),
         catchError((error) => {
           console.error('Error fetching send states:', error);
           return throwError(() => new Error('Error al obtener estados de envío'));
@@ -138,9 +189,12 @@ export class CatalogService {
                 descripcion: item.descripcion,
                 icono: '',
                 color: '',
-                habilitada: item.habilitada
+                habilitada: item.habilitada,
               }) as Idioma
           );
+        }),
+        tap((idiomas: Idioma[]) => {
+          this.idiomasSubject.next(idiomas);
         }),
         catchError((error) => {
           console.error('Error fetching languages:', error);
@@ -171,6 +225,9 @@ export class CatalogService {
               }) as MetodoActivacion
           );
         }),
+        tap((metodosActivacion: MetodoActivacion[]) => {
+          this.metodosActivacionSubject.next(metodosActivacion);
+        }),
         catchError((error) => {
           console.error('Error fetching activation methods:', error);
           return throwError(() => new Error('Error al obtener métodos de activación'));
@@ -198,6 +255,9 @@ export class CatalogService {
                 precision: 0,
               }) as MetodoUbicacion
           );
+        }),
+        tap((metodosUbicacion: MetodoUbicacion[]) => {
+          this.metodosUbicacionSubject.next(metodosUbicacion);
         }),
         catchError((error) => {
           console.error('Error fetching location methods:', error);
@@ -228,6 +288,9 @@ export class CatalogService {
               }) as PrioridadAlarma
           );
         }),
+        tap((prioridadesAlarma: PrioridadAlarma[]) => {
+          this.prioridadAlarmaSubject.next(prioridadesAlarma);
+        }),
         catchError((error) => {
           console.error('Error fetching alarm priorities:', error);
           return throwError(() => new Error('Error al obtener prioridades de alarma'));
@@ -245,6 +308,9 @@ export class CatalogService {
         string[]
       >(`${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.CATALOG_RELATIONSHIPS}`)
       .pipe(
+        tap((relaciones: string[]) => {
+          this.relacionSubject.next(relaciones);
+        }),
         catchError((error) => {
           console.error('Error fetching relationships:', error);
           return throwError(() => new Error('Error al obtener relaciones'));

@@ -6,6 +6,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { NotificationService } from '@app/services/notification-toast.service';
 import { SettingsLayoutStateService } from '../../services/settings-layout-state.service';
 import { SettingsConfigDraftService } from '../../services/settings-config-draft.service';
+import { CatalogService } from '@app/services/catalog.service';
 
 interface ConfigPage {
   id: string;
@@ -44,6 +45,12 @@ export class ConfigLayoutComponent implements OnDestroy {
       route: '/settings/security',
     },
     {
+      id: 'permissions',
+      label: 'Configuracion de Permisos',
+      icon: 'toggle_on',
+      route: '/settings/permissions',
+    },
+    {
       id: 'performance',
       label: 'Configuracion de Rendimiento',
       icon: 'battery_charging_full',
@@ -73,13 +80,16 @@ export class ConfigLayoutComponent implements OnDestroy {
     private router: Router,
     private readonly notificationService: NotificationService,
     private settingsLayoutStateService: SettingsLayoutStateService,
-    private settingsConfigDraftService: SettingsConfigDraftService
+    private settingsConfigDraftService: SettingsConfigDraftService,
+    private catalogService: CatalogService
   ) {
 
   }
 
   ngOnInit(): void {
+    console.log('ConfigLayoutComponent initialized');
     this.settingsConfigDraftService.ensureInitialized();
+    this.catalogService.loadCatalogs();
     this.syncCurrentPage(this.router.url);
 
     this.settingsLayoutStateService.actionButtonsVisible$

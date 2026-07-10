@@ -119,4 +119,10 @@ public class UsuarioService {
         usuario.setEstaActivo(true);
         usuarioRepository.save(usuario);
     }
+
+    @Transactional
+    public String refreshToken(String token) {
+        String newToken = sessionService.refreshToken(token);
+        return newToken;
+    }
 }

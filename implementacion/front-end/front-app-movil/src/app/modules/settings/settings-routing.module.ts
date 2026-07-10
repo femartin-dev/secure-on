@@ -7,6 +7,7 @@ import { ActivationConfigComponent } from './components/activation-config/activa
 import { SecurityConfigComponent } from './components/security-config/security-config.component';
 import { PerformanceConfigComponent } from './components/performance-config/performance-config.component';
 import { NotificationsConfigComponent } from './components/notifications-config/notifications-config.component';
+import { PermissionsConfigComponent } from './components/permissions-config/permissions-config.component';
 
 const routes: Routes = [
   {
@@ -17,6 +18,7 @@ const routes: Routes = [
       { path: 'general', component: GeneralConfigComponent },
       { path: 'activation', component: ActivationConfigComponent },
       { path: 'security', component: SecurityConfigComponent },
+      { path: 'permissions', component: PermissionsConfigComponent },
       { path: 'performance', component: PerformanceConfigComponent },
       { path: 'notifications', component: NotificationsConfigComponent },
       { path: 'contacts', component: ContactsConfigComponent }

@@ -97,4 +97,20 @@ public class SesionService {
             .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.session.not-found.token")));
     }
 
+    public String refreshToken(String token) {
+        if (!tokenProvider.validateToken(token)) {
+            throw new UnauthorizedException(messageService.getMessage("error.unauthorized"));
+        }
+        Sesion sesion = obtenerSesion(token);
+        String newToken = tokenProvider.generateTokenFromUsername(tokenProvider.getUsername(token));
+        OffsetDateTime newExpiracion = tokenProvider.getExpiration(newToken)
+                                                .toInstant()
+                                                .atZone(ZoneId.systemDefault())
+                                                .toOffsetDateTime();
+        sesion.setTokenRestablecimiento(newToken);
+        sesion.setExpiracionToken(newExpiracion);
+        sesionRepository.save(sesion);
+        return newToken;
+    }
+
 }

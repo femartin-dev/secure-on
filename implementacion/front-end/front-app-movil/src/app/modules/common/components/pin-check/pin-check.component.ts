@@ -2,7 +2,7 @@ import { NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { arrayGenerator } from '../../../../utils/constants.util';
 
-export type PinCheckComponentOutput = {
+export type PinCheckOutput = {
   pin: number;
   complete: boolean;
 }
@@ -16,16 +16,17 @@ export type PinCheckComponentOutput = {
   styleUrl: './pin-check.component.css',
 })
 export class PinCheckComponent {
-  @Output() pinOutput = new EventEmitter<PinCheckComponentOutput>();
+  @Output() pinOutput = new EventEmitter<PinCheckOutput>();
 
   pinDigits: number[] = [];
   pinValue: string = '';
   digits: number[] = [];
   showPin: boolean = false;
   @Input() error: string | null = null;
-  @Input() loadingAuth: boolean = false;
+  @Input() loading: boolean = false;
   @Input() maxPinLength: number = 4;
   @Input() pinSubtitle: string = 'para desactivar la alarma';
+  @Input() showHeadline: boolean = true;
 
   ngOnInit() {
     this.pinDigits = arrayGenerator(this.maxPinLength);

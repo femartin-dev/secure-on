@@ -58,6 +58,12 @@ public class CdmController {
         return ResponseEntity.ok().body(messageService.getMessage("ok.logout"));
     }
 
+    @PostMapping("/auth/refresh")
+    public ResponseEntity<String> refresh(@Valid @RequestBody String oldToken) {
+        String newToken = operadorService.refreshToken(oldToken);
+        return ResponseEntity.ok().body(newToken);
+    }
+
     @GetMapping("/operador/mis-datos")
     public ResponseEntity<OperadorResponse> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");

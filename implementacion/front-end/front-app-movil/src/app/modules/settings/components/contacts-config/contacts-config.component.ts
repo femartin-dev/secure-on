@@ -13,6 +13,7 @@ import { CanalNotificacion } from '../../../../models/catalog.models';
 import { notificationChannelsConfig } from '../../../../utils/constants.util';
 import { SettingsLayoutStateService } from '../../services/settings-layout-state.service';
 import { PhoneFormatPipe } from '../../../common/pipes/phone/phone-format.pipe';
+import { CatalogService } from '@app/services/catalog.service';
 
 type ViewMode = 'list' | 'form';
 
@@ -53,6 +54,7 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
     private contactService: ContactService,
     private notificationService: NotificationService,
     private authService: AuthService,
+    private catalogService: CatalogService,
     private settingsLayoutStateService: SettingsLayoutStateService
   ) {}
 
@@ -65,13 +67,12 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
       this.userId = currentUser.id;
     }
 
-    this.contactService
-      .getCanalesNotificacion()
+    this.catalogService.canalesNotificacion$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (types) => {
           console.log('[ContactsConfig] Canales cargados:', types);
-          this.notificationChannels = types;
+          this.notificationChannels = types || [];
         },
         error: (err) => {
           console.error('[ContactsConfig] Error cargando canales:', err);
@@ -83,11 +84,10 @@ export class ContactsConfigComponent implements OnInit, OnDestroy {
     });
 
     //this.relationOptions = this.contactService.getRelationOptions();
-    this.contactService
-      .getRelaciones()
+    this.catalogService.relacion$
       .pipe(takeUntil(this.destroy$))
       .subscribe((relations) => {
-        this.relationOptions = relations;
+        this.relationOptions = relations || [];
       });
 
   }

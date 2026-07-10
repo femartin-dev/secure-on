@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, interval } from 'rxjs';
 import { tap, catchError, switchMap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Preferences } from '@capacitor/preferences';
 
 import { API_CONFIG } from '../config/api-config';
 import { AuthService } from './auth.service';
@@ -16,14 +17,13 @@ import {
   AlarmFinalizationRequest,
   AlarmBlockRequest,
   AlarmStatus,
-  Ubicacion,
-  LocationData,
-  toUbicacion
 } from '../models/alarm.models';
+import { Ubicacion, LocationData, toUbicacion } from '../models/evidence.models';
 import { ConfigService } from './config.service';
+import { QueueService } from './queue.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AlarmService {
   private activeAlarmSubject = new BehaviorSubject<AlarmActivationResponse | null>(null);
@@ -45,6 +45,7 @@ export class AlarmService {
   private activationTimerId: any = null;
   private cancellationTimerId: any = null;
   private preAlarmTimerId: any = null;
+
   private locationUpdateIntervalId: any = null;
 
   constructor(
@@ -53,7 +54,8 @@ export class AlarmService {
     private geolocationService: GeolocationService,
     private notificationService: NotificationService,
     private configService: ConfigService,
-    private webSocketService: WebSocketService
+    private webSocketService: WebSocketService,
+    private queueService: QueueService
   ) {}
 
   isAlarmActive(): boolean {
@@ -76,7 +78,10 @@ export class AlarmService {
     return { success: true };
   }
 
-  async requestEmergencyBypass(_: { timestamp: Date; reason: string }): Promise<{ approved: boolean }> {
+  async requestEmergencyBypass(_: {
+    timestamp: Date;
+    reason: string;
+  }): Promise<{ approved: boolean }> {
     return { approved: true };
   }
 
@@ -143,73 +148,6 @@ export class AlarmService {
     this.preAlarmCountdownSubject.next(0);
   }
 
-  /**
-   * Start activation countdown
-   */
-  private startActivationCountdown(seconds: number): void {
-    let count = seconds;
-    this.activationCountdownSubject.next(count);
-
-    this.activationTimerId = setInterval(() => {
-      count--;
-      this.activationCountdownSubject.next(count);
-
-      if (count <= 0) {
-        clearInterval(this.activationTimerId);
-        //this.completeActivation();
-      }
-    }, 1000);
-  }
-
-  /**
-   * Complete alarm activation
-   * POST /servicios-moviles/v1/alarma/nueva
-   */
-  private async completeActivation(): Promise<void> {
-    try {
-      const user = this.authService.getCurrentUser();
-      const location = await this.geolocationService.getCurrentLocation();
-
-      if (!user || !location) {
-        throw new Error('No user or location data');
-      }
-
-      const request: AlarmActivationRequest = {
-        usuarioId: user.id,
-        dispositivoId: user.dispositivoId ?? '',
-        metodoActivacion: 1,        // Default: BOTÓN DE PÁNICO
-        prioridad: 2,                  // Default: ALTA
-        ubicacion: toUbicacion(location)
-
-      };
-
-      const response = await this.http
-        .post<AlarmActivationResponse>(
-          `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.NEW_ALARM}`,
-          request
-        )
-        .toPromise();
-
-      if (response) {
-        this.activeAlarmSubject.next(response);
-        this.alarmStatusSubject.next(response.estadoAlarma?.descripcion ?? 'ACTIVA');
-
-        // Start cancellation countdown (default 15s)
-        this.startCancellationCountdown(15);
-
-        // Start sending location updates periodically
-        this.startLocationUpdates(response.alarmaId, 5000);
-
-        // Show notification
-        this.notificationService.showInfo(
-          `Alarma activa - 15 segundos para cancelar`
-        );
-      }
-    } catch (error) {
-      console.error('Error completing alarm activation:', error);
-      this.notificationService.showError('Error al activar alarma');
-    }
-  }
 
   /**
    * Start cancellation countdown
@@ -246,7 +184,7 @@ export class AlarmService {
       // Finalize the alarm via PUT /{alarmaId}/finalizar
       const finalizeRequest: AlarmFinalizationRequest = {
         motivo: 'Tiempo expirado',
-        detalles: 'La alarma no fue cancelada dentro del tiempo límite'
+        detalles: 'La alarma no fue cancelada dentro del tiempo límite',
       };
 
       await this.http
@@ -286,7 +224,7 @@ export class AlarmService {
 
       const request: AlarmFinalizationRequest = {
         motivo: `Cancelada por usuario (${method})`,
-        detalles: `Método: ${method}`
+        detalles: `Método: ${method}`,
       };
 
       await this.http
@@ -323,54 +261,61 @@ export class AlarmService {
    */
   private startLocationUpdates(alarmaId: string, intervalMs: number): void {
     // Ensure WebSocket is connected for real-time updates
+    /*
     if (!this.webSocketService.isConnected) {
       this.webSocketService.connect();
-    }
+    }*/
 
     this.locationUpdateIntervalId = setInterval(async () => {
+      let queueItem;
       try {
-        const user = this.authService.getCurrentUser();
+
         const location = await this.geolocationService.getCurrentLocation();
+        if (!location)
+          throw new Error('No se pudo obtener la ubicación actual.');
+        //await this.queueService.queueLocation(location);
 
-        if (!user || !location) return;
 
-        const update: Ubicacion = {
-          latitud: location.latitude,
-          longitud: location.longitude,
-          altitud: location.altitude,
-          precision: location.accuracy,
-          fecha: location.timestamp,
-          bateria: location.batteryLevel,
-          velocidad: location.speed,
-          rumbo: location.heading,
-          metodoUbicacionId: location.locationMethod
-        };
+        const user = this.authService.getCurrentUser();
+        if (!user)
+          throw new Error('No se pudo obtener el usuario actual.');
 
+        //queueItem = await this.queueService.getNextLocation();
+        //if (!queueItem)
+          //throw new Error('No se pudo obtener la siguiente ubicación en la cola.');
+        const payload = toUbicacion(location);
+
+         // Queue for offline persistence
         // 1) Send via WebSocket (real-time for CDM)
+        /*
         if (this.webSocketService.isConnected) {
-          this.webSocketService.publish(
-            API_CONFIG.WS_TOPICS.LOCATION_REALTIME,
-            {
-              alarmaId,
-              dispositivoId: user.dispositivoId ?? '',
-              ...update,
-              timestamp: new Date().toISOString()
-            }
-          );
-        }
+          this.webSocketService.publish(API_CONFIG.WS_TOPICS.LOCATION_REALTIME, {
+            alarmaId,
+            dispositivoId: user.dispositivoId ?? '',
+            ...payload,
+            timestamp: new Date().toISOString(),
+          });
+        }*/
 
         // 2) Also POST via HTTP (persistence / fallback)
         await this.http
           .post(
             `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.ALARM_BASE}/${alarmaId}/enviar/ubicacion`,
-            update
+            payload
           )
           .toPromise();
+        //3 change queue item status
+
+        //await this.queueService.changeLocationStatus(queueItem.id, 'SEND');
       } catch (error) {
         console.error('Error updating location:', error);
+        //if (queueItem)
+          //await this.queueService.changeLocationStatus(queueItem.id, 'FAILED');
       }
     }, intervalMs);
   }
+
+
 
   /**
    * Stop location updates and disconnect WebSocket
@@ -453,7 +398,7 @@ export class AlarmService {
 
       const request: AlarmFinalizationRequest = {
         motivo: `Desactivada por usuario (${method})`,
-        detalles: `Método: ${method}`
+        detalles: `Método: ${method}`,
       };
 
       await this.http
@@ -497,7 +442,7 @@ export class AlarmService {
         dispositivoId: user?.dispositivoId ?? '',
         metodoActivacion: 1,
         prioridad: 2,
-        ubicacion: location ? toUbicacion(location) : undefined
+        ubicacion: location ? toUbicacion(location) : undefined,
       };
 
       const response = await this.http
@@ -548,7 +493,7 @@ export class AlarmService {
         timestamp: new Date().toISOString(),
         status,
         location,
-        method
+        method,
       };
 
       // TODO: Store in local IndexedDB or Storage API

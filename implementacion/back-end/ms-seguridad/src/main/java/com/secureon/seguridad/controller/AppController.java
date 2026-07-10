@@ -57,6 +57,12 @@ public class AppController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/auth/refresh")
+    public ResponseEntity<String> refresh(@Valid @RequestBody String oldToken) {
+        String newToken = authService.refreshToken(oldToken);
+        return ResponseEntity.ok().body(newToken);
+    }
+
     @GetMapping("/auth/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");

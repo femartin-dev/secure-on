@@ -1,0 +1,147 @@
+<div class="page flex h-full flex-col bg-background-light dark:bg-background-dark text-[#111317] dark:text-white">
+  <main class="flex-1 overflow-y-auto px-4 pt-6 pb-4 w-full max-w-md mx-auto space-y-5">
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+            <span class="material-symbols-outlined text-xl">mic</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Permiso de audio</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="audioPermission" (ngModelChange)="onToggleAudio($event)" title="Activar permiso de audio" aria-label="Activar permiso de audio" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+            <span class="material-symbols-outlined text-xl">photo_camera</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Permiso de foto</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="photoPermission" (ngModelChange)="onTogglePhoto($event)" title="Activar permiso de foto" aria-label="Activar permiso de foto" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
+            <span class="material-symbols-outlined text-xl">folder</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Permiso de almacenamiento</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="storagePermission" (ngModelChange)="onToggleStorage($event)" title="Activar permiso de almacenamiento" aria-label="Activar permiso de almacenamiento" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-sky-50 dark:bg-sky-900/20 flex items-center justify-center text-sky-600 dark:text-sky-400">
+            <span class="material-symbols-outlined text-xl">background_replace</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Permiso en segundo plano</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="backgroundPermission" (ngModelChange)="onToggleBackground($event)" title="Activar permiso en segundo plano" aria-label="Activar permiso en segundo plano" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+            <span class="material-symbols-outlined text-xl">sensors</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Acelerometro y giroscopio</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="motionPermission" (ngModelChange)="onToggleMotion($event)" title="Activar acelerometro y giroscopio" aria-label="Activar acelerometro y giroscopio" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+            <span class="material-symbols-outlined text-xl">location_on</span>
+          </div>
+          <span class="text-base font-medium text-gray-900 dark:text-white">Permiso de ubicacion</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="locationPermission" (ngModelChange)="onToggleLocation($event)" title="Activar permiso de ubicacion" aria-label="Activar permiso de ubicacion" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-lime-50 dark:bg-lime-900/20 flex items-center justify-center text-lime-600 dark:text-lime-400">
+            <span class="material-symbols-outlined text-xl">contacts</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-gray-900 dark:text-white">Permiso de contactos</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Guardado local en el dispositivo</span>
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="contactsPermission" (ngModelChange)="onToggleContacts($event)" title="Activar permiso de contactos" aria-label="Activar permiso de contactos" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center text-rose-600 dark:text-rose-400">
+            <span class="material-symbols-outlined text-xl">touch_app</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-gray-900 dark:text-white">Deshabilitacion de botones</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Guardado local en el dispositivo</span>
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="buttonDisableProtection" (ngModelChange)="onToggleButtonDisableProtection($event)" title="Activar deshabilitacion de botones" aria-label="Activar deshabilitacion de botones" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <span class="material-symbols-outlined text-xl">lock</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-gray-900 dark:text-white">Bloqueo al inicio</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Guardado local en el dispositivo</span>
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only" [ngModel]="lockOnStartup" (ngModelChange)="onToggleLockOnStartup($event)" title="Activar bloqueo al inicio" aria-label="Activar bloqueo al inicio" />
+          <span class="toggle"></span>
+        </label>
+      </div>
+    </section>
+  </main>
+</div>

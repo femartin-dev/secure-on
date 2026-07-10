@@ -113,7 +113,7 @@
   <!-- Bottom: Deactivate Button -->
   <div class="sticky bottom-0 z-20 w-full p-6 pb-8 bg-gradient-to-t from-background-dark via-background-dark to-transparent">
     <button
-      (click)="openDeactivation()"
+      (click)="openCredentials()"
       class="w-full h-14 bg-slate-800 hover:bg-slate-700 rounded-full font-bold text-base flex items-center justify-center gap-2 border border-slate-600 shadow-inner transition-all active:scale-[0.98]">
       <span class="material-symbols-outlined text-white" style="font-size: 24px;">close</span>
       <span class="text-slate-300 uppercase tracking-wide">Desactivar Alarma</span>
@@ -127,7 +127,7 @@
 
     <!-- Top Bar -->
     <div class="flex items-center p-5 justify-between shrink-0">
-      <button (click)="closeDeactivation()" class="flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full p-2 hover:bg-white/10">
+      <button (click)="closeCredentials()" class="flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full p-2 hover:bg-white/10">
         <span class="material-symbols-outlined text-[28px]">close</span>
       </button>
       <div class="flex flex-col justify-center h-16 rounded-3xl bg-white/5 border border-white/10 shadow-inner backdrop-blur-md w-32">
@@ -136,17 +136,17 @@
       <div class="w-12"></div>
     </div>
 
-    <!-- ======== PASSWORD VIEW ======== -->
+    <!-- ======== PASSWORD VIEW ======== --
     <div *ngIf="cancelMethod === 'password'" class="flex-1 flex flex-col items-center justify-start px-6 w-full max-w-md mx-auto">
 
-      <!-- Icon -->
+      <!-- Icon --
       <div class="flex justify-center pb-5">
         <div class="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
           <span class="material-symbols-outlined text-3xl text-red-500">shield_lock</span>
         </div>
       </div>
 
-      <!-- Header -->
+      <!-- Header --
       <div class="flex flex-col gap-2 text-center mb-6">
         <h1 class="text-white text-2xl font-bold leading-tight tracking-tight">Desactivar Alarma</h1>
         <p class="text-[#9da4b9] text-sm font-normal leading-normal px-4">
@@ -154,7 +154,7 @@
         </p>
       </div>
 
-      <!-- Password Input -->
+      <!-- Password Input --
       <div class="w-full mb-5">
         <div class="relative flex w-full items-center rounded-xl bg-[#1c1e27] border border-[#3b4154] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200">
           <input
@@ -172,12 +172,12 @@
         </div>
       </div>
 
-      <!-- Error -->
+      <!-- Error --
       <div *ngIf="authError" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm mb-4 animate-shake">
         {{ authError }}
       </div>
 
-      <!-- Confirm -->
+      <!-- Confirm --
       <button
         (click)="deactivateWithPassword()"
         [disabled]="loadingAuth || !password"
@@ -188,17 +188,17 @@
         </span>
       </button>
 
-      <!-- Switch to PIN -->
+      <!-- Switch to PIN --
       <button (click)="switchMethod()" class="text-primary/80 hover:text-white text-sm font-semibold transition-colors py-2">
         Usar código PIN en su lugar
       </button>
 
-      <!-- Forgot password -->
+      <!-- Forgot password --
       <button class="text-[#9da4b9] text-sm font-medium hover:text-white transition-colors py-2 mt-2">
         ¿Olvidaste tu contraseña?
       </button>
 
-      <!-- Attempts -->
+      <!-- Attempts --
       <div *ngIf="attempts > 0" class="flex items-center gap-2 mt-4">
         <span class="text-xs text-slate-400">Intentos restantes:</span>
         <div class="flex gap-1">
@@ -208,17 +208,17 @@
         </div>
       </div>
     </div>
-
-    <!-- ======== PIN VIEW ======== -->
+    -->
+    <!-- ======== PIN VIEW ======== --
     <div *ngIf="cancelMethod === 'pin'" class="flex-1 flex flex-col items-center justify-start pt-2 pb-4 px-6 w-full max-w-md mx-auto">
 
-      <!-- Headline -->
+      <!-- Headline --
       <div class="text-center mb-6 space-y-2">
         <h2 class="text-2xl font-bold leading-tight text-white">Ingrese su PIN</h2>
         <p class="text-white/60 text-base font-medium">para desactivar la alarma</p>
       </div>
 
-      <!-- PIN Indicators -->
+      <!-- PIN Indicators --
       <div class="mb-6 w-full flex justify-center">
         <div class="flex gap-6">
           <div *ngFor="let i of [0,1,2,3]"
@@ -228,17 +228,17 @@
         </div>
       </div>
 
-      <!-- Error -->
+      <!-- Error --
       <div *ngIf="authError" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm mb-4 animate-shake">
         {{ authError }}
       </div>
 
-      <!-- Loading -->
+      <!-- Loading --
       <div *ngIf="loadingAuth" class="flex items-center gap-2 text-white mb-4">
         <span class="animate-spin material-symbols-outlined">sync</span> Verificando...
       </div>
 
-      <!-- Keypad -->
+      <!-- Keypad --
       <div class="w-full max-w-[280px] mx-auto mt-2">
         <div class="grid grid-cols-3 gap-y-4 gap-x-6">
           <button *ngFor="let digit of ['1','2','3','4','5','6','7','8','9']"
@@ -265,7 +265,7 @@
         </div>
       </div>
 
-      <!-- Attempts -->
+      <!-- Attempts --
       <div *ngIf="attempts > 0" class="flex items-center gap-2 mt-6">
         <span class="text-xs text-slate-400">Intentos restantes:</span>
         <div class="flex gap-1">
@@ -275,12 +275,63 @@
         </div>
       </div>
 
-      <!-- Forgot PIN -->
+      <!-- Forgot PIN --
       <div class="mt-4">
         <button class="text-sm font-semibold text-white/50 hover:text-primary transition-colors py-2 px-4 rounded-lg">
           ¿Olvidaste tu PIN?
         </button>
       </div>
+    </div>
+    -->
+    <!-- ======== PASSWORD VIEW ======== -->
+    <div *ngIf="cancelMethodSelected === 'password'" class="p-6 flex flex-col items-center justify-center min-h-[500px]">
+      <app-password-check
+        [loading]="loading"
+        [error]="error"
+        (passwordOutput)="onPasswordSubmit($event)">
+      </app-password-check>
+    </div>
+
+    <!-- ======== PIN VIEW ======== -->
+    <div *ngIf="cancelMethodSelected === 'pin'" class="p-6 flex flex-col items-center justify-center min-h-[500px]">
+      <app-pin-check
+        [loading]="loading"
+        [error]="error"
+        [maxPinLength]="4"
+        (pinOutput)="onPinSubmit($event)">
+      </app-pin-check>
+    </div>
+
+    <!-- ======== PATTERN VIEW ======== -->
+    <div *ngIf="cancelMethodSelected === 'pattern'" class="p-6 flex flex-col items-center justify-center min-h-[500px]">
+      <app-pattern-touch
+        (patternDrawn)="onPatternSubmit($event)"
+        [editable]="true"
+        [error]="error"
+        [pattern]="pattern || []">
+      </app-pattern-touch>
+    </div>
+
+    <!-- Attempts -->
+    <div class="flex-1 flex flex-col items-center justify-start pt-2 pb-4 px-6 z-10 w-full max-w-md mx-auto">
+      <app-attemps-check [maxAttempts]="maxAttempts"
+        [remaining]="getRemainingAttempts()">
+      </app-attemps-check>
+    </div>
+
+    <!-- Switch to PIN
+    <button (click)="switchMethod()" class="text-primary/80 hover:text-white text-sm font-semibold transition-colors py-2">
+      Usar código PIN en su lugar
+    </button>
+  -->
+    <div *ngIf="cancelMethod.length > 1" class="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex gap-1">
+      <label *ngFor="let cm of cancelMethod" class="flex-1">
+        <input class="hidden peer" name="cancel-method" type="radio" (click)="switchMethods(cm)" [checked]="cancelMethodSelected === cm"
+              [value]="cm" title="Usar {{ cm }} para cancelar alarma"/>
+        <div class="text-center py-2 rounded-md text-xs font-bold transition-all peer-checked:bg-white dark:peer-checked:bg-gray-600 peer-checked:text-blue-900 dark:peer-checked:text-white text-gray-500 dark:text-gray-300 cursor-pointer uppercase">
+          {{ cm | titlecase }}
+        </div>
+      </label>
     </div>
 
     <!-- Background Glow -->

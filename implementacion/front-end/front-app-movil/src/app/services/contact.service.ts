@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { tap, catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-
+import { Contacts, GetContactsOptions } from '@capacitor-community/contacts'
 import { API_CONFIG } from '../config/api-config';
 import { AuthService } from './auth.service';
 import { Contact, ContactResponse, ContactRequest } from '../models/contact.models';
@@ -171,8 +171,15 @@ export class ContactService {
   async getDeviceContacts(): Promise<any[]> {
     try {
       // Dynamic import — @capacitor/contacts may not be installed
-      const { Contacts } = await import('@capacitor/contacts' as any);
-      const result = await Contacts.getContacts();
+      //const { Contacts } = await import('@capacitor/contacts' as any);
+      const options: GetContactsOptions = {
+        projection : {
+          name: true,
+          phones: true,
+          emails: true,
+        }
+      };
+      const result = await Contacts.getContacts(options);
       return result.contacts || [];
     } catch (error) {
       console.error('Error getting device contacts:', error);

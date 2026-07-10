@@ -20,21 +20,6 @@ export class ConfigService {
   private configSubject = new BehaviorSubject<AppSettings | null>(null);
   public config$ = this.configSubject.asObservable();
 
-  private defaultConfig: AppSettings = {
-    id: '',
-    usuarioId: '',
-    dispositivoId: '',
-    general: { idiomaId: 'es', modoSigilosoActivo: false, modoDarkActivo: false },
-    activation: { comandosVozActivo: false, fraseActivacionVoz: null, patronActivo: false, patronActivacion: null, movimientoActivo: false, sensibilidadMovimiento: null, tiempoCancelacionSeg: 0, tiempoActivacionSeg: 0 },
-    security: { patronDesbloqueo: null, pinDesbloqueo: null, passDesbloqueo: null, nroIntentosFallidos: 0 },
-    notifications: { frecuenciaUbicacion: 0, frecuenciaCapturaFotos: 0, frecuenciaGrabaAudio: 0, notificarSiempreSms: false, templateMensaje: null },
-    media: { compresionAudio: '', resolucionFotosDpi: 0, umbralMinimoLux: null, usarFiltrosRuido: false },
-    location: { precisionRed: 0, ubicacionWifi: false },
-    storage: { conservarEvidencias: false, retencionEvidenciasDias: 0, limiteEspacioEvidencias: 0, borrarAntiguas: false, borrarEnviadas: false, espacioCriticoPct: 0, conservarHistorialLocal: 0 },
-    network: { usarDatosMoviles: false, limiteDatos: 0, envioSoloWifi: false },
-    battery: { umbralBateriaMedia: 50, umbralBateriaBaja: 20, umbralBateriaCritica: 5 }
-  };
-
   constructor(private http: HttpClient) {}
 
   /**
@@ -159,56 +144,4 @@ export class ConfigService {
     }
   }
 
-
-  private async clearLocalConfig(): Promise<void> {
-    try {
-      await Preferences.remove({ key: 'app_config' });
-    } catch (error) {
-      console.error('Error clearing local config:', error);
-    }
-  }
-
-  /**
-   * Reset to default config
-   */
-  async resetToDefault(): Promise<void> {
-    this.configSubject.next(this.defaultConfig);
-    await this.persistConfig(this.defaultConfig);
-  }
-
-  validarCredencialDesbloqueo(method: string, value: any) : boolean {
-    const config = this.getCurrentConfig();
-    if (!config)
-      return false;
-    switch (method) {
-      case 'PASSWORD':
-        return (config.security.passDesbloqueoActivo || false) && value === config.security.passDesbloqueo;
-      case 'PIN':
-        return (config.security.pinDesbloqueoActivo || false) && value === config.security.pinDesbloqueo;
-      case 'PATRON':
-        return (config.security.patronDesbloqueoActivo || false) && value === config.security.patronDesbloqueo;
-      default:
-        return false;
-    }
-  }
-
-  validarCredencialActivacion(method: string, value: any) : boolean {
-    const config = this.getCurrentConfig();
-    if (!config)
-      return false;
-    switch (method) {
-      case 'FRASE_VOZ':
-        return (config.activation.comandosVozActivo || false) && value === config.activation.fraseActivacionVoz;
-      case 'PATRON':
-        return (config.activation.patronActivo || false) && value === config.activation.patronActivacion;
-      case 'MOVIMIENTO':
-        return config.activation.movimientoActivo || false;
-      case 'REACTIVACION':
-        return true; // No credential, just reactivation flow
-      case 'MANUAL':
-        return true; // No credential, just manual activation
-      default:
-        return false;
-    }
-  }
 }

@@ -7,7 +7,7 @@ import { GeolocationService } from '../../../../services/geolocation.service';
 import { NotificationService } from '../../../../services/notification-toast.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LocationData } from '../../../../models/alarm.models';
+import { LocationData } from '../../../../models/evidence.models';
 
 @Component({
   selector: 'app-dashboard',

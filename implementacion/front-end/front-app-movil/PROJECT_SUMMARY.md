@@ -252,7 +252,7 @@ adb install android/app/build/outputs/apk/debug/secureon-*.apk
 
 ✅ **HTTPS en todas las comunic aciones**
 ✅ **JWT Bearer tokens** para autenticación
-✅ **Renovación automática** 5 min antes de expierar
+✅ **Renovación automática** 5 min antes de expirar
 ✅ **Almacenamiento seguro** en Preferences (encriptado by Android)
 ✅ **Manejo de errores** 401/403 transparente
 ✅ **Device ID único** por dispositivo

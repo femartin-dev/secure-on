@@ -177,6 +177,9 @@ export function toAppSettings(config: Configuracion): AppSettings {
         tiempoActivacionSeg: config.tiempoActivacionSeg,
       } as ActivationSettings,
       security: {
+        patronDesbloqueoActivo: !!config.patronDesbloqueo,
+        pinDesbloqueoActivo: !!config.pinDesbloqueo,
+        passDesbloqueoActivo: !!config.passDesbloqueo,
         patronDesbloqueo: config.patronDesbloqueo,
         pinDesbloqueo: config.pinDesbloqueo,
         passDesbloqueo: config.passDesbloqueo,
@@ -264,5 +267,7 @@ export function toConfiguracion(config: AppSettings): Configuracion{
       umbralBateriaBaja: config.battery.umbralBateriaBaja,
       umbralBateriaCritica: config.battery.umbralBateriaCritica,
     };
+
+
 }
 

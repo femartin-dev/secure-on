@@ -10,15 +10,16 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './password-check.component.css',
 })
 export class PasswordCheckComponent {
-  @Output() pinOutput = new EventEmitter<string>();
+  @Output() passwordOutput = new EventEmitter<string>();
 
   password: string = '';
   showPassword: boolean = false;
-  @Input() loadingAuth: boolean = false;
-  @Input() error: string | null = null;
+  @Input() loading: boolean = false;
+  @Input() error: string[] | string | null = null;
+  @Input() showHeadline: boolean = true;
 
   passwordSubmit() {
-    this.pinOutput.emit(this.password);
+    this.passwordOutput.emit(this.password);
   }
 
   togglePasswordVisibility(): void {
@@ -27,5 +28,15 @@ export class PasswordCheckComponent {
 
   clearPassword(): void {
     this.password = '';
+  }
+
+  errorArray(): string[] {
+    if (Array.isArray(this.error)) {
+      return this.error;
+    } else if (typeof this.error === 'string') {
+      return [this.error];
+    } else {
+      return [];
+    }
   }
 }
