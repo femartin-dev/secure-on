@@ -21,7 +21,7 @@ const routes: Routes = [
       { path: 'permissions', component: PermissionsConfigComponent },
       { path: 'performance', component: PerformanceConfigComponent },
       { path: 'notifications', component: NotificationsConfigComponent },
-      { path: 'contacts', component: ContactsConfigComponent }
+      { path: 'contacts', component: ContactsConfigComponent },
     ]
   }
 ];

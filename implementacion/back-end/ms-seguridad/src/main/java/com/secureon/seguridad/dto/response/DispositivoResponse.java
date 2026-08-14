@@ -20,7 +20,7 @@ public class DispositivoResponse {
 
     private UUID usuarioId;
 
-    private UUID dispositivoAppId; 
+    private String dispositivoAppId; 
 
     private String numero; 
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, interval } from 'rxjs';
 import { switchMap, filter, takeUntil } from 'rxjs/operators';
 import { Geolocation, Position } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 
 import { LocationData, Ubicacion } from '../models/evidence.models';
 import { DeviceService } from './device.service';
@@ -30,6 +31,7 @@ export class GeolocationService {
    */
   async getCurrentLocation(): Promise<LocationData | null> {
     try {
+      await this.ensureLocationPermission();
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
@@ -110,6 +112,7 @@ export class GeolocationService {
    */
   private async getLocationAsObservable(): Promise<LocationData | null> {
     try {
+      await this.ensureLocationPermission();
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
@@ -211,5 +214,19 @@ export class GeolocationService {
 
   private getLocationMethodByAccuracy(position: Position): number {
     return position.coords.accuracy > 50 ? 3 : position.coords.accuracy > 10 ? 2 : 1; // Default to GPS for now
+  }
+
+  private async ensureLocationPermission(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+
+    const status = await Geolocation.checkPermissions();
+    const alreadyGranted = status.location === 'granted' || status.coarseLocation === 'granted';
+    if (alreadyGranted) {
+      return;
+    }
+
+    await Geolocation.requestPermissions();
   }
 }

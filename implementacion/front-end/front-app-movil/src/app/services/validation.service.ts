@@ -9,12 +9,13 @@ export class ValidationService {
 
   validatePassword(password: string): boolean {
     const config = this.configService.getCurrentConfig();
-    return config?.security?.passDesbloqueo === password;
+    return config?.security?.passDesbloqueo == password;
   }
 
   validatePin(pin: number): boolean{
     const config = this.configService.getCurrentConfig();
-    return config?.security?.pinDesbloqueo === pin;
+    console.log('Validating PIN:', pin, 'against stored PIN:', config?.security?.pinDesbloqueo);
+    return config?.security?.pinDesbloqueo == pin;
   }
 
   validatePattern(pattern: number[]): boolean {

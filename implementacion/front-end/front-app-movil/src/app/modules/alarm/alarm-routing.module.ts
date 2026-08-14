@@ -3,12 +3,14 @@ import { RouterModule, Routes } from '@angular/router';
 import { AlarmActivationComponent } from './components/alarm-activation/alarm-activation.component';
 import { AlarmCancellationComponent } from './components/alarm-cancellation/alarm-cancellation.component';
 import { DeviceLockComponent } from './components/device-lock/device-lock.component';
+import { PostAlarmQuestionnaireComponent } from './components/post-alarm-questionnaire/post-alarm-questionnaire.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'activation', pathMatch: 'full' },
   { path: 'activation', component: AlarmActivationComponent },
   { path: 'cancel', component: AlarmCancellationComponent },
-  { path: 'lock', component: DeviceLockComponent }
+  { path: 'lock', component: DeviceLockComponent },
+  { path: 'post-cuestionario', component: PostAlarmQuestionnaireComponent }
 ];
 
 @NgModule({

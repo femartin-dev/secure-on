@@ -2,24 +2,24 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, Cha
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from '../../services/alert.service';
-import { Alert, Location } from '../../models/alert.models';
+import { AlarmService } from '../../services/alarm.service';
+import { Alarm, Location } from '../../models/alarm.models';
 import { ALERT_PRIORITY_LABELS, ALERT_STATUS_LABELS } from '../../shared/alert-ui.config';
 import { GoogleMapsService } from '../../services/google-maps.service';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-alert-detail',
+  selector: "app-alert-detail",
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './alert-detail.component.html',
-  styleUrls: ['./alert-detail.component.css']
+  templateUrl: "./alert-detail.component.html",
+  styleUrls: ["./alert-detail.component.css"],
 })
 export class AlertDetailComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('map') mapElement!: ElementRef;
+  @ViewChild("map") mapElement!: ElementRef;
 
-  alert: Alert | null = null;
-  mode: 'view' | 'edit' | 'verify' | 'notify' = 'view';
+  alarm: Alarm | null = null;
+  mode: "view" | "edit" | "verify" | "notify" = "view";
   isLoading = true;
   mapReady = false;
   map: google.maps.Map | null = null;
@@ -33,21 +33,21 @@ export class AlertDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   fieldsDisabled = {
     status: false,
     priority: false,
-    notes: false
+    notes: false,
   };
 
   constructor(
-    private alertService: AlertService,
+    private alarmService: AlarmService,
     private googleMapsService: GoogleMapsService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
-    const alertId = this.route.snapshot.paramMap.get('id');
+    const alertId = this.route.snapshot.paramMap.get("id");
     const state = this.router.getCurrentNavigation()?.extras.state;
-    this.mode = state?.['mode'] || 'view';
+    this.mode = state?.["mode"] || "view";
 
     if (alertId) {
       this.loadAlert(alertId);
@@ -67,56 +67,61 @@ export class AlertDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private setFieldsDisabledState(): void {
     switch (this.mode) {
-      case 'view':
+      case "view":
         this.fieldsDisabled = { status: true, priority: true, notes: true };
         break;
-      case 'verify':
+      case "verify":
         this.fieldsDisabled = { status: false, priority: true, notes: true };
         break;
-      case 'notify':
+      case "notify":
         this.fieldsDisabled = { status: true, priority: true, notes: false };
         break;
-      case 'edit':
+      case "edit":
         this.fieldsDisabled = { status: false, priority: false, notes: false };
         break;
     }
   }
 
   private loadAlert(id: string): void {
-    this.subscriptions.add(this.alertService.getAlertById(id).subscribe({
-      next: (alert) => {
-        this.alert = alert;
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        this.initializeMap();
-      },
-      error: (error) => {
-        console.error('Error loading alert:', error);
-        this.isLoading = false;
-      }
-    }));
+    this.subscriptions.add(
+      this.alarmService.getAlarmById(id).subscribe({
+        next: (alarm) => {
+          this.alarm = alarm;
+          this.isLoading = false;
+          this.cdr.detectChanges();
+          this.initializeMap();
+        },
+        error: (error) => {
+          console.error("Error loading alert:", error);
+          this.isLoading = false;
+        },
+      }),
+    );
   }
 
   private async initializeMap(): Promise<void> {
-    if (!this.alert || !this.mapElement?.nativeElement) {
+    if (!this.alarm || !this.mapElement?.nativeElement) {
       return;
     }
 
     if (!this.mapReady) {
       try {
-        this.map = await this.googleMapsService.createMap(this.mapElement.nativeElement, {
-          center: {
-            lat: this.alert.location.latitude,
-            lng: this.alert.location.longitude
+        this.map = await this.googleMapsService.createMap(
+          this.mapElement.nativeElement,
+          {
+            center: {
+              lat: this.alarm.ultimaUbicacion?.latitud || 0,
+              lng: this.alarm.ultimaUbicacion?.longitud || 0,
+            },
+            zoom: 15,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
           },
-          zoom: 15,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false
-        });
+        );
         this.mapReady = true;
       } catch (error) {
-        console.error('No se pudo inicializar Google Maps:', error);
+        console.error("No se pudo inicializar Google Maps:", error);
         return;
       }
     }
@@ -125,37 +130,44 @@ export class AlertDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private drawRoute(): void {
-    if (!this.map || !this.alert) {
+    if (!this.map || !this.alarm) {
       return;
     }
 
     this.clearRouteOverlays();
 
-    const sortedHistory = [...(this.alert.locationHistory || [])].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    const sortedHistory = [...(this.alarm.ubicacionesAnteriores || [])].sort(
+      (a, b) =>
+        new Date(a.fechaToma).getTime() - new Date(b.fechaToma).getTime(),
     );
 
     if (sortedHistory.length === 0) {
       const marker = new google.maps.Marker({
         map: this.map,
-        position: { lat: this.alert.location.latitude, lng: this.alert.location.longitude },
-        title: `Alerta ${this.alert.id}`
+        position: {
+          lat: this.alarm.ultimaUbicacion?.latitud || 0,
+          lng: this.alarm.ultimaUbicacion?.longitud || 0,
+        },
+        title: `Alerta ${this.alarm.estadoAlarma.descripcion}`,
       });
       this.routeMarkers.push(marker);
       return;
     }
 
-    const routePath = sortedHistory.map((loc) => ({ lat: loc.latitude, lng: loc.longitude }));
+    const routePath = sortedHistory.map((loc) => ({
+      lat: loc.latitud,
+      lng: loc.longitud,
+    }));
     const bounds = new google.maps.LatLngBounds();
     routePath.forEach((point) => bounds.extend(point));
 
     this.routePolyline = new google.maps.Polyline({
       path: routePath,
       geodesic: true,
-      strokeColor: '#3b82f6',
+      strokeColor: "#3b82f6",
       strokeOpacity: 0.9,
       strokeWeight: 4,
-      map: this.map
+      map: this.map,
     });
 
     const start = routePath[0];
@@ -164,29 +176,32 @@ export class AlertDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     const startMarker = new google.maps.Marker({
       map: this.map,
       position: start,
-      title: 'Inicio de la alerta',
+      title: "Inicio de la alerta",
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        fillColor: '#22c55e',
+        fillColor: "#22c55e",
         fillOpacity: 1,
-        strokeColor: '#ffffff',
+        strokeColor: "#ffffff",
         strokeWeight: 1.5,
-        scale: 7
-      }
+        scale: 7,
+      },
     });
 
     const endMarker = new google.maps.Marker({
       map: this.map,
       position: end,
-      title: this.alert.status === 'resolved' ? 'Alerta finalizada/cancelada' : 'Última ubicación',
+      title:
+        this.alarm.estadoAlarma.id !== 1
+          ? this.alarm.estadoAlarma.descripcion
+          : "Última ubicación",
       icon: {
         path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-        fillColor: this.alert.status === 'resolved' ? '#ef4444' : '#f59e0b',
+        fillColor: this.alarm.estadoAlarma.id === 1 ? "#ef4444" : "#f59e0b",
         fillOpacity: 1,
-        strokeColor: '#ffffff',
+        strokeColor: "#ffffff",
         strokeWeight: 1,
-        scale: 6
-      }
+        scale: 6,
+      },
     });
 
     this.routeMarkers.push(startMarker, endMarker);
@@ -204,100 +219,105 @@ export class AlertDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getStatusColor(): string {
-    if (!this.alert) return '';
-    switch (this.alert.status) {
-      case 'active':
-        return '🔴 Activo';
-      case 'review':
-        return '🟡 En Revisión';
-      case 'dispatched':
-        return '🔵 Despachado';
-      case 'resolved':
-        return '🟢 Resuelto';
+    if (!this.alarm) return "";
+    switch (this.alarm.estadoAlarma.descripcion.toLowerCase()) {
+      case "active":
+        return "🔴 Activo";
+      case "review":
+        return "🟡 En Revisión";
+      case "dispatched":
+        return "🔵 Despachado";
+      case "resolved":
+        return "🟢 Resuelto";
       default:
-        return '';
+        return "";
     }
   }
 
   getPriorityColor(): string {
-    if (!this.alert) return '';
-    switch (this.alert.priority) {
-      case 'critical':
-        return '🔴 CRÍTICA';
-      case 'high':
-        return '🟠 ALTA';
-      case 'medium':
-        return '🟡 MEDIA';
-      case 'low':
-        return '🟢 BAJA';
+    if (!this.alarm) return "";
+    switch (this.alarm.prioridad.id) {
+      case 3:
+        return `🔴 ${this.alarm.prioridad.descripcion}`;
+      case 2:
+        return `🟠 ${this.alarm.prioridad.descripcion}`;
+      case 1:
+        return `🟡 ${this.alarm.prioridad.descripcion}`;
+      case 0:
+        return `🟢 ${this.alarm.prioridad.descripcion}`;
       default:
-        return '';
+        return "";
     }
   }
 
-  updateAlertStatus(newStatus: Alert['status']): void {
-    if (!this.alert || this.fieldsDisabled.status) return;
+  updateAlertStatus(status: number): void {
+    if (!this.alarm || this.fieldsDisabled.status) return;
 
-    this.alertService.updateAlertStatus(this.alert.id, newStatus).subscribe({
+    this.alarmService.updateAlarmStatus(this.alarm.alarmaId, status).subscribe({
       next: (updated) => {
-        this.alert = updated;
+        this.alarm = updated;
       },
       error: (error) => {
-        console.error('Error updating status:', error);
-      }
+        console.error("Error updating status:", error);
+      },
     });
   }
 
-  updateAlert(): void {
-    if (!this.alert) return;
+  updateAlertPriority(priority: number): void {
+    if (!this.alarm) return;
 
-    this.alertService.updateAlert(this.alert.id, this.alert).subscribe({
-      next: (updated) => {
-        this.alert = updated;
-        this.router.navigate(['/dashboard']);
-      },
-      error: (error) => {
-        console.error('Error updating alert:', error);
-      }
-    });
+    this.alarmService
+      .updateAlarmPriority(this.alarm.alarmaId, priority)
+      .subscribe({
+        next: (updated) => {
+          this.alarm = updated;
+        },
+        error: (error) => {
+          console.error("Error updating alarm:", error);
+        },
+      });
   }
 
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(["/dashboard"]);
   }
 
   getModeTitle(): string {
     switch (this.mode) {
-      case 'view':
-        return 'Ver Detalle';
-      case 'edit':
-        return 'Editar Alarma';
-      case 'verify':
-        return 'Verificar Alarma';
-      case 'notify':
-        return 'Notificar Autoridades';
+      case "view":
+        return "Ver Detalle";
+      case "edit":
+        return "Editar Alarma";
+      case "verify":
+        return "Verificar Alarma";
+      case "notify":
+        return "Notificar Autoridades";
       default:
-        return 'Detalle de Alarma';
+        return "Detalle de Alarma";
     }
   }
 
   getLocationHistory(): Location[] {
-    return this.alert?.locationHistory || [];
+    const locations = this.alarm?.ubicacionesAnteriores || [];
+    if (!!this.alarm?.ultimaUbicacion) {
+      locations.push(this.alarm.ultimaUbicacion);
+    }
+    return locations;
   }
 
   hasEvidence(): boolean {
-    return (this.alert?.evidenceUrls?.length || 0) > 0;
+    return (this.alarm?.evidencias?.length || 0) > 0;
   }
 
   getNearbyAuthorities() {
-    return this.alert?.nearbyAuthorities || [];
+    return this.alarm?.autoridades || [];
   }
 
-  getStatusLabel(status: Alert['status']): string {
+  getStatusLabel(status: number): string {
     return this.statusLabels[status];
   }
 
-  getPriorityLabel(priority: Alert['priority']): string {
+  getPriorityLabel(priority: number): string {
     return this.priorityLabels[priority];
   }
 }

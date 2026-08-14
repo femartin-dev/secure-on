@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.hibernate.query.SortDirection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -55,8 +56,8 @@ public class AlarmaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaHasta,
             @RequestParam(required = false) UUID operadorId,
             @RequestParam(required = false) Integer asignacionId,
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<AlarmaOperador> alarmas = asignacionService.listarAlarmas(estadoId, prioridad, fechaDesde, fechaHasta, operadorId, asignacionId, pageable);
+            @PageableDefault(size = 20) Pageable resultados) {
+        Page<AlarmaOperador> alarmas = asignacionService.listarAlarmas(estadoId, prioridad, fechaDesde, fechaHasta, operadorId, asignacionId, resultados);
         Page<AlarmaResponse> dtoPage = alarmas.map(AlarmaResponse::fromEntity);
         return ResponseEntity.ok(dtoPage);
     }
@@ -81,7 +82,6 @@ public class AlarmaController {
 
     @PutMapping("/{id}/cambiar-estado")
     public ResponseEntity<AlarmaResponse> actualizarEstadoAlarma(@PathVariable UUID id, @RequestBody AlarmaRequest dto) {
-
         Alarma alarma = alarmaService.actualizarEstado(id, dto.getEstadoId());
         return ResponseEntity.ok(AlarmaResponse.fromEntity(alarma));
     }

@@ -12,7 +12,7 @@ import com.secureon.common.model.entity.Usuario;
 
 @Repository
 public interface DispositivoRepository extends JpaRepository<Dispositivo, UUID> {
-    Optional<Dispositivo> findByUsuarioAndDispositivoAppId(Usuario usuario, UUID dispositivoAppId);
+    Optional<Dispositivo> findByUsuarioAndDispositivoAppId(Usuario usuario, String dispositivoAppId);
     Optional<Dispositivo> findByUsuarioAndNumero(Usuario usuario, String numero);
     List<Dispositivo> findByUsuario(Usuario usuario);
     List<Dispositivo> findByUsuarioAndEstaActivoTrue(Usuario usuario);

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -6,6 +6,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { AppSettings, BatterySettings } from '../../../../models/config.models';
 import { SettingsConfigDraftService } from '../../services/settings-config-draft.service';
 import { Constants } from '../../../../utils/constants.util';
+import { DeviceService } from '../../../../services/device.service';
 
 @Component({
   selector: 'app-performance-config',
@@ -14,11 +15,12 @@ import { Constants } from '../../../../utils/constants.util';
   templateUrl: './performance-config.component.html',
   styleUrl: './performance-config.component.css',
 })
-export class PerformanceConfigComponent {
+export class PerformanceConfigComponent implements OnInit {
   private readonly destroy$ = new Subject<void>();
   batteryMode: 'max' | 'balanced' | 'min' = 'balanced';
   private readonly section = 'battery' as const;
   validationMessage = '';
+  currentBatteryLevel: number | null = null;
 
   settings: BatterySettings = {
     umbralBateriaMedia: 50,
@@ -26,7 +28,10 @@ export class PerformanceConfigComponent {
     umbralBateriaCritica: 10,
   };
 
-  constructor(private settingsConfigDraftService: SettingsConfigDraftService) {
+  constructor(
+    private settingsConfigDraftService: SettingsConfigDraftService,
+    private deviceService: DeviceService
+  ) {
     this.settingsConfigDraftService.ensureInitialized();
     this.settingsConfigDraftService.draft$
       .pipe(
@@ -36,6 +41,10 @@ export class PerformanceConfigComponent {
       .subscribe((draft) => {
         this.settings = { ...draft.battery };
       });
+  }
+
+  ngOnInit(): void {
+    this.loadCurrentBatteryLevel();
   }
 
   onMaxThresholdChange(value: number | string): void {
@@ -107,6 +116,52 @@ export class PerformanceConfigComponent {
 
   private setValidationMessage(shouldShow: boolean, message: string): void {
     this.validationMessage = shouldShow ? message : '';
+  }
+
+  private async loadCurrentBatteryLevel(): Promise<void> {
+    const level = await this.deviceService.getBatteryLevel();
+    this.currentBatteryLevel = Number.isFinite(level) ? this.clamp(level as number, 0, 100) : null;
+  }
+
+  get batteryIndicatorPosition(): number {
+    return this.currentBatteryLevel ?? 0;
+  }
+
+  get batteryDisplayValue(): string {
+    return this.currentBatteryLevel === null ? '--' : `${Math.round(this.currentBatteryLevel)}%`;
+  }
+
+  get batteryStatusLabel(): string {
+    if (this.currentBatteryLevel === null) {
+      return 'Sin datos';
+    }
+
+    if (this.currentBatteryLevel <= this.settings.umbralBateriaCritica) {
+      return 'Critico';
+    }
+    if (this.currentBatteryLevel <= this.settings.umbralBateriaBaja) {
+      return 'Bajo';
+    }
+    if (this.currentBatteryLevel <= this.settings.umbralBateriaMedia) {
+      return 'Regular';
+    }
+    return 'Optimo';
+  }
+
+  get batteryIcon(): string {
+    if (this.currentBatteryLevel === null) {
+      return 'battery_unknown';
+    }
+    if (this.currentBatteryLevel <= this.settings.umbralBateriaCritica) {
+      return 'battery_alert';
+    }
+    if (this.currentBatteryLevel <= this.settings.umbralBateriaBaja) {
+      return 'battery_2_bar';
+    }
+    if (this.currentBatteryLevel <= this.settings.umbralBateriaMedia) {
+      return 'battery_5_bar';
+    }
+    return 'battery_full';
   }
 
   ngOnDestroy(): void {

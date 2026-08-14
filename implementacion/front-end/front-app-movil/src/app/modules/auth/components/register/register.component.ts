@@ -126,22 +126,11 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       await this.configService.createConfig(respUser?.userId || '', respDevice?.id || '').toPromise();
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      /*
-      this.router.navigate(['/login']);
-      if (respUser) {
-        await this.notificationService.showSuccess('Cuenta creada exitosamente');
-        //const deviceRequest = toDeviceRegistration(this.deviceInfo!, response.userId, this.f['telefono'].value?.trim() || '');
-        // register the device immediately for the new user
-        try {
-          //await this.authService.registerDevice(deviceRequest).toPromise();
-        } catch (err) {
-          console.warn('Device registration failed:', err);
-        }
 
-        // without logging in auto, send user to login screen
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        this.router.navigate(['/login']);
-      }*/
+      await this.notificationService.showSuccess('Cuenta creada exitosamente');
+
+      this.goToLogin();
+
     } catch (error: any) {
       this.showError(error?.message || error?.error?.mensaje || 'Error al crear la cuenta');
     } finally {

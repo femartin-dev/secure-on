@@ -3,7 +3,7 @@ import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  
+
   // Auth module (lazy loaded)
   {
     path: 'auth',
@@ -32,5 +32,5 @@ export const routes: Routes = [
   },
 
   // Fallback
-  { path: '**', redirectTo: '/dashboard' }
+  { path: '**', redirectTo: '/main' }
 ];

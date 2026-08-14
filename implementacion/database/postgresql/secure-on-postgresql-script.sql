@@ -149,7 +149,7 @@ CREATE TABLE secure_on_movil.dispositivos (
     dispositivo_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	user_id UUID NOT NULL
         REFERENCES secure_on_movil.usuarios(user_id) ON DELETE RESTRICT,
-    dispositivo_app_id UUID NOT NULL,
+    dispositivo_app_id VARCHAR(50) NOT NULL,
     numero VARCHAR(20) NOT NULL,
 	fabricante VARCHAR(50),
 	modelo VARCHAR(50),

@@ -55,7 +55,7 @@ ws-gateway:
 api-gateway:
     server_url: http://localhost:8090
     endpoints:
-        ws-internal: /ws/internal
+        ws-internal: /ws/internal/enviar
         app-movil: /api/secure-on/servicios-moviles
         cmd-control: /api/secure-on/centro-de-monitoreo
         seguridad: /api/secure-on/seguridad
@@ -63,7 +63,7 @@ api-gateway:
 app:
     repository:
         path: 
-            evidencias: c:/secure-on-dev/evidencias/
+            evidencias: C:\Users\fjmv2\Proyectos\Repositorios\secure-on\evidencias
     jwt:
         secret: rN3tF0nX5kK7d8JmP4z6Ww2Xb3L0E9A5R8Q1sHjDkC7ZP2M4J9F6LQYtE8gVwUSecret34frt34EMUIrsCore45
         expiration: 86400000     # 24 horas en milisegundos

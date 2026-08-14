@@ -1,43 +1,42 @@
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'admin' | 'operator' | 'supervisor';
-  phone?: string;
-  address?: string;
-  isActive: boolean;
-  lastLogin?: Date;
-}
+import { Operator, PersonData } from "./person.models";
 
-export interface AuthResponse {
-  token: string;
-  user: User;
-}
 
 
 export interface LoginRequest {
-  username: string;
-  password: string;
-  appId?: string; // Opcional: para identificar dispositivo o mock en web
-}
-
-export interface RegisterRequest {
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  address: string;
-  password: string;
-  confirmPassword?: string;
+  email?: string;
   legajo?: number;
-  supervisorId?: string;
+  password: string;
+  dispositivoAppId: string;
 }
 
-export interface Supervisor {
+export interface LoginResponse {
+  token: string;
   id: string;
+  email: string;
   nombre: string;
   apellido: string;
   legajo: number;
+  esAdministrador: boolean;
+  expiracion: string;
 }
+
+export interface RegisterRequest {
+  nombre: string;
+  apellido: string;
+  telefono: string;
+  direccion: string;
+  email: string;
+  legajo: number;
+  password: string;
+  esAdministrador: boolean;
+  supervisorId: string | null;
+}
+
+export interface RegisterResponse extends PersonData {
+  operadorId: string;
+  legajo: number;
+  esAdministrador: boolean;
+}
+
+
+

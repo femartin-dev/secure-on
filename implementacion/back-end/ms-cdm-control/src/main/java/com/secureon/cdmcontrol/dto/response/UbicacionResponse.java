@@ -6,8 +6,9 @@ import java.util.UUID;
 
 import org.locationtech.jts.geom.Point;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.secureon.common.model.converter.PointSerializer;
 import com.secureon.common.model.entity.MetodoUbicacion;
 import com.secureon.common.model.entity.Ubicacion;
 
@@ -20,7 +21,6 @@ import lombok.Data;
 public class UbicacionResponse {
     private UUID id;
     private UUID alarmaId;
-    private Point posicion;
     private BigDecimal latitud;
     private BigDecimal longitud;
     private Integer precisionToma;
@@ -39,7 +39,6 @@ public class UbicacionResponse {
         return UbicacionResponse.builder()
                                 .id(u.getId())
                                 .alarmaId(u.getAlarma().getId())
-                                .posicion(u.getPosicion())
                                 .precisionToma(u.getPrecision())
                                 .latitud(getValorCoordenadas(u,LAT))
                                 .longitud(getValorCoordenadas(u,LNG))

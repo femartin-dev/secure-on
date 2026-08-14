@@ -31,16 +31,20 @@
     </div>
     -->
   </div>
+  <div class="w-full max-w-[280px] mb-4">
+    <div class="min-h-[52px] flex items-center justify-center">
+      <!-- Error -->
+      <div *ngIf="error" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm leading-tight animate-shake break-words">
+        {{ error }}
+      </div>
 
-  <!-- Error -->
-  <div *ngIf="error" class="w-full bg-red-900/30 border border-red-700/50 rounded-xl p-3 text-red-300 text-center text-sm mb-4 animate-shake">
-    {{ error }}
+      <!-- Loading -->
+      <div *ngIf="loading" class="flex items-center gap-2 text-white text-sm">
+        <span class="animate-spin material-symbols-outlined">sync</span> Verificando...
+      </div>
+    </div>
   </div>
 
-  <!-- Loading -->
-  <div *ngIf="loading" class="flex items-center gap-2 text-white mb-4">
-    <span class="animate-spin material-symbols-outlined">sync</span> Verificando...
-  </div>
 
   <!-- Keypad -->
   <div class="w-full max-w-[280px] mx-auto mt-2">
@@ -68,6 +72,7 @@
         </button>
       </div>
     </div>
+
   </div>
   <!-- Attempts
   <div *ngIf="attempts > 0" class="flex items-center gap-2 mt-6">

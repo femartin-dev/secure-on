@@ -1,3 +1,7 @@
-<div class="app-container">
+<div class="native-header" *ngIf="isNativePlatform"></div>
+
+<div class="app-container" [class.native-safe]="isNativePlatform">
   <router-outlet></router-outlet>
 </div>
+
+<div class="native-footer" *ngIf="isNativePlatform"></div>

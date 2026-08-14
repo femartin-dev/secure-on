@@ -19,7 +19,7 @@ public class RegistrarDispositivoRequest {
     private UUID usuarioId;
 
     @NotNull
-    private UUID dispositivoAppId; 
+    private String dispositivoAppId; 
 
     @NotBlank
     @Pattern(regexp = "\\+?[0-9]{10,15}", message = "{err.phone.not-valid}")

@@ -2,11 +2,17 @@ package com.secureon.common.dto;
 
 import java.time.OffsetDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.secureon.common.property.WsDestinoEnum;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EventoDTO {
     private String destino;
     private Object payload;

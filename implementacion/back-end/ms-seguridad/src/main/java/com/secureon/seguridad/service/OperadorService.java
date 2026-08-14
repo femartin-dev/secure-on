@@ -91,11 +91,13 @@ public class OperadorService {
 
         return LoginResponse.builder()
                 .token(sesion.getTokenRestablecimiento())
-                .id(operador.getId()) // No aplica para operadores
+                .id(operador.getId()) 
                 .email(operador.getEmail())
                 .nombre(operador.getNombre())
                 .apellido(operador.getApellido())
                 .expiracion(sesion.getExpiracionToken())
+                .esAdministrador(operador.getEsAdministrador())
+                .legajo(operador.getLegajo())
                 .build();
     }
 

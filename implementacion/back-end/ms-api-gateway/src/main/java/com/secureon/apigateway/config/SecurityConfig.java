@@ -23,6 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 public class SecurityConfig {
     @Value("${api-gateway.security.paths-habilitados}")
     private String allowedRequestPath;
+    @Value("${api-gateway.config.cors.allowed-origins}")
+    private String allowedOrigins;
+    @Value("${api-gateway.config.cors.allowed-methods}")
+    private String allowedMethods;
+    @Value("${api-gateway.config.cors.allowed-headers}")
+    private String allowedHeaders;
+    @Value("${api-gateway.config.cors.allow-credentials}")
+    private boolean allowCredentials;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -39,16 +47,12 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        List<String> allowedOrigins = new java.util.ArrayList<>();
-        allowedOrigins.add("http://localhost:3000");
-        IntStream.rangeClosed(4200, 4220)
-                .forEach(port -> allowedOrigins.add("http://localhost:" + port));
 
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(allowedOrigins);
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowCredentials(true);
+        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        config.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+        config.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+        config.setAllowCredentials(allowCredentials);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

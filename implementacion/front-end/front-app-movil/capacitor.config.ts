@@ -5,18 +5,18 @@ const config: CapacitorConfig = {
   appName: 'SecureOn',
   webDir: 'dist/secureon-app-movil',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
   },
   plugins: {
     SplashScreen: {
       launchAutoHide: true,
-      androidScaleType: 'CENTER_CROP'
+      androidScaleType: 'CENTER_CROP',
     },
     StatusBar: {
       style: 'dark',
-      backgroundColor: '#ffffff'
-    }
-  }
+      backgroundColor: '#ffffff',
+    },
+  },
 };
 
 export default config;

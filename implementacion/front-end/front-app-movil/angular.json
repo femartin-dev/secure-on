@@ -68,6 +68,9 @@
               "buildTarget": "secureon-app-movil:build:development"
             }
           },
+          "options": {
+            "proxyConfig": "proxy.conf.js"
+          },
           "defaultConfiguration": "development"
         },
         "test": {

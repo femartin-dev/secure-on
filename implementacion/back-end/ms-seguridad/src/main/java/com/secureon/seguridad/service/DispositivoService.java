@@ -73,7 +73,7 @@ public class DispositivoService {
                 .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.device.not-found")));
     }
 
-    public Dispositivo obtenerPorAppId(Usuario usuario, UUID dispositivoAppId) {
+    public Dispositivo obtenerPorAppId(Usuario usuario, String dispositivoAppId) {
         return dispositivoRepository.findByUsuarioAndDispositivoAppId(usuario, dispositivoAppId)
                 .orElseThrow(() -> new ResourceNotFoundException(messageService.getMessage("err.device.not-found")));
     }

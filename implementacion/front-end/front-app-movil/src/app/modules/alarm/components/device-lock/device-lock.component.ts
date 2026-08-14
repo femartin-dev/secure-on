@@ -17,6 +17,7 @@ import { PasswordCheckComponent } from '@app/modules/common/components/password-
 import { PatternTouchComponent } from '@app/modules/common/components/pattern-touch/pattern-touch.component';
 import { ConfigService } from '@app/services/config.service';
 import { ValidationService } from '@app/services/validation.service';
+import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-device-lock',
@@ -48,6 +49,7 @@ export class DeviceLockComponent implements OnInit, OnDestroy {
   address = 'Obteniendo ubicación...';
   city = '';
   mapUrl: SafeResourceUrl | null = null;
+  mapLoadState: 'loading' | 'ready' | 'error' = 'loading';
 
   // ─── Embedded credentials ──────────
   showCredentials = false;
@@ -140,13 +142,34 @@ export class DeviceLockComponent implements OnInit, OnDestroy {
       const loc = await this.geolocationService.getCurrentLocation();
       if (loc) {
         this.currentLocation = loc;
-        const mapsEmbedUrl = `https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}&z=16&output=embed`;
+        const mapsEmbedUrl = this.buildMapEmbedUrl(loc.latitude, loc.longitude);
         this.mapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(mapsEmbedUrl);
+        this.mapLoadState = 'ready';
         this.reverseGeocode(loc.latitude, loc.longitude);
+      } else {
+        this.mapLoadState = 'error';
+        this.address = 'GPS no disponible';
+        this.city = 'Activa permisos de ubicación';
       }
     } catch {
       this.address = 'GPS no disponible';
+      this.city = 'Activa permisos de ubicación';
+      this.mapLoadState = 'error';
     }
+  }
+
+  private buildMapEmbedUrl(lat: number, lng: number): string {
+    if (Capacitor.isNativePlatform()) {
+      // OSM embed is generally more reliable than Google iframe inside mobile WebViews.
+      const delta = 0.003;
+      const left = lng - delta;
+      const right = lng + delta;
+      const top = lat + delta;
+      const bottom = lat - delta;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${lat}%2C${lng}`;
+    }
+
+    return `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
   }
 
   private async reverseGeocode(lat: number, lng: number): Promise<void> {
@@ -256,7 +279,7 @@ export class DeviceLockComponent implements OnInit, OnDestroy {
     try {
       const result = await this.alarmService.finalizeAlarm(tipoCancel, '');
       if (result) {
-        this.router.navigate(['/main']);
+        this.router.navigate(['/alarm/post-cuestionario']);
       } else {
         this.handleFailedAttempt(
           tipoCancel === 'PIN'

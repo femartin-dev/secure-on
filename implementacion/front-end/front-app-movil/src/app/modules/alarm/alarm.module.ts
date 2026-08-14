@@ -5,6 +5,7 @@ import { AlarmActivationComponent } from './components/alarm-activation/alarm-ac
 import { AlarmCancellationComponent } from './components/alarm-cancellation/alarm-cancellation.component';
 import { DeviceLockComponent } from './components/device-lock/device-lock.component';
 import { AlarmRoutingModule } from './alarm-routing.module';
+import { PostAlarmQuestionnaireComponent } from './components/post-alarm-questionnaire/post-alarm-questionnaire.component';
 
 @NgModule({
   declarations: [],
@@ -15,6 +16,7 @@ import { AlarmRoutingModule } from './alarm-routing.module';
     AlarmActivationComponent,
     AlarmCancellationComponent,
     DeviceLockComponent,
+    PostAlarmQuestionnaireComponent,
     AlarmRoutingModule
   ]
 })

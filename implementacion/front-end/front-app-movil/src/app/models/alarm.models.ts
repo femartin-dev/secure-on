@@ -9,10 +9,6 @@ import { Ubicacion } from "./evidence.models";
 export type AlarmStatus = 'ACTIVA' | 'CANCELADA' | 'FINALIZADA' | 'PENDIENTE';
 export type CancellationMethod = 'PASSWORD' | 'PIN' | 'PATTERN' | 'FINGERPRINT' | 'FACE_ID';
 
-// ──────────────────────────────────────────────
-// Location
-// ──────────────────────────────────────────────
-
 
 
 // ──────────────────────────────────────────────
@@ -44,8 +40,7 @@ export interface AlarmActivationResponse {
 // ──────────────────────────────────────────────
 
 export interface AlarmFinalizationRequest {
-  motivo: string;
-  detalles?: string;
+  fechaFinalizacion?: string; // ISO 8601 timestamp
 }
 
 // ──────────────────────────────────────────────

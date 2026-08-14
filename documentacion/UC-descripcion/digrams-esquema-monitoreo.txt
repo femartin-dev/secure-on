@@ -1,0 +1,1358 @@
++------------+
+|   UC-029   |
++------------+
+
+
+Te comparto los diagramas solicitados para el caso de uso UC-029 – Gestionar Alarmas Entrantes, siguiendo el enfoque del Proceso Unificado (Jacobson, Booch, Rumbaugh). Incluyo el código PlantUML y un bosquejo conceptual de cada uno.
+
+1. Diagrama de Actividad
+Representa el flujo de trabajo entre el actor (operador/administrador) y el sistema, modelando decisiones y caminos alternativos tal como aparecen en la especificación.
+
+plantuml
+@startuml
+|Actor|
+start
+:Accede al tablero principal
+(tras iniciar sesión);
+
+|Sistema|
+:Recupera alarmas activas
+asignadas al operador;
+
+if (¿Es administrador?) then (sí)
+  :Recupera todas las alarmas activas,
+  no asignadas y finalizadas del turno;
+else (no)
+endif
+
+:Muestra tablero de monitoreo
+(mapa + listado);
+
+repeat
+  :Actualiza automáticamente
+  cada 15 segundos;
+  :Espera evento;
+repeat while (¿Nueva alarma entrante?) is (no)
+-> sí;
+
+if (¿Operador es administrador?) then (sí)
+  :Ejecuta UC-032
+  (asignar operador disponible);
+  :Muestra notificación de nueva entrada
+  para el administrador;
+else (no)
+  :Muestra nueva alarma asignada al operador;
+endif
+
+|Actor|
+:Selecciona ver detalle
+de la nueva alarma;
+
+|Sistema|
+:Inicia temporizador (20 s);
+
+while (¿Temporizador expirado?) is (no)
+  if (¿Operador tomó la alarma?) then (sí)
+    break
+  else (no)
+  endif
+endwhile (sí)
+
+if (¿Operador no tomó la alarma?) then (sí)
+  :Refuerza notificación
+  y reinicia temporizador (20 s);
+  if (¿Operador sigue sin tomar?) then (sí)
+    :Actualiza alarma → "no tomada";
+    :Ejecuta UC-032 (reasignar a otro operador);
+    :Envía mail al administrador de turno;
+    stop
+  else (no)
+  endif
+else (no)
+endif
+
+:Actualiza alarma → "en verificación"
+(con timestamp);
+:Ejecuta UC-030 (ver detalle de alarma);
+stop
+@enduml
+Bosquejo:
+El diagrama muestra dos carriles (Actor/Sistema). Arranca con el acceso al tablero, la recuperación de alarmas condicionada por permisos de administrador, la presentación visual, el ciclo de refresco automático y la detección de nueva alarma. Luego se bifurca según el tipo de operador. La interacción principal es la selección de detalle por parte del operador, con control de tiempo de respuesta; si expira, se reasigna. Finaliza con el cambio de estado a “en verificación” y la llamada al UC-030.
+
+2. Diagrama de Estado
+Describe el ciclo de vida de una Alarma desde que ingresa hasta que es atendida o reasignada, de acuerdo a las transiciones que aparecen en el caso de uso.
+
+plantuml
+@startuml
+[*] --> Activa : nueva alarma entrante
+
+Activa --> Asignada : UC-032 asigna operador
+Activa --> Asignada : administrador asigna manualmente
+
+Asignada --> EnVerificación : operador selecciona detalle (dentro de 20 s)
+Asignada --> NoTomada : timeout 20 s (sin acción del operador)
+
+NoTomada --> Asignada : UC-032 reasigna a otro operador
+
+EnVerificación --> [*] : UC-030 inicia gestión
+@enduml
+Bosquejo:
+Los estados capturan el comportamiento descrito:
+
+Activa: la alarma recién ingresó.
+
+Asignada: ya tiene un operador responsable.
+
+En verificación: el operador la tomó y comenzó la revisión.
+
+No tomada: venció el tiempo de espera sin acción.
+Las transiciones reflejan el flujo principal y el alternativo de timeout con reasignación. El estado final ocurre cuando se dispara el UC-030 desde “En verificación”.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases con los estereotipos del Proceso Unificado:
+<<A>> (Actor), <<I>> (Interfaz), <<C>> (Controlador), <<E>> (Entidad).
+
+plantuml
+@startuml
+actor "Operador CdM" as op <<A>>
+actor "Administrador CdM" as adm <<A>>
+
+class "TableroPrincipalUI" as ui <<I>>
+class "MapaInteractivo" as mapa <<I>>
+class "ControladorGestionAlarmas" as ctrl <<C>>
+class "Alarma" as alarma <<E>>
+class "Operador" as operadorE <<E>>
+class "Asignacion" as asign <<E>>
+
+op --> ui : interactúa
+adm --> ui : interactúa
+ui --> ctrl : solicita operaciones
+ui --> mapa : contiene
+ctrl --> alarma : gestiona
+ctrl --> asign : consulta/asigna
+asign --> operadorE : vincula
+asign --> alarma : vincula
+@enduml
+Bosquejo:
+
+Actores (estereotipados <<A>>) representan al operador y administrador.
+
+Interfaz <<I>> principal es TableroPrincipalUI, que contiene un MapaInteractivo.
+
+Controlador <<C>> ControladorGestionAlarmas centraliza la lógica del UC.
+
+Entidades <<E>>: Alarma (estado, ubicación, evidencias), Operador (datos del usuario), Asignacion (relación alarma-operador con timestamps).
+
+Las relaciones muestran que el controlador conoce alarmas y asignaciones, y la asignación conecta operador con alarma.
+
+4. Diagrama de Colaboración
+Muestra las mismas clases de análisis con los mensajes que intercambian para ejecutar el flujo principal del UC.
+
+plantuml
+@startuml
+actor Operador
+actor Administrador
+
+boundary TableroPrincipalUI
+boundary MapaInteractivo
+control ControladorGestionAlarmas
+entity Alarma
+entity Asignacion
+entity Operador
+
+Operador -> TableroPrincipalUI : 1. accederTablero()
+TableroPrincipalUI -> ControladorGestionAlarmas : 2. recuperarAlarmasActivas()
+ControladorGestionAlarmas -> Alarma : 3. obtenerAlarmasAsignadas(operador)
+Alarma --> ControladorGestionAlarmas : listaAlarmas
+ControladorGestionAlarmas -> Asignacion : 4. verificarAsignaciones()
+ControladorGestionAlarmas --> TableroPrincipalUI : 5. datosTablero(alarmas)
+TableroPrincipalUI -> MapaInteractivo : 6. mostrarMarcadores(alarmas)
+TableroPrincipalUI -> Operador : 7. mostrar listado + mapa
+
+... nueva alarma entrante ...
+
+ControladorGestionAlarmas -> Alarma : 8. detectarNuevaAlarma()
+ControladorGestionAlarmas -> Asignacion : 9. asignarOperador(alarma, operador)
+ControladorGestionAlarmas -> TableroPrincipalUI : 10. notificarNuevaAlarma(alarma)
+
+Operador -> TableroPrincipalUI : 11. seleccionarDetalle(alarma)
+TableroPrincipalUI -> ControladorGestionAlarmas : 12. tomarAlarma(alarma)
+ControladorGestionAlarmas -> Alarma : 13. actualizarEstado("en verificación")
+ControladorGestionAlarmas -> TableroPrincipalUI : 14. iniciarUC030()
+@enduml
+Bosquejo:
+Los mensajes numerados reproducen la secuencia del UC: desde la carga inicial del tablero (1-7) hasta la recepción de una nueva alarma (8-10) y la toma de la alarma por el operador (11-14). Los mensajes viajan entre la interfaz, el controlador y las entidades de dominio. Se omitió el flujo alternativo de timeout para no sobrecargar, pero se podría añadir con alt.
+
+5. Diagrama de Secuencia
+Detalla la interacción temporal entre los objetos, incluyendo líneas de vida y fragmentos combinados para modelar el camino principal y la alternativa de timeout.
+
+plantuml
+@startuml
+actor Operador
+participant "TableroPrincipalUI" as UI
+participant "MapaInteractivo" as Mapa
+participant "ControladorGestionAlarmas" as Ctrl
+participant "Alarma" as A
+participant "Asignacion" as Asig
+participant "Operador" as OpE
+
+Operador -> UI : accederTablero()
+activate UI
+UI -> Ctrl : recuperarAlarmasActivas()
+activate Ctrl
+Ctrl -> A : obtenerAlarmasAsignadas(operador)
+activate A
+A --> Ctrl : lista alarmas
+deactivate A
+Ctrl -> Asig : verificarAsignaciones()
+activate Asig
+Asig --> Ctrl : estado asignaciones
+deactivate Asig
+Ctrl --> UI : datosTablero(alarmas)
+deactivate Ctrl
+UI -> Mapa : mostrarMarcadores(alarmas)
+activate Mapa
+Mapa --> UI : renderizado
+deactivate Mapa
+UI --> Operador : tablero completo
+deactivate UI
+
+loop cada 15 seg o refresco manual
+  Operador -> UI : refrescar()
+  UI -> Ctrl : recuperarAlarmasActivas()
+  note right: actualización automática
+end
+
+... nueva alarma entrante ...
+
+Ctrl -> A : detectarNuevaAlarma()
+activate Ctrl
+activate A
+A --> Ctrl : nueva alarma
+deactivate A
+Ctrl -> Asig : asignarOperador(alarma, operador)
+activate Asig
+Asig --> Ctrl : ok
+deactivate Asig
+Ctrl -> UI : notificarNuevaAlarma(alarma)
+UI --> Operador : alerta visual/sonora
+deactivate Ctrl
+
+Operador -> UI : seleccionarDetalle(alarma)
+activate UI
+UI -> Ctrl : tomarAlarma(alarma)
+activate Ctrl
+Ctrl -> A : actualizarEstado("en verificación")
+activate A
+A --> Ctrl : timestamp
+deactivate A
+
+alt timeout 20 s sin respuesta
+  Ctrl -> UI : reforzarNotificacion()
+  UI --> Operador : segunda alerta
+  ... espera otros 20 s ...
+  Operador -> UI : (sin acción)
+  UI -> Ctrl : timeoutExpirado()
+  Ctrl -> A : actualizarEstado("no tomada")
+  Ctrl -> Asig : reasignarOperador()
+  Ctrl -> UI : notificarAdmin()
+else operador toma la alarma
+  Ctrl --> UI : iniciarUC030()
+  deactivate Ctrl
+  UI --> Operador : pantalla detalle UC-030
+end
+deactivate UI
+@enduml
+Bosquejo:
+La secuencia refleja el flujo principal con líneas de vida para cada objeto de análisis. Incluye:
+
+Carga del tablero.
+
+Bucle de refresco.
+
+Detección de nueva alarma y asignación.
+
+Toma de la alarma por el operador.
+
+Fragmento alt que modela el timeout/refuerzo y posible reasignación, o bien la continuación normal con la llamada al UC-030.
+Se destaca el ciclo de vida de los objetos con activaciones y desactivaciones.
+
+Estos diagramas cubren la especificación completa del UC-029 desde las distintas perspectivas del Proceso Unificado. Si necesitas que ajuste algún detalle o que profundice en un escenario particular, quedo atento.
+
+
+
++------------+
+|   UC-030   |
++------------+
+
+
+A continuación, se presentan los diagramas solicitados para el caso de uso UC-030 – Verificar Alarma, modelados según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Cada diagrama incluye su código PlantUML y un bosquejo conceptual.
+
+1. Diagrama de Actividad
+Representa el flujo de acciones entre el operador y el sistema, incluyendo el camino principal, el modo consulta y la alternativa de descarte.
+
+plantuml
+@startuml
+|Operador|
+start
+:Selecciona una alarma
+desde el tablero del CdM;
+
+|Sistema|
+:Obtiene autoridades más cercanas
+(ejecuta UC-013);
+:Abre vista detallada de la alarma;
+
+if (¿Modo consulta?) then (sí)
+  :Muestra campos y botones deshabilitados;
+  :Habilita botón "Cerrar";
+  |Operador|
+  :Presiona "Cerrar";
+  stop
+else (no)
+  repeat
+    :Muestra vista detallada con:
+    - Datos del usuario
+    - Mapa y ubicación
+    - Evidencias (audio, fotos, batería)
+    - Listado de autoridades
+    - Selector de prioridad
+    - Botones "Notificar Autoridades" y "Descartar Alarma";
+    |Operador|
+    :Revisa información y evidencias;
+    if (¿Acción?) then (Notificar Autoridades)
+      :Selecciona prioridad y autoridades,
+      presiona "Notificar Autoridades";
+      |Sistema|
+      :Actualiza estado de alarma,
+      registra acción con timestamp;
+      :Notifica a las autoridades
+      (ejecuta UC-031);
+      :Muestra mensaje "Alarma verificada y priorizada";
+      stop
+    else (Descartar Alarma)
+      :Selecciona "Descartar Alarma";
+      |Sistema|
+      :Muestra diálogo de confirmación
+      con campo de motivo;
+      |Operador|
+      if (¿Confirmar descarte?) then (sí)
+        :Ingresa motivo y confirma;
+        |Sistema|
+        :Registra motivo y timestamp;
+        :Retira alarma de lista prioritaria;
+        :Envía señal para finalizar
+        alarma en dispositivo del usuario;
+        stop
+      else (no) (Cancelar)
+        :Cancela operación;
+        |Sistema|
+        :Retorna a la vista detallada;
+      endif
+    endif
+  repeat while (se canceló el descarte)
+endif
+@enduml
+Bosquejo:
+El diagrama usa dos carriles. Se inicia con la selección de la alarma y la ejecución de UC‑013. Luego se evalúa si la vista se abre en modo consulta (campos bloqueados); en ese caso el operador solo puede cerrar y terminar. Si no, entra en un bucle que muestra la vista completa. El operador puede elegir notificar (actualiza estado, llama a UC‑031 y finaliza) o descartar. En la rama de descarte se muestra un diálogo de confirmación; si se confirma, se registra el motivo, se retira la alarma y se envía señal al dispositivo; si se cancela, se regresa a la vista detallada. La notificación siempre termina el flujo.
+
+2. Diagrama de Estado
+Modela el ciclo de vida de la entidad Alarma en el contexto de este caso de uso, considerando los estados previos y posteriores a la verificación.
+
+plantuml
+@startuml
+[*] --> Nueva : alarma creada
+[*] --> EnVerificación : operador toma alarma (UC-029)
+
+Nueva --> Verificada : operador notifica autoridades
+Nueva --> Descartada : operador descarta alarma
+
+EnVerificación --> Verificada : operador notifica autoridades
+EnVerificación --> Descartada : operador descarta alarma
+
+Verificada --> [*]
+Descartada --> [*]
+@enduml
+Bosquejo:
+Los estados posibles son:
+
+Nueva: la alarma aún no ha sido revisada.
+
+En verificación: un operador la ha tomado pero no ha completado la verificación.
+
+Verificada: el operador confirmó la emergencia y notificó a las autoridades.
+
+Descartada: el operador la consideró falsa alarma y la eliminó de la atención prioritaria.
+Las transiciones muestran que desde Nueva o En verificación se puede pasar a Verificada (flujo principal) o a Descartada (alternativo). Ambos estados finales conducen al fin del proceso dentro de este UC.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con los estereotipos del Proceso Unificado: <<A>> (Actor), <<I>> (Interfaz), <<C>> (Controlador), <<E>> (Entidad), y sus relaciones.
+
+plantuml
+@startuml
+actor "Operador CdM" as op <<A>>
+
+class "PantallaVerificarAlarma" as ui <<I>>
+class "DialogoDescarte" as dialogo <<I>>
+
+class "ControladorVerificarAlarma" as ctrl <<C>>
+
+class "Alarma" as alarma <<E>>
+class "Evidencia" as evidencia <<E>>
+class "Usuario" as usuario <<E>>
+class "Autoridad" as autoridad <<E>>
+class "HistorialAlarma" as historial <<E>>
+class "DispositivoUsuario" as dispositivo <<E>>
+
+op --> ui : interactúa
+ui --> ctrl : solicita operaciones
+ui --> dialogo : muestra/oculta
+
+ctrl --> alarma : actualiza estado/prioridad
+ctrl --> evidencia : consulta
+ctrl --> usuario : obtiene datos
+ctrl --> autoridad : obtiene cercanas
+ctrl --> historial : registra acciones
+ctrl --> dispositivo : envía señal de finalización
+@enduml
+Bosquejo:
+
+Actor <<A>>: Operador CdM.
+
+Interfaces <<I>>: PantallaVerificarAlarma (vista detallada) y DialogoDescarte (confirmación de descarte).
+
+Controlador <<C>>: ControladorVerificarAlarma centraliza la lógica de verificación.
+
+Entidades <<E>>:
+
+Alarma: estado, prioridad, timestamps.
+
+Evidencia: audio, fotos, nivel de batería.
+
+Usuario: datos del ciudadano que activó la alarma.
+
+Autoridad: estaciones de policía, bomberos, etc.
+
+HistorialAlarma: registro de acciones y motivos.
+
+DispositivoUsuario: para enviar la señal de finalización cuando se descarta.
+Las relaciones muestran que la interfaz se comunica con el controlador, y este con las distintas entidades para leer o modificar la información.
+
+4. Diagrama de Colaboración
+Muestra las mismas clases de análisis con los mensajes que se intercambian durante la ejecución del flujo principal.
+
+plantuml
+@startuml
+actor Operador
+boundary PantallaVerificarAlarma
+boundary DialogoDescarte
+control ControladorVerificarAlarma
+entity Alarma
+entity Evidencia
+entity Usuario
+entity Autoridad
+entity HistorialAlarma
+entity DispositivoUsuario
+
+Operador -> PantallaVerificarAlarma : 1. seleccionarAlarma(alarma)
+PantallaVerificarAlarma -> ControladorVerificarAlarma : 2. iniciarVerificacion(alarma)
+ControladorVerificarAlarma -> Autoridad : 3. obtenerAutoridadesCercanas(ubicacion)
+Autoridad --> ControladorVerificarAlarma : lista autoridades
+ControladorVerificarAlarma -> Alarma : 4. obtenerDatos()
+ControladorVerificarAlarma -> Evidencia : 5. obtenerEvidencias()
+ControladorVerificarAlarma -> Usuario : 6. obtenerDatosUsuario()
+ControladorVerificarAlarma --> PantallaVerificarAlarma : 7. datosCompletos(alarma, evidencias, usuario, autoridades)
+PantallaVerificarAlarma -> Operador : 8. mostrar vista detallada
+
+Operador -> PantallaVerificarAlarma : 9. notificarAutoridades(prioridad, autoridadesSeleccionadas)
+PantallaVerificarAlarma -> ControladorVerificarAlarma : 10. verificarAlarma(alarma, prioridad, autoridades)
+ControladorVerificarAlarma -> Alarma : 11. actualizarEstado("Verificada", prioridad)
+ControladorVerificarAlarma -> HistorialAlarma : 12. registrarAccion("verificada", timestamp)
+ControladorVerificarAlarma -> "UC-031" : 13. ejecutarNotificacion()
+ControladorVerificarAlarma --> PantallaVerificarAlarma : 14. confirmacion
+PantallaVerificarAlarma -> Operador : 15. "Alarma verificada y priorizada"
+@enduml
+Bosquejo:
+Los mensajes reflejan la secuencia completa del caso de uso:
+
+El operador selecciona la alarma (1).
+
+La interfaz pide al controlador que inicie la verificación (2).
+
+El controlador consulta las entidades (autoridades cercanas, datos de la alarma, evidencias, usuario) (3‑6).
+
+Devuelve los datos a la interfaz, que los presenta al operador (7‑8).
+
+El operador decide notificar (9); la interfaz lo comunica al controlador (10).
+
+El controlador actualiza la alarma (11), registra en el historial (12) y ejecuta UC‑031 (13).
+
+Finalmente se notifica al operador del éxito (14‑15).
+La alternativa de descarte se omite por brevedad, pero seguiría un patrón similar con interacción con DialogoDescarte y DispositivoUsuario.
+
+5. Diagrama de Secuencia
+Detalla la interacción temporal, con líneas de vida, activaciones y fragmentos combinados para modelar el flujo principal y la alternativa de descarte.
+
+plantuml
+@startuml
+actor Operador
+participant "PantallaVerificarAlarma" as UI
+participant "ControladorVerificarAlarma" as Ctrl
+participant "Alarma" as A
+participant "Evidencia" as Evi
+participant "Usuario" as U
+participant "Autoridad" as Aut
+participant "HistorialAlarma" as Hist
+participant "DispositivoUsuario" as Disp
+participant "UC031" as UC031
+
+Operador -> UI : seleccionarAlarma(alarma)
+activate UI
+UI -> Ctrl : iniciarVerificacion(alarma)
+activate Ctrl
+Ctrl -> Aut : obtenerAutoridadesCercanas(ubicacion)
+activate Aut
+Aut --> Ctrl : lista autoridades
+deactivate Aut
+Ctrl -> A : obtenerDatos()
+activate A
+A --> Ctrl : datos alarma
+deactivate A
+Ctrl -> Evi : obtenerEvidencias()
+activate Evi
+Evi --> Ctrl : evidencias
+deactivate Evi
+Ctrl -> U : obtenerDatosUsuario()
+activate U
+U --> Ctrl : datos usuario
+deactivate U
+Ctrl --> UI : datosCompletos(alarma, evidencias, usuario, autoridades)
+deactivate Ctrl
+UI --> Operador : mostrar vista detallada
+deactivate UI
+
+alt notificar autoridades
+    Operador -> UI : notificarAutoridades(prioridad, autoridadesSeleccionadas)
+    activate UI
+    UI -> Ctrl : verificarAlarma(alarma, prioridad, autoridades)
+    activate Ctrl
+    Ctrl -> A : actualizarEstado("Verificada", prioridad)
+    activate A
+    A --> Ctrl : ok
+    deactivate A
+    Ctrl -> Hist : registrarAccion("verificada", timestamp)
+    activate Hist
+    Hist --> Ctrl : ok
+    deactivate Hist
+    Ctrl -> UC031 : ejecutarNotificacion()
+    activate UC031
+    UC031 --> Ctrl : resultado
+    deactivate UC031
+    Ctrl --> UI : confirmacion
+    deactivate Ctrl
+    UI --> Operador : "Alarma verificada y priorizada"
+    deactivate UI
+
+else descartar alarma
+    Operador -> UI : seleccionarDescartar()
+    activate UI
+    UI -> UI : mostrarDialogoConfirmacion()
+    Operador -> UI : confirmarDescartar(motivo)
+    UI -> Ctrl : descartarAlarma(alarma, motivo)
+    activate Ctrl
+    Ctrl -> A : actualizarEstado("Descartada")
+    activate A
+    A --> Ctrl : ok
+    deactivate A
+    Ctrl -> Hist : registrarAccion("descartada", motivo, timestamp)
+    activate Hist
+    Hist --> Ctrl : ok
+    deactivate Hist
+    Ctrl -> Disp : enviarSenialFinalizar()
+    activate Disp
+    Disp --> Ctrl : señal enviada
+    deactivate Disp
+    Ctrl --> UI : operacionExitosa
+    deactivate Ctrl
+    UI --> Operador : "Alarma descartada correctamente"
+    deactivate UI
+
+else cancelar descarte
+    Operador -> UI : cancelarDescartar()
+    activate UI
+    UI -> UI : cerrarDialogo()
+    UI --> Operador : vuelve a vista detallada
+    deactivate UI
+end
+@enduml
+Bosquejo:
+La secuencia se compone de tres grandes bloques:
+
+Carga inicial: el operador selecciona la alarma, el controlador consulta autoridades, datos de la alarma, evidencias y usuario, y la interfaz presenta toda la información.
+
+Alternativa principal – notificar: el operador envía la orden, se actualiza la alarma a “Verificada”, se registra en el historial y se invoca a UC‑031 para notificar a las autoridades.
+
+Alternativa de descarte: se abre un diálogo de confirmación; si se confirma, la alarma pasa a “Descartada”, se registra el motivo, se envía una señal al dispositivo del usuario para finalizar la alarma. Si se cancela, simplemente se retorna a la vista detallada.
+Las líneas de vida muestran la participación temporal de cada objeto y los fragmentos alt organizan los distintos caminos.
+
+Estos diagramas cubren en profundidad el caso de uso UC‑030 desde las perspectivas estática y dinámica, siguiendo fielmente la especificación y la notación del Proceso Unificado. Si necesitas ajustar algún detalle o profundizar en algún escenario adicional, estoy a tu disposición.
+
+
++------------+
+|   UC-031   |
++------------+
+
+
+A continuación se presentan los diagramas correspondientes al caso de uso UC-031 – Notificar Autoridades, modelados con base en el Proceso Unificado de Desarrollo de Software. Cada sección incluye el código PlantUML y un bosquejo explicativo.
+
+1. Diagrama de Actividad
+Refleja el flujo entre el operador y el sistema, desde la activación de la notificación hasta el registro, considerando la vía de llamada y la alternativa por SMS.
+
+plantuml
+@startuml
+|Operador|
+start
+:Selecciona "Notificar Autoridades"
+desde la verificación de la alarma;
+
+|Sistema|
+:Muestra diálogo con:
+- Información para transmitir (dirección, coordenadas, datos usuario, tipo activación)
+- Número de contacto de las autoridades seleccionadas
+- Botones "Llamar" y "Enviar SMS";
+
+|Operador|
+if (¿Medio de contacto?) then (Llamar)
+  :Revisa información,
+  añade observaciones,
+  presiona "Llamar";
+  :Realiza la comunicación verbal
+  con la autoridad;
+else (Enviar SMS)
+  :Selecciona "Enviar SMS";
+  |Sistema|
+  :Genera mensaje resumido para SMS;
+  :Envía el mensaje (ejecuta UC-012);
+  |Operador|
+  :Confirma el envío del mensaje;
+endif
+
+|Sistema|
+:Muestra campo para ingresar
+resumen de la respuesta de las autoridades;
+
+|Operador|
+:Ingresa resumen de lo comunicado;
+
+|Sistema|
+:Registra la acción (medio, resumen, timestamp, autoridad, receptor);
+:Cambia estado de la alarma a "Autoridades Notificadas";
+:Muestra confirmación "Alarma notificada";
+
+stop
+@enduml
+Bosquejo:
+El diagrama usa dos carriles. Inicia con el operador activando la notificación desde la pantalla de verificación. El sistema presenta un diálogo con los datos de la alarma y las opciones de contacto. El operador elige entre llamar (flujo principal) o enviar SMS (alternativo). En el camino de SMS se genera un mensaje, se invoca al UC‑012 y se confirma el envío. Ambos caminos confluyen en la solicitud de un resumen de la respuesta. Tras ingresarlo, el sistema registra la acción, cambia el estado de la alarma y muestra confirmación.
+
+2. Diagrama de Estado
+Muestra la transición del estado de la alarma provocada por este caso de uso, dentro del ciclo de verificación y notificación.
+
+plantuml
+@startuml
+[*] --> Nueva : alarma creada
+Nueva --> Verificada : operador confirma emergencia (UC-030)
+Verificada --> AutoridadesNotificadas : operador notifica autoridades (UC-031)
+AutoridadesNotificadas --> [*]
+@enduml
+Bosquejo:
+Se definen los estados relevantes para este UC:
+
+Nueva: sin revisar.
+
+Verificada: la alarma fue confirmada como real y priorizada (alta).
+
+Autoridades Notificadas: se ha contactado a la autoridad correspondiente y se registró la comunicación.
+La transición desde Verificada representa exactamente la ejecución exitosa del UC‑031, que culmina con el cambio de estado y la confirmación.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con sus estereotipos (<<A>>, <<I>>, <<C>>, <<E>>) y las relaciones necesarias para cumplir el caso de uso.
+
+plantuml
+@startuml
+actor "Operador CdM" as op <<A>>
+actor "Autoridad" as autActor <<A>>
+
+class "DialogoNotificarAutoridades" as ui <<I>>
+class "CampoResumen" as campo <<I>>
+
+class "ControladorNotificarAutoridades" as ctrl <<C>>
+
+class "Alarma" as alarma <<E>>
+class "Autoridad" as autEnt <<E>>
+class "HistorialAlarma" as hist <<E>>
+class "Notificacion" as notif <<E>>
+class "UC012_SMS" as sms <<C>>  ' representando el caso de uso de envío de SMS
+
+op --> ui : interactúa
+autActor --> ui : recibe comunicación
+
+ui --> ctrl : solicita operaciones
+ui --> campo : contiene
+
+ctrl --> alarma : actualiza estado
+ctrl --> autEnt : obtiene datos de contacto
+ctrl --> hist : registra acción
+ctrl --> notif : crea/registra comunicación
+ctrl --> sms : envía SMS (cuando corresponda)
+@enduml
+Bosquejo:
+
+Actores <<A>>: operador y autoridad (secundario, receptor de la comunicación).
+
+Interfaces <<I>>: DialogoNotificarAutoridades (muestra datos y botones) y CampoResumen para la entrada del resultado.
+
+Controlador <<C>>: ControladorNotificarAutoridades coordina toda la operación.
+
+Entidades <<E>>:
+
+Alarma: estado, prioridad, ubicación.
+
+Autoridad: nombre, jurisdicción, números de contacto.
+
+HistorialAlarma: registra cada evento.
+
+Notificacion: encapsula el contenido y el medio (llamada o SMS).
+
+Se incluye un controlador adicional <<C>> para el UC‑012, ya que la alternativa de SMS delega en ese caso de uso.
+Las relaciones muestran que el controlador central conoce y modifica las entidades, y utiliza el sistema de SMS cuando es necesario.
+
+4. Diagrama de Colaboración
+Representa las mismas clases de análisis con los mensajes intercambiados durante la ejecución principal (llamada) y la alternativa (SMS).
+
+plantuml
+@startuml
+actor Operador
+actor Autoridad
+boundary DialogoNotificarAutoridades
+boundary CampoResumen
+control ControladorNotificarAutoridades
+entity Alarma
+entity Autoridad as AutEnt
+entity HistorialAlarma
+entity Notificacion
+control UC012_SMS
+
+Operador -> DialogoNotificarAutoridades : 1. seleccionarNotificar()
+DialogoNotificarAutoridades -> ControladorNotificarAutoridades : 2. prepararNotificacion(alarma)
+ControladorNotificarAutoridades -> AutEnt : 3. obtenerDatosContacto()
+AutEnt --> ControladorNotificarAutoridades : números, jurisdicción
+ControladorNotificarAutoridades -> Alarma : 4. obtenerDatosTransmision()
+Alarma --> ControladorNotificarAutoridades : ubicación, usuario, tipo
+ControladorNotificarAutoridades --> DialogoNotificarAutoridades : 5. datosDialogo(info, contactos)
+DialogoNotificarAutoridades -> Operador : 6. mostrar opciones
+
+alt Llamar (flujo principal)
+  Operador -> DialogoNotificarAutoridades : 7. llamar()
+  DialogoNotificarAutoridades -> Operador : 8. iniciar llamada
+  Operador -> Autoridad : 9. comunicación verbal
+else Enviar SMS
+  Operador -> DialogoNotificarAutoridades : 7a. enviarSMS()
+  DialogoNotificarAutoridades -> ControladorNotificarAutoridades : 8a. generarYEnviarSMS()
+  ControladorNotificarAutoridades -> Notificacion : 9a. crearMensaje(resumen)
+  ControladorNotificarAutoridades -> UC012_SMS : 10a. enviarMensaje(mensaje)
+  UC012_SMS --> ControladorNotificarAutoridades : confirmación
+  ControladorNotificarAutoridades --> DialogoNotificarAutoridades : 11a. smsEnviado
+end
+
+DialogoNotificarAutoridades -> Operador : 12. solicitarResumen()
+Operador -> CampoResumen : 13. ingresarResumen(respuesta)
+CampoResumen -> ControladorNotificarAutoridades : 14. registrarNotificacion(resumen, medio)
+ControladorNotificarAutoridades -> Alarma : 15. actualizarEstado("Autoridades Notificadas")
+ControladorNotificarAutoridades -> HistorialAlarma : 16. registrarAccion(timestamp, autoridad, receptor, resumen)
+ControladorNotificarAutoridades -> Notificacion : 17. guardarNotificacion(detalle)
+ControladorNotificarAutoridades --> DialogoNotificarAutoridades : 18. confirmacion
+DialogoNotificarAutoridades -> Operador : 19. "Alarma notificada"
+@enduml
+Bosquejo:
+Los mensajes muestran la secuencia completa del UC:
+
+Preparación del diálogo (1-6): el operador solicita notificar, el controlador obtiene los datos de la autoridad y de la alarma, y la interfaz los presenta.
+
+Elección del medio (7-11): en la rama de llamada se inicia la comunicación verbal; en la rama SMS se crea un mensaje y se invoca al UC‑012.
+
+Post-comunicación (12-19): se pide el resumen, el operador lo ingresa, se registra en el historial, se actualiza el estado de la alarma y se confirma el éxito.
+
+5. Diagrama de Secuencia
+Describe la interacción temporal entre los objetos, con líneas de vida, activaciones y fragmentos alt para los dos medios de contacto.
+
+plantuml
+@startuml
+actor Operador
+actor Autoridad
+participant "DialogoNotificar\nAutoridades" as UI
+participant "CampoResumen" as ResumenUI
+participant "ControladorNotificar\nAutoridades" as Ctrl
+participant "Alarma" as A
+participant "Autoridad" as Aut
+participant "HistorialAlarma" as Hist
+participant "Notificacion" as Notif
+participant "UC-012\n(Sistema SMS)" as SMS
+
+Operador -> UI : seleccionarNotificar()
+activate UI
+UI -> Ctrl : prepararNotificacion(alarma)
+activate Ctrl
+Ctrl -> Aut : obtenerDatosContacto()
+activate Aut
+Aut --> Ctrl : números, jurisdicción
+deactivate Aut
+Ctrl -> A : obtenerDatosTransmision()
+activate A
+A --> Ctrl : ubicación, usuario, tipo
+deactivate A
+Ctrl --> UI : datosDialogo(info, contactos)
+deactivate Ctrl
+UI --> Operador : mostrar opciones (Llamar/Enviar SMS)
+deactivate UI
+
+alt llamada telefónica
+    Operador -> UI : llamar()
+    activate UI
+    UI --> Operador : iniciarLlamada(numero)
+    Operador -> Autoridad : comunicación verbal
+    deactivate UI
+else envío de SMS
+    Operador -> UI : enviarSMS()
+    activate UI
+    UI -> Ctrl : generarYEnviarSMS(alarma)
+    activate Ctrl
+    Ctrl -> Notif : crearMensaje(resumen)
+    activate Notif
+    Notif --> Ctrl : mensaje
+    deactivate Notif
+    Ctrl -> SMS : enviarMensaje(mensaje)
+    activate SMS
+    SMS --> Ctrl : confirmación
+    deactivate SMS
+    Ctrl --> UI : smsEnviado
+    deactivate Ctrl
+    UI --> Operador : confirmación visual
+    deactivate UI
+end
+
+Operador -> UI : continuarAResumen()
+activate UI
+UI -> ResumenUI : mostrarCampoResumen()
+activate ResumenUI
+ResumenUI --> Operador : solicitar resumen
+deactivate UI
+Operador -> ResumenUI : ingresarResumen(respuesta)
+activate ResumenUI
+ResumenUI -> Ctrl : registrarNotificacion(resumen, medio)
+activate Ctrl
+Ctrl -> A : actualizarEstado("Autoridades Notificadas")
+activate A
+A --> Ctrl : ok
+deactivate A
+Ctrl -> Hist : registrarAccion(timestamp, autoridad, receptor, resumen)
+activate Hist
+Hist --> Ctrl : ok
+deactivate Hist
+Ctrl -> Notif : guardarNotificacion(detalle)
+activate Notif
+Notif --> Ctrl : ok
+deactivate Notif
+Ctrl --> ResumenUI : confirmacion
+deactivate Ctrl
+ResumenUI --> Operador : "Alarma notificada"
+deactivate ResumenUI
+@enduml
+Bosquejo:
+El diagrama de secuencia está dividido en tres fases:
+
+Carga del diálogo: el operador activa la notificación, el controlador consulta los datos de la autoridad y de la alarma, y la interfaz presenta la información con los botones.
+
+Selección del medio: mediante un fragmento alt se modela la llamada telefónica (inicia la comunicación con el actor Autoridad) o el envío de SMS (crea un mensaje y delega en el UC‑012).
+
+Registro de la respuesta: la interfaz muestra el campo de resumen; el operador ingresa la información; el controlador actualiza el estado de la alarma, registra en el historial y guarda la notificación; finalmente se emite la confirmación.
+
+Las líneas de vida reflejan el ciclo de participación de cada objeto y la activación de sus métodos durante el flujo completo.
+
+Estos diagramas cubren el UC‑031 desde las perspectivas de actividad, estado, estructura estática e interacción, siguiendo las pautas del Proceso Unificado. Si necesitas ajustar o ampliar algún aspecto, quedo a tu disposición.
+
+
++------------+
+|   UC-032   |
++------------+
+
+
+A continuación se presentan los diagramas correspondientes al caso de uso UC-032 – Asignar Operador, modelados con base en el Proceso Unificado de Desarrollo de Software. Cada sección incluye el código PlantUML y un bosquejo explicativo.
+
+1. Diagrama de Actividad
+Refleja el flujo entre el Administrador y el Sistema, cubriendo tanto la invocación manual desde el tablero como la automática desde el caso de uso extendido (UC‑029).
+
+plantuml
+@startuml
+start
+if (¿Invocación?) then (manual)
+  |Administrador|
+  :Selecciona alarma sin asignar
+  (estado "Nueva" o "No Tomada")
+  desde Gestionar Alarmas;
+else (automática)
+  |Sistema|
+  :(Desde UC-029) Detecta nueva
+  alarma sin operador;
+endif
+
+|Sistema|
+:Verifica que la alarma está en estado
+"Nueva"/"No Tomada";
+:Genera/verifica ID único de alarma;
+
+:Muestra diálogo con datos básicos
+de la alarma y lista de operadores
+disponibles;
+
+if (¿Hay operadores disponibles?) then (sí)
+  :Muestra solo operadores con estado disponible;
+else (no)
+  :Muestra todos los operadores activos
+  con cantidad de alarmas en cola,
+  ordenados de forma ascendente;
+endif
+
+|Administrador|
+:Selecciona un operador de la lista;
+
+|Sistema|
+:Asocia alarma con el operador;
+:Actualiza estado de la alarma → "Asignada";
+:Registra ID de asignación;
+
+:Muestra mensaje de confirmación
+(ID asignado y nombre del operador);
+
+:Notifica al operador asignado
+en su tablero;
+
+stop
+@enduml
+Bosquejo:
+El diagrama utiliza dos carriles y un nodo de decisión inicial que distingue el disparo manual (administrador) del automático (extensión de UC‑029). Tras la verificación inicial, el sistema muestra una lista de operadores; si no hay disponibles, se listan todos con su carga de trabajo ordenada. El administrador elige a un operador, se realiza la asociación, se cambia el estado de la alarma a “Asignada” y se confirma la acción. Finalmente se notifica al operador.
+
+2. Diagrama de Estado
+Muestra la transición del estado de una Alarma provocada por este caso de uso, indicando los estados previos y posteriores.
+
+plantuml
+@startuml
+[*] --> Nueva : alarma entrante sin asignar
+Nueva --> Asignada : UC-032 (asignación manual/automática)
+NoTomada --> Asignada : UC-032 (reasignación tras timeout)
+
+Asignada --> EnVerificación : operador toma la alarma (UC-029)
+Asignada --> [*]
+@enduml
+Bosquejo:
+
+Nueva: la alarma ingresó pero no tiene operador asignado.
+
+No Tomada: la alarma fue asignada previamente pero el operador no respondió a tiempo (estado previo, definido en UC‑029).
+
+Asignada: estado resultante tras la ejecución exitosa del UC‑032, indicando que ya tiene un operador responsable.
+Desde Asignada, la alarma puede pasar a “En Verificación” si el operador la toma (UC‑029) o finalizar si es descartada.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con los estereotipos del Proceso Unificado (<<A>>, <<I>>, <<C>>, <<E>>) y las relaciones necesarias.
+
+plantuml
+@startuml
+actor "Administrador CdM" as admin <<A>>
+
+class "DialogoAsignarOperador" as ui <<I>>
+class "ListaOperadores" as lista <<I>>
+
+class "ControladorAsignarOperador" as ctrl <<C>>
+
+class "Alarma" as alarma <<E>>
+class "Operador" as operador <<E>>
+class "Asignacion" as asign <<E>>
+
+admin --> ui : interactúa
+ui --> lista : contiene
+ui --> ctrl : solicita operaciones
+ctrl --> alarma : actualiza estado y asigna
+ctrl --> operador : obtiene disponibles / carga
+ctrl --> asign : crea/actualiza asignación
+@enduml
+Bosquejo:
+
+Actor <<A>>: Administrador del CdM.
+
+Interfaces <<I>>: DialogoAsignarOperador (diálogo principal) y ListaOperadores (componente que muestra los operadores).
+
+Controlador <<C>>: ControladorAsignarOperador centraliza la lógica de asignación.
+
+Entidades <<E>>:
+
+Alarma: estado, ID, prioridad.
+
+Operador: nombre, estado (disponible/activo/ocupado), carga de trabajo.
+
+Asignacion: vincula una alarma con un operador, incluye timestamp e ID de asignación.
+Las relaciones muestran que el controlador conoce y modifica tanto alarmas como asignaciones, y consulta la información de los operadores.
+
+4. Diagrama de Colaboración
+Muestra las mismas clases de análisis con los mensajes intercambiados durante el flujo principal (asignación manual) y la variante automática.
+
+plantuml
+@startuml
+actor Administrador
+boundary DialogoAsignarOperador
+boundary ListaOperadores
+control ControladorAsignarOperador
+entity Alarma
+entity Operador
+entity Asignacion
+
+Administrador -> DialogoAsignarOperador : 1. seleccionarAlarmaSinAsignar(alarma)
+DialogoAsignarOperador -> ControladorAsignarOperador : 2. iniciarAsignacion(alarma)
+ControladorAsignarOperador -> Alarma : 3. verificarEstado("Nueva"/"NoTomada")
+Alarma --> ControladorAsignarOperador : estado OK, ID alarma
+ControladorAsignarOperador -> Operador : 4. obtenerOperadoresDisponibles()
+Operador --> ControladorAsignarOperador : lista disponibles (o todos con carga si no hay)
+ControladorAsignarOperador --> DialogoAsignarOperador : 5. datosDialogo(alarma, operadores)
+DialogoAsignarOperador -> ListaOperadores : 6. mostrarOperadores(operadores)
+ListaOperadores --> Administrador : 7. lista de operadores
+
+Administrador -> DialogoAsignarOperador : 8. seleccionarOperador(operador)
+DialogoAsignarOperador -> ControladorAsignarOperador : 9. asignarAlarma(alarma, operador)
+ControladorAsignarOperador -> Asignacion : 10. crearAsignacion(alarma, operador, timestamp)
+Asignacion --> ControladorAsignarOperador : ID asignación
+ControladorAsignarOperador -> Alarma : 11. actualizarEstado("Asignada")
+ControladorAsignarOperador -> Operador : 12. notificarNuevaAlarma(operador, alarma)
+ControladorAsignarOperador --> DialogoAsignarOperador : 13. confirmacion(ID, nombreOperador)
+DialogoAsignarOperador --> Administrador : 14. mensaje de confirmación
+@enduml
+Bosquejo:
+La secuencia de mensajes refleja el flujo completo:
+
+El administrador selecciona una alarma no asignada.
+
+El controlador verifica el estado y obtiene el ID.
+
+Se consulta la lista de operadores (disponibles o todos según el caso).
+
+La interfaz presenta el diálogo con los datos de la alarma y la lista de operadores.
+
+El administrador elige un operador, el controlador crea la asignación y actualiza el estado de la alarma.
+
+Se notifica al operador y se envía la confirmación al administrador.
+El camino automático sería similar, pero el mensaje inicial (paso 1) provendría directamente del controlador de UC‑029.
+
+5. Diagrama de Secuencia
+Describe la interacción temporal entre los objetos, con líneas de vida y fragmentos combinados para mostrar la invocación automática y la selección manual.
+
+plantuml
+@startuml
+actor Administrador
+participant "DialogoAsignar\nOperador" as UI
+participant "ListaOperadores" as ListaUI
+participant "ControladorAsignar\nOperador" as Ctrl
+participant "Alarma" as A
+participant "Operador" as O
+participant "Asignacion" as Asig
+
+' Punto de entrada manual
+Administrador -> UI : seleccionarAlarmaSinAsignar(alarma)
+activate UI
+UI -> Ctrl : iniciarAsignacion(alarma)
+activate Ctrl
+Ctrl -> A : verificarEstado("Nueva"/"NoTomada")
+activate A
+A --> Ctrl : estado correcto, ID
+deactivate A
+Ctrl -> O : obtenerOperadoresDisponibles()
+activate O
+O --> Ctrl : lista operadores (ordenada según disponibilidad)
+deactivate O
+Ctrl --> UI : datosDialogo(alarma, operadores)
+deactivate Ctrl
+UI -> ListaUI : mostrarOperadores(operadores)
+activate ListaUI
+ListaUI --> UI : renderizado
+deactivate ListaUI
+UI --> Administrador : diálogo con datos y lista
+deactivate UI
+
+Administrador -> UI : seleccionarOperador(operador)
+activate UI
+UI -> Ctrl : asignarAlarma(alarma, operador)
+activate Ctrl
+Ctrl -> Asig : crearAsignacion(alarma, operador, timestamp)
+activate Asig
+Asig --> Ctrl : ID asignacion
+deactivate Asig
+Ctrl -> A : actualizarEstado("Asignada")
+activate A
+A --> Ctrl : ok
+deactivate A
+Ctrl -> O : notificarNuevaAlarma(operador, alarma)
+activate O
+O --> Ctrl : notificación enviada
+deactivate O
+Ctrl --> UI : confirmacion(ID, nombreOperador)
+deactivate Ctrl
+UI --> Administrador : mensaje de confirmación
+deactivate UI
+
+' Nota: La invocación automática desde UC-029 puede representarse como una llamada directa al controlador
+' sin intervención del administrador, por ejemplo:
+' Ctrl -> ControladorAsignarOperador : asignarAutomaticamente(alarma)
+@enduml
+Bosquejo:
+La secuencia presenta dos fases: la preparación del diálogo (verificación de la alarma y obtención de operadores) y la asignación en sí.
+El administrador dispara el flujo seleccionando una alarma no asignada. El controlador centraliza las consultas a las entidades. Una vez elegido el operador, se crea la asignación, se actualiza el estado de la alarma y se notifica al operador.
+Se incluye una nota sobre la invocación automática desde UC‑029, que podría omitir la interacción con el administrador y ejecutar directamente la lógica de asignación.
+
+Estos diagramas cubren el UC‑032 desde las perspectivas de actividad, estado, estructura estática e interacción, siguiendo fielmente la especificación y las pautas del Proceso Unificado. Si requieres ajustes o mayor detalle en algún aspecto, quedo a tu disposición.
+
+
++------------+
+|   UC-033   |
++------------+
+
+A continuación se presentan los diagramas correspondientes al caso de uso UC-033 – Consultar Historial de Alarmas, modelados según el Proceso Unificado de Desarrollo de Software. Cada sección incluye el código PlantUML y un bosquejo explicativo.
+
+1. Diagrama de Actividad
+Refleja el flujo de trabajo del operador (o administrador) al consultar el historial, incluyendo el filtrado, la consulta en modo detalle y la descarga de listados.
+
+plantuml
+@startuml
+start
+|Operador / Administrador|
+:Navega a la sección "Historial"
+desde el menú principal;
+
+|Sistema|
+if (¿Usuario es administrador?) then (sí)
+  :Permite filtrar por cualquier operador;
+else (no)
+  :Filtra automáticamente por operador actual;
+endif
+
+:Muestra listado de alarmas:
+- Ordenado por fecha descendente
+- Controles de filtro (fecha, estado, nombre, etc.)
+- Controles de ordenación;
+
+|Operador / Administrador|
+:Define criterios de filtro y ordenación;
+:Presiona "Buscar";
+
+|Sistema|
+:Consulta las alarmas aplicando
+los filtros y ordenación definidos;
+:Refresca el listado;
+
+|Operador / Administrador|
+if (¿Acción?) then (Seleccionar alarma)
+  :Elige una alarma de la lista;
+  |Sistema|
+  :Abre vista de detalle
+  (ejecuta UC-030 en modo consulta);
+  stop
+else (Descargar listado)
+  :Selecciona "Descargar listado";
+  |Sistema|
+  :Ofrece opciones: PDF / XLS;
+  |Operador / Administrador|
+  :Elige formato de descarga;
+  |Sistema|
+  :Genera archivo del formato seleccionado;
+  :Inicia descarga automática;
+  stop
+else (Seguir consultando)
+  :Regresa al paso de filtros;
+endif
+@enduml
+Bosquejo:
+El diagrama utiliza dos carriles. Inicia con la navegación a la sección Historial. El sistema evalúa permisos: si el usuario es administrador, se habilita el filtro por cualquier operador; si no, se filtra automáticamente por el operador actual. Se muestra la lista con controles de filtro y ordenación. El usuario puede buscar, seleccionar una alarma para ver detalle (se invoca UC‑030 en modo consulta) o descargar el listado en PDF/XLS. No hay cambios de estado de la alarma, por lo que el flujo termina con la presentación de la información solicitada.
+
+2. Diagrama de Estado
+Aunque este caso de uso no modifica el estado de una alarma, el diagrama presenta el ciclo de vida completo de la entidad Alarma, cuyos estados son consultados en el historial.
+
+plantuml
+@startuml
+[*] --> Nueva : alarma entrante
+Nueva --> Asignada : operador asignado (UC-032)
+Asignada --> EnVerificación : operador toma alarma (UC-029)
+EnVerificación --> Verificada : operador confirma emergencia (UC-030)
+EnVerificación --> Descartada : operador descarta alarma (UC-030)
+Verificada --> AutoridadesNotificadas : se notifica a autoridades (UC-031)
+Descartada --> [*]
+AutoridadesNotificadas --> [*]
+
+' Estados consultados en el historial
+Nueva : puede ser consultada en historial
+Asignada : puede ser consultada en historial
+EnVerificación : puede ser consultada en historial
+Verificada : puede ser consultada en historial
+Descartada : aparece en historial como finalizada
+AutoridadesNotificadas : aparece en historial como finalizada
+@enduml
+Bosquejo:
+Se representan todos los estados posibles de una alarma: Nueva, Asignada, En verificación, Verificada, Autoridades Notificadas y Descartada. Las transiciones muestran el flujo de vida típico definido en los casos de uso previos. El historial (UC‑033) consulta alarmas en cualquiera de estos estados, incluyendo las finalizadas (descartadas o con autoridades notificadas). No se añaden transiciones nuevas porque la consulta es de solo lectura.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con los estereotipos <<A>> (Actor), <<I>> (Interfaz), <<C>> (Controlador), <<E>> (Entidad) y sus relaciones.
+
+plantuml
+@startuml
+actor "Operador CdM" as op <<A>>
+actor "Administrador CdM" as admin <<A>>
+
+class "PantallaHistorialAlarmas" as ui <<I>>
+class "PanelFiltros" as filtro <<I>>
+class "ListadoAlarmas" as lista <<I>>
+
+class "ControladorHistorialAlarmas" as ctrl <<C>>
+
+class "Alarma" as alarma <<E>>
+class "Operador" as operadorE <<E>>
+
+op --> ui : interactúa
+admin --> ui : interactúa
+ui --> ctrl : solicita consultas y descargas
+ui --> filtro : contiene
+ui --> lista : contiene
+ctrl --> alarma : consulta y filtra
+ctrl --> operadorE : consulta (filtrado admin)
+@enduml
+Bosquejo:
+
+Actores <<A>>: Operador y Administrador.
+
+Interfaces <<I>>: PantallaHistorialAlarmas (página principal), compuesta por un PanelFiltros y un ListadoAlarmas.
+
+Controlador <<C>>: ControladorHistorialAlarmas maneja las peticiones de consulta, filtrado y generación de descargas.
+
+Entidades <<E>>: Alarma (con todos los atributos: fecha, estado, ubicación, usuario, etc.) y Operador (para el filtro por operador que ve el administrador).
+Las relaciones indican que la interfaz se comunica únicamente con el controlador, el cual accede a las entidades para recuperar los datos.
+
+4. Diagrama de Colaboración
+Muestra las clases de análisis con los mensajes que intercambian durante el flujo principal (consulta y visualización de detalle).
+
+plantuml
+@startuml
+actor Operador
+boundary PantallaHistorialAlarmas
+boundary PanelFiltros
+control ControladorHistorialAlarmas
+entity Alarma
+entity Operador as EntOperador
+
+Operador -> PantallaHistorialAlarmas : 1. navegarAHistorial()
+PantallaHistorialAlarmas -> ControladorHistorialAlarmas : 2. cargarVistaInicial(operador)
+ControladorHistorialAlarmas -> Alarma : 3. obtenerAlarmas(operador, filtroDefecto)
+Alarma --> ControladorHistorialAlarmas : lista paginada
+ControladorHistorialAlarmas -> EntOperador : 4. verificarPermisos(operador)
+EntOperador --> ControladorHistorialAlarmas : esAdmin? / datos
+ControladorHistorialAlarmas --> PantallaHistorialAlarmas : 5. datosListado(alarmas, permisos)
+PantallaHistorialAlarmas -> PanelFiltros : 6. configurarFiltros(permisos)
+PanelFiltros --> PantallaHistorialAlarmas : filtros disponibles
+PantallaHistorialAlarmas -> Operador : 7. mostrar listado y filtros
+
+Operador -> PanelFiltros : 8. definirFiltros(criterios)
+PanelFiltros -> ControladorHistorialAlarmas : 9. buscar(criterios)
+ControladorHistorialAlarmas -> Alarma : 10. consultarConFiltros(criterios)
+Alarma --> ControladorHistorialAlarmas : resultados
+ControladorHistorialAlarmas --> PantallaHistorialAlarmas : 11. refrescarListado(resultados)
+PantallaHistorialAlarmas -> Operador : 12. listado actualizado
+
+Operador -> PantallaHistorialAlarmas : 13. seleccionarAlarma(alarma)
+PantallaHistorialAlarmas -> ControladorHistorialAlarmas : 14. verDetalle(alarma)
+ControladorHistorialAlarmas -> "UC-030" : 15. abrirModoConsulta(alarma)
+Bosquejo:
+
+El operador ingresa a la sección (1), el controlador carga los datos iniciales aplicando el filtro por defecto (por operador actual si no es admin) (2-5).
+
+La interfaz configura los filtros según los permisos (6-7).
+
+El operador define criterios de búsqueda, el panel los envía al controlador (8-9), que consulta la entidad Alarma (10) y refresca la lista (11-12).
+
+Al seleccionar una alarma, se invoca al UC‑030 en modo consulta a través del controlador (13-15).
+La descarga del listado seguiría un camino similar, con un mensaje adicional para generar el archivo.
+
+5. Diagrama de Secuencia
+Detalla la interacción temporal, con líneas de vida y fragmentos combinados para el filtrado y la visualización de detalle.
+
+plantuml
+@startuml
+actor Operador
+participant "PantallaHistorial\nAlarmas" as UI
+participant "PanelFiltros" as Filtros
+participant "ControladorHistorial\nAlarmas" as Ctrl
+participant "Alarma" as A
+participant "Operador" as O
+participant "UC-030\n(Modo Consulta)" as UC030
+
+Operador -> UI : navegarAHistorial()
+activate UI
+UI -> Ctrl : cargarVistaInicial(operador)
+activate Ctrl
+Ctrl -> A : obtenerAlarmas(operador, filtroDefecto)
+activate A
+A --> Ctrl : lista paginada
+deactivate A
+Ctrl -> O : verificarPermisos(operador)
+activate O
+O --> Ctrl : esAdmin, lista operadores (si admin)
+deactivate O
+Ctrl --> UI : datosListado(alarmas, permisos)
+deactivate Ctrl
+UI -> Filtros : configurarFiltros(permisos)
+activate Filtros
+Filtros --> UI : filtros disponibles
+deactivate Filtros
+UI --> Operador : mostrar listado y filtros
+deactivate UI
+
+Operador -> Filtros : definirFiltros(criterios)
+activate Filtros
+Filtros -> Ctrl : buscar(criterios)
+activate Ctrl
+Ctrl -> A : consultarConFiltros(criterios)
+activate A
+A --> Ctrl : resultados
+deactivate A
+Ctrl --> Filtros : refrescarListado(resultados)
+deactivate Ctrl
+Filtros --> Operador : listado actualizado
+deactivate Filtros
+
+Operador -> UI : seleccionarAlarma(alarma)
+activate UI
+UI -> Ctrl : verDetalle(alarma)
+activate Ctrl
+Ctrl -> UC030 : abrirModoConsulta(alarma)
+activate UC030
+UC030 --> Ctrl : vista detalle
+deactivate UC030
+Ctrl --> UI : ok
+deactivate Ctrl
+UI --> Operador : pantalla de detalle (modo consulta)
+deactivate UI
+
+@enduml
+Bosquejo:
+El diagrama muestra tres fases:
+
+Carga inicial: el operador ingresa, el controlador obtiene las alarmas con el filtro por defecto y el permiso del usuario, y la interfaz presenta la lista y los filtros.
+
+Búsqueda con filtros: el operador define criterios en el panel, el controlador consulta la entidad Alarma y actualiza la lista.
+
+Visualización de detalle: al seleccionar una alarma, el controlador invoca a UC‑030 en modo consulta, que muestra los datos sin permitir modificaciones.
+No se incluye el fragmento de descarga por brevedad, pero podría añadirse como una alternativa adicional en el diagrama.
+
+Estos diagramas cubren el caso de uso UC‑033 desde las perspectivas de actividad, estado (ciclo de vida de la alarma), estructura estática e interacción, siguiendo las pautas del Proceso Unificado. Si necesitas ajustes o más detalles en algún aspecto, estoy a tu disposición.

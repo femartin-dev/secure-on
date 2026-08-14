@@ -106,15 +106,16 @@ export class ActivationConfigComponent {
         takeUntil(this.destroy$)
       )
       .subscribe((draft) => {
-        this.touchPatternEnabled = draft.activation?.patronActivo;
-        this.voiceCommandEnabled = draft.activation?.comandosVozActivo;
-        this.movementEnabled = draft.activation?.movimientoActivo;
+        // Sync local UI state from the draft without triggering write-back setters.
+        this.touchPatternEnabledValue = draft.activation?.patronActivo ?? true;
+        this.voiceCommandEnabledValue = draft.activation?.comandosVozActivo ?? true;
+        this.movementEnabledValue = draft.activation?.movimientoActivo ?? true;
         this.touchPatternValue =
           (draft.activation?.patronActivacion?.patternPoints as number[]) || [];
-        this.voiceCommandPhrase = draft.activation?.fraseActivacionVoz || '';
-        this.movementSensitivity =
+        this.voiceCommandPhraseValue = draft.activation?.fraseActivacionVoz || '';
+        this.movementSensitivityValue =
           (draft.activation?.sensibilidadMovimiento as 'low' | 'medium' | 'high') || 'medium';
-        this.activationTimer = draft.activation?.tiempoActivacionSeg || 3;
+        this.activationTimerValue = draft.activation?.tiempoActivacionSeg || 3;
         this.cancelTimerValue = draft.activation?.tiempoCancelacionSeg || 15;
       });
   }

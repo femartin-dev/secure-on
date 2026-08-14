@@ -1,0 +1,44 @@
+:host {
+  display: block;
+}
+
+.form-input {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(24, 61, 170, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.form-input::placeholder {
+  opacity: 0.6;
+}
+
+.hero-banner {
+  background-image: url('/assets/secureon-register-hero.jpg');
+}
+
+input:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+:host {
+  -ms-overflow-style: none;
+}

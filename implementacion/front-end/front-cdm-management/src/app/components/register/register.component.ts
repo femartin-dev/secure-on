@@ -3,7 +3,9 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { RegisterRequest, Supervisor } from '../../models/auth.models';
+import { RegisterRequest } from '../../models/auth.models';
+import { Operator } from 'src/app/models/person.models';
+import { CatalogueService } from 'src/app/services/catalogue.service';
 
 @Component({
   selector: 'app-register',
@@ -21,17 +23,20 @@ export class RegisterComponent implements OnInit, OnDestroy {
   error = '';
   showPassword = false;
   showConfirmPassword = false;
-  supervisors: Supervisor[] = [];
+  supervisors: Operator[] = [];
 
   private hideErrorTimeoutId: number | undefined;
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
+    private catalogueService: CatalogueService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.catalogueService.initializeCatalogs();
+
     this.form = this.formBuilder.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
@@ -46,21 +51,18 @@ export class RegisterComponent implements OnInit, OnDestroy {
       validators: this.passwordMatchValidator.bind(this)
     });
 
-    this.loadSupervisors();
+  
   }
 
-  private loadSupervisors(): void {
-    this.authService.getSupervisors().subscribe({
-      next: (supervisors) => {
+  loadSupervisors(): void {
+    this.catalogueService.supervisors$.subscribe((supervisors) => {
+      if (supervisors) {
         this.supervisors = supervisors;
-      },
-      error: (err) => {
-        console.error('Error al cargar supervisores', err);
       }
     });
   }
-
-  getSupervisorDisplayName(supervisor: Supervisor): string {
+  
+  getSupervisorDisplayName(supervisor: Operator): string {
     return `${supervisor.apellido}, ${supervisor.nombre} (${supervisor.legajo})`;
   }
 
@@ -85,22 +87,18 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.loading = true;
     const raw = this.form.getRawValue();
     const supervisorId = `${raw.supervisorId ?? ''}`.trim();
-    const legajoRaw = raw.legajo;
-    const legajo = `${legajoRaw ?? ''}`.trim().length > 0 ? Number(legajoRaw) : undefined;
 
     const request: RegisterRequest = {
-      firstName: raw.firstName,
-      lastName: raw.lastName,
+      nombre: raw.firstName,
+      apellido: raw.lastName,
+      telefono: raw.phone,
+      direccion: raw.address,
       email: raw.email,
-      phone: raw.phone,
-      address: raw.address,
+      legajo: Number(raw.legajo),
       password: raw.password,
-      legajo: legajo !== undefined && Number.isFinite(legajo) ? legajo : undefined,
-      supervisorId: supervisorId.length > 0 ? supervisorId : undefined
+      esAdministrador: raw.supervisorId.length > 0 ? false : true,
+      supervisorId: raw.supervisorId.length > 0 ? supervisorId : null,
     };
-
-
-
 
     this.authService.register(request).subscribe({
       next: () => {

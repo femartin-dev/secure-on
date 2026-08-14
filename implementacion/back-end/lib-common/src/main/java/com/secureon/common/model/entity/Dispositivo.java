@@ -37,7 +37,7 @@ public class Dispositivo {
     private Usuario usuario;
 
     @Column(name = "dispositivo_app_id", nullable = false)
-    private UUID dispositivoAppId;
+    private String dispositivoAppId;
 
     @Column(nullable = false, length = 20)
     private String numero;

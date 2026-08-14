@@ -6,21 +6,22 @@ import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'app-login',
+  selector: "app-login",
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  templateUrl: "./login.component.html",
+  styleUrls: ["./login.component.css"],
 })
 export class LoginComponent implements OnInit, OnDestroy {
-  @ViewChild('errorAlert') private errorAlert?: ElementRef<HTMLElement>;
+  @ViewChild("errorAlert") private errorAlert?: ElementRef<HTMLElement>;
 
   form!: FormGroup;
   loading = false;
   submitted = false;
-  error = '';
+  error = "";
   showPassword = false;
 
+  private readonly EMAIL_REGEXP = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   private hideErrorTimeoutId: number | undefined;
 
   constructor(
@@ -28,20 +29,20 @@ export class LoginComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private ngZone: NgZone,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     // Redirect if already logged in
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(["/dashboard"]);
       return;
     }
 
     this.form = this.formBuilder.group({
-      username: ['', Validators.required],
-      password: ['', Validators.required]
+      usuario: ["", Validators.required],
+      password: ["", Validators.required],
     });
   }
 
@@ -56,27 +57,29 @@ export class LoginComponent implements OnInit, OnDestroy {
     if (this.form.invalid) {
       return;
     }
-
     this.loading = true;
-    const loginPayload = { ...this.form.value };
-    this.authService.login(loginPayload).subscribe({
-      next: (response) => {
-        this.clearError();
-        this.router.navigate(['/dashboard']);
-      },
-      error: (error) => {
-        this.loading = false;
+    
+    let tipo = this.EMAIL_REGEXP.test(this.f["usuario"].value.trim()) ? "email" : "legajo";
+    this.authService
+      .login(this.f["usuario"].value.trim(), this.f["password"].value.trim(), tipo)
+      .subscribe({
+        next: (response) => {
+          this.clearError();
+          this.router.navigate(["/dashboard"]);
+        },
+        error: (error) => {
+          this.loading = false;
 
-        console.error('[LoginComponent] LOGIN error response ←', {
-          status: error?.status,
-          error: error?.error,
-          message: error?.message
-        });
+          console.error("[LoginComponent] LOGIN error response ←", {
+            status: error?.status,
+            error: error?.error,
+            message: error?.message,
+          });
 
-        const message = error?.error?.message || 'Error en la autenticación';
-        this.showServerError(message);
-      }
-    });
+          const message = error?.error?.message || "Error en la autenticación";
+          this.showServerError(message);
+        },
+      });
   }
 
   private showServerError(message: string): void {
@@ -94,17 +97,17 @@ export class LoginComponent implements OnInit, OnDestroy {
 
     this.hideErrorTimeoutId = window.setTimeout(() => {
       this.ngZone.run(() => {
-        this.error = '';
+        this.error = "";
         this.hideErrorTimeoutId = undefined;
         // Make sure the view updates even in edge cases.
         this.cdr.detectChanges();
-        console.log('[LoginComponent] error banner hidden');
+        console.log("[LoginComponent] error banner hidden");
       });
     }, 5000);
   }
 
   private clearError(): void {
-    this.error = '';
+    this.error = "";
     if (this.hideErrorTimeoutId !== undefined) {
       window.clearTimeout(this.hideErrorTimeoutId);
       this.hideErrorTimeoutId = undefined;
@@ -116,10 +119,14 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   goToRegister(): void {
-    this.router.navigate(['/register']);
+    this.router.navigate(["/register"]);
   }
 
   ngOnDestroy(): void {
     this.clearError();
+  }
+
+  goToForgotPassword(): void {
+    //this.router.navigate(["/forgot-password"]);
   }
 }

@@ -3,7 +3,8 @@
        width="300" height="300" viewBox="0 0 300 300"
        class="pattern-svg"
        [ngClass]="!!error ? 'animate-shake' : ''"
-       (touchstart)="onSvgTouch($event)">
+       (touchstart)="onSvgTouch($event)"
+       (touchmove)="onSvgTouch($event)">
 
     <!-- Línea del patrón (detrás de los puntos) -->
     <polyline [attr.points]="patternPoints"
@@ -25,7 +26,8 @@
               fill="transparent"
               class="dot-hitarea"
               (mousedown)="onDotMouseDown($event, dot.id)"
-              (touchstart)="onDotTouchStart($event, dot.id)" />
+              (touchstart)="onDotTouchStart($event, dot.id)"
+              (touchmove)="onSvgTouch($event)"/>
     </g>
   </svg>
 </div>

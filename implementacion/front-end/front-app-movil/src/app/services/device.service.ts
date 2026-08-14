@@ -38,8 +38,18 @@ export class DeviceService {
       sistemaOperativo: (await Device.getInfo()).operatingSystem || 'unknown',
       versionDelSO: (await Device.getInfo()).osVersion || 'unknown',
       zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      idiomaId: (await Device.getLanguageTag()).value || navigator.language || 'unknown',
+      idiomaId: await this.getLanguageCode(),
     };
+  }
+
+  private async getLanguageCode(): Promise<string> {
+    try {
+      const languageTag = (await Device.getLanguageTag()).value || navigator.language;
+      return new Intl.Locale(languageTag).language;
+    } catch (error) {
+      console.warn('Failed to get language code:', error);
+      return 'es';
+    }
   }
 
 

@@ -13,6 +13,7 @@ import { ActivationConfigComponent } from "@app/modules/settings/components/acti
 import { PatternTouchComponent } from '@app/modules/common/components/pattern-touch/pattern-touch.component';
 import { ValidationService } from '@app/services/validation.service';
 import { AppSettings, SecuritySettings } from '@app/models/config.models';
+import { MetodoActivacion, PrioridadAlarma } from '@app/utils/constants.util';
 @Component({
   selector: 'app-alarm-cancellation',
   standalone: true,
@@ -72,7 +73,6 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
     this.loadConfig();
     this.preventNavigation();
     this.isAlarmActive = this.alarmService.isAlarmActive();
-
     // Subscribe to the service-level pre-alarm countdown
     this.countdownSub = this.alarmService.preAlarmCountdown$.subscribe((remaining) => {
       this.countdownRemaining = remaining;
@@ -200,7 +200,7 @@ export class AlarmCancellationComponent implements OnInit, OnDestroy {
         const result = await this.alarmService.finalizeAlarm(tipoCancel, '');
         if (result) {
           this.isAlarmCancelled = true;
-          this.router.navigate(['/main']);
+          this.router.navigate(['/alarm/post-cuestionario']);
         } else {
           this.handleFailedAttempt(
             tipoCancel === 'PIN'

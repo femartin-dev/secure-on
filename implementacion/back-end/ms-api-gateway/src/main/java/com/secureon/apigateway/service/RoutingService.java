@@ -50,6 +50,7 @@ public class RoutingService {
     }
 
     public ResponseEntity<String> forward(String path, String method, String body, HttpServletRequest request) {
+        log.info("Forwarding request: {} {} with body: {}", method, path, body);
         String url = getTargetUrl(path);
         String pathWithoutQuery = path.split("\\?", 2)[0];
         boolean loginRequest = pathWithoutQuery.endsWith(AUTH_LOGIN_SUFFIX);
@@ -68,7 +69,16 @@ public class RoutingService {
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.valueOf(method), entity, String.class);
-            return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(response.getBody());
+            HttpHeaders cleanHeaders = new HttpHeaders();
+            response.getHeaders().forEach((key, values) -> {
+                if (!"transfer-encoding".equalsIgnoreCase(key) 
+                    && !"content-length".equalsIgnoreCase(key)) {
+                    cleanHeaders.addAll(key, values);
+                }
+            });
+            return ResponseEntity.status(response.getStatusCode())
+                    .headers(cleanHeaders)
+                    .body(response.getBody());
         } catch (HttpClientErrorException.Unauthorized e) {
             log.info("Downstream status: {} url: {} body: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
             throw new DownstreamHttpException(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());
@@ -77,4 +87,5 @@ public class RoutingService {
             throw new DownstreamHttpException(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());
         } 
     }
+
 }

@@ -13,14 +13,12 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DispositivoResponse {
     private UUID id;
-    private UUID dispositivoAppId;
     private String numero;
     private String so;
 
     public static DispositivoResponse fromEntity(Dispositivo dispositivo) {
         return DispositivoResponse.builder()
                                     .id(dispositivo.getId())
-                                    .dispositivoAppId(dispositivo.getDispositivoAppId())
                                     .numero(dispositivo.getNumero())
                                     .so(dispositivo.getSistemaOperativo())
                                     .build();

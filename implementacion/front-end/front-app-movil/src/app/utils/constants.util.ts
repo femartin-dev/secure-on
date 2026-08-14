@@ -25,3 +25,25 @@ export const arrayGenerator = (size: number, ini: number = 0,  step: number = 1)
   return Array.from({ length: size }, (_, i) => ini + (i * step));
 };
 
+export enum MetodoActivacion {
+  MANUAL = 1,
+  PATRON_TACTIL = 2,
+  COMANDO_VOZ = 3,
+  MOVIMIENTO = 4,
+  REACTIVACION = 5,
+}
+
+export enum PrioridadAlarma {
+  BAJA = 0,
+  NORMAL = 1,
+  ALTA = 2,
+  CRITICA = 3,
+}
+
+export enum EstadoAlarma {
+  ACTIVA = 1,
+  CANCELADA = 2,
+  FINALIZADA = 3,
+  PENDIENTE = 0
+}
+

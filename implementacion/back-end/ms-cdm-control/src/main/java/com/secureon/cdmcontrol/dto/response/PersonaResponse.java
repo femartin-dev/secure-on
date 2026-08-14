@@ -30,7 +30,7 @@ public class PersonaResponse {
                                 .activo(operador.getEstaActivo())
                                 .legajo(operador.getLegajo())
                                 .supervisorId(operador.getSupervisor() == null ? null : operador.getSupervisor().getId())
-                                .tipo(operador.getEsAdministrador() ? "ADIM" : "OPER")
+                                .tipo(operador.getEsAdministrador() ? "ADMIN" : "OPER")
                                 .build();
     }
 

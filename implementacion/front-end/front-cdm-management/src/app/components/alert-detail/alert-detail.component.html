@@ -22,7 +22,7 @@
   </div>
 
   <!-- Content -->
-  <main *ngIf="!isLoading && alert" class="flex-grow p-6 grid grid-cols-12 gap-6 max-w-[1600px] mx-auto w-full overflow-y-auto">
+  <main *ngIf="!isLoading && alarm" class="flex-grow p-6 grid grid-cols-12 gap-6 max-w-[1600px] mx-auto w-full overflow-y-auto">
     <!-- User Information Section -->
     <section class="col-span-12 card-dark rounded-xl p-5 flex flex-wrap lg:flex-nowrap items-center gap-8 shadow-md bg-slate-800/50 border border-slate-700">
       <div class="flex items-center gap-4">
@@ -30,11 +30,11 @@
           <span class="material-symbols-outlined text-4xl text-slate-400">person</span>
         </div>
         <div>
-          <h3 class="text-xl font-bold text-white">{{ alert.userName }}</h3>
-          <p class="text-blue-400 font-mono text-sm">ID: #{{ alert.userId.substring(0, 8) }}</p>
+          <h3 class="text-xl font-bold text-white">{{ alarm.usuario.apellido }} , {{ alarm.usuario.nombre }}</h3>
+          <p class="text-blue-400 font-mono text-sm">ID: #{{ alarm.usuario.id.substring(0, 8) }}</p>
           <p class="text-slate-400 text-sm flex items-center mt-1">
             <span class="material-symbols-outlined text-sm mr-1">call</span>
-            {{ alert.userPhone }}
+            {{ alarm.usuario.telefono }}
           </p>
         </div>
       </div>
@@ -45,18 +45,18 @@
         <div>
           <span class="text-xs font-bold text-slate-500 uppercase block mb-2">Información del Evento</span>
           <div class="space-y-1">
-            <p class="text-sm text-slate-300"><strong>Tipo:</strong> {{ alert.type }}</p>
-            <p class="text-sm text-slate-300"><strong>Estado:</strong> {{ getStatusLabel(alert.status) }}</p>
-            <p class="text-sm text-slate-300"><strong>Prioridad:</strong> {{ getPriorityLabel(alert.priority) }}</p>
-            <p class="text-sm text-slate-300"><strong>Hora:</strong> {{ alert.createdAt | date:'HH:mm:ss' }}</p>
-            <p class="text-sm text-slate-300"><strong>Fecha:</strong> {{ alert.createdAt | date:'dd/MM/yyyy' }}</p>
+            <p class="text-sm text-slate-300"><strong>Tipo:</strong> {{ alarm.tipoAlarma }}</p>
+            <p class="text-sm text-slate-300"><strong>Estado:</strong> {{ getStatusLabel(alarm.estadoAlarma.id) }}</p>
+            <p class="text-sm text-slate-300"><strong>Prioridad:</strong> {{ getPriorityLabel(alarm.prioridad.id) }}</p>
+            <p class="text-sm text-slate-300"><strong>Hora:</strong> {{ alarm.fechaActivacion | date:'HH:mm:ss' }}</p>
+            <p class="text-sm text-slate-300"><strong>Fecha:</strong> {{ alarm.fechaActivacion | date:'dd/MM/yyyy' }}</p>
           </div>
         </div>
 
         <div>
           <span class="text-xs font-bold text-slate-500 uppercase block mb-2">Estado Actual</span>
-          <p class="text-sm text-emerald-400 mb-2">Batería: 84%</p>
-          <p class="text-sm text-slate-400">Precisión GPS: 5m</p>
+          <p class="text-sm text-emerald-400 mb-2">Batería: {{ alarm.ultimaUbicacion?.bateriaNivel ?? 'N/A' }}%</p>
+          <p class="text-sm text-slate-400">Precisión GPS: {{ alarm.ultimaUbicacion?.precisionToma ?? 'N/A' }}m</p>
         </div>
       </div>
     </section>
@@ -89,39 +89,38 @@
           <div>
             <label class="block text-xs text-slate-400 mb-1">Estado del Incidente</label>
             <select
-              [(ngModel)]="alert.status"
-              (change)="updateAlertStatus(alert.status)"
+              [(ngModel)]="alarm.estadoAlarma.id"
+              (change)="updateAlertStatus(alarm.estadoAlarma.id)"
               [disabled]="fieldsDisabled.status"
               class="w-full bg-slate-700 border border-slate-600 text-white rounded-md text-sm p-2 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="active">🔴 Activo</option>
-              <option value="review">🟡 En Revisión</option>
-              <option value="dispatched">🔵 Despachado</option>
-              <option value="resolved">🟢 Resuelto</option>
+              <option value="1">🔴 Activa</option>
+              <option value="2">🟡 Cancelada</option>
+              <option value="3">🔵 Finalizada</option>
             </select>
           </div>
 
           <div>
             <label class="block text-xs text-slate-400 mb-1">Prioridad</label>
             <select
-              [(ngModel)]="alert.priority"
+              [(ngModel)]="alarm.prioridad.id"
+              (change)="updateAlertPriority(alarm.prioridad.id)"
               [disabled]="fieldsDisabled.priority"
               class="w-full bg-slate-700 border border-slate-600 text-white rounded-md text-sm p-2 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="critical">🔴 CRÍTICA</option>
-              <option value="high">🟠 ALTA</option>
-              <option value="medium">🟡 MEDIA</option>
-              <option value="low">🟢 BAJA</option>
+              <option value="3">🔴 CRÍTICA</option>
+              <option value="2">🟠 ALTA</option>
+              <option value="1">🟡 MEDIA</option>
             </select>
           </div>
 
-          <button
+          <!--button
             (click)="updateAlert()"
             [disabled]="fieldsDisabled.status && fieldsDisabled.priority && fieldsDisabled.notes"
             class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed py-2.5 rounded-lg font-bold text-sm transition-colors mt-2 text-white"
           >
             Actualizar Registro
-          </button>
+          </button-->
         </div>
       </div>
 
@@ -129,14 +128,14 @@
       <div class="card-dark rounded-xl p-5 shadow-lg flex-grow bg-slate-800/50 border border-slate-700">
         <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Evidencia Capturada</h3>
         <div *ngIf="hasEvidence()" class="grid grid-cols-2 gap-3">
-          <div *ngFor="let url of alert.evidenceUrls; let i = index" class="relative group cursor-pointer">
+          <div *ngFor="let url of alarm.evidencias; let i = index" class="relative group cursor-pointer">
             <img
               [src]="url"
               [alt]="'Evidence ' + (i + 1)"
               class="rounded-lg border border-slate-700 opacity-80 hover:opacity-100 transition-opacity w-full h-[105px] object-cover"
             />
             <span class="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1 rounded text-white">
-              {{ alert.updatedAt | date:'HH:mm' }}
+              {{ alarm.fechaActivacion | date:'HH:mm' }}
             </span>
           </div>
         </div>
@@ -152,8 +151,8 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div *ngFor="let location of getLocationHistory(); let i = index" class="p-3 bg-slate-700 rounded-lg border border-slate-600">
           <p class="text-xs text-slate-400 mb-1">Punto {{ i + 1 }}</p>
-          <p class="text-sm text-slate-300 font-mono break-all">{{ location.latitude }}, {{ location.longitude }}</p>
-          <p class="text-xs text-slate-500 mt-1">{{ location.timestamp | date:'HH:mm:ss' }}</p>
+          <p class="text-sm text-slate-300 font-mono break-all">{{ location.latitud }}, {{ location.longitud }}</p>
+          <p class="text-xs text-slate-500 mt-1">{{ location.fechaToma | date:'HH:mm:ss' }}</p>
         </div>
         <div *ngIf="getLocationHistory().length === 0" class="col-span-full text-center py-8 text-slate-400">
           No hay historial de ubicaciones disponible
@@ -190,7 +189,7 @@
     <section *ngIf="mode === 'notify' || mode === 'edit'" class="col-span-12 card-dark rounded-xl p-5 shadow-lg bg-slate-800/50 border border-slate-700">
       <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Notas</h3>
       <textarea
-        [(ngModel)]="alert.notes"
+        [(ngModel)]="alarm.observaciones"
         [disabled]="fieldsDisabled.notes"
         class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed h-32 resize-none"
         placeholder="Agregue notas sobre el incidente..."

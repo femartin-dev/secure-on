@@ -57,7 +57,7 @@
         <h2 class="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">Visualizacion Umbrales</h2>
         -->
         <span class="text-[10px] font-bold text-gray-400 uppercase">Estado de Carga</span>
-        <span class="material-symbols-outlined text-xl">battery_android_frame_4</span>
+        <span class="material-symbols-outlined text-xl">{{ batteryIcon }}</span>
 
       </div>
       <div class="relative pt-6 pb-2">
@@ -68,12 +68,15 @@
           <span>Regular</span>
           <span>100%</span>
         </div>
-        <div class="h-4 w-full inverted-slider-track rounded-full shadow-inner relative overflow-hidden"></div>
-        <div class="absolute -bottom-1 left-[75%] -translate-x-1/2 flex flex-col items-center">
-          <div class="w-0.5 h-6 bg-gray-800 dark:bg-gray-100"></div>
-          <div class="mt-1 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 text-[9px] px-1.5 py-0.5 rounded font-bold">75%</div>
+        <div class="relative mt-2">
+          <div class="h-4 w-full inverted-slider-track rounded-full shadow-inner"></div>
+          <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" [style.left.%]="batteryIndicatorPosition">
+            <div class="w-0.5 h-8 bg-gray-800 dark:bg-gray-100"></div>
+            <div class="mt-1 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 text-[9px] px-1.5 py-0.5 rounded font-bold">{{ batteryDisplayValue }}</div>
+          </div>
         </div>
       </div>
+      <p class="mt-4 text-[10px] font-bold text-gray-500 dark:text-gray-300 uppercase">Nivel actual: {{ batteryStatusLabel }}</p>
       <div class="mt-8 grid grid-cols-4 gap-1">
         <div class="flex items-center gap-1">
           <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>

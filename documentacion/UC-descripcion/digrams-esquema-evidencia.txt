@@ -1,0 +1,1126 @@
+
++------------+
+|   UC-034   |
++------------+
+
+A continuación se presentan los diagramas correspondientes al caso de uso UC-034 – Obtener Ubicación, modelados según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Dado que este caso de uso no involucra interacción directa con un usuario, sino que es un proceso interno del sistema, los diagramas se centran en la lógica de control, los servicios externos y las entidades.
+
+1. Diagrama de Actividad
+Muestra el flujo del sistema al intentar obtener la ubicación, considerando los servicios GPS y de red celular, la consulta de batería y los caminos de fallback.
+
+plantuml
+@startuml
+|Sistema|
+start
+:Inicia obtención de ubicación
+(desde estado de alarma);
+
+:Invoca Servicio GPS
+con timeout de 10 segundos;
+
+:Obtiene nivel de batería
+(ejecuta UC-038);
+
+if (¿Nivel de batería crítico?) then (sí)
+  :Cancela solicitud GPS;
+  :Invoca Servicio Red Celular
+  con timeout de 10 segundos;
+  |Servicio Red Celular|
+  if (¿Ubicación recibida?) then (sí)
+    :Devuelve coordenadas y precisión;
+    |Sistema|
+    :Marca método como "Red";
+  else (no)
+    |Sistema|
+    :Recupera última ubicación almacenada;
+    :Marca método como "Almacenada";
+  endif
+else (no)
+  |Servicio GPS|
+  if (¿Ubicación recibida dentro del timeout?) then (sí)
+    :Devuelve ubicación con precisión aceptable;
+    |Sistema|
+    :Marca método como "GPS";
+  else (no)
+    |Sistema|
+    :Cancela/timeout GPS;
+    :Invoca Servicio Red Celular
+    con timeout de 10 segundos;
+    |Servicio Red Celular|
+    if (¿Ubicación recibida?) then (sí)
+      :Devuelve coordenadas y precisión;
+      |Sistema|
+      :Marca método como "Red";
+    else (no)
+      |Sistema|
+      :Recupera última ubicación almacenada;
+      :Marca método como "Almacenada";
+    endif
+  endif
+endif
+
+|Sistema|
+:Guarda ubicación (timestamp, método, coordenadas)
+(ejecuta UC-037);
+
+:Retorna ubicación con metadatos;
+stop
+@enduml
+Bosquejo:
+El diagrama utiliza carriles para el Sistema, Servicio GPS y Servicio Red Celular. El flujo principal comienza con la solicitud a GPS y la consulta paralela de batería. Si la batería es crítica, se descarta el GPS y se intenta directamente la red celular; en caso contrario, se espera la respuesta del GPS. Si cualquiera de los dos servicios falla (timeout o baja precisión), se recurre a la última ubicación almacenada. Finalmente se guarda la ubicación mediante UC-037 y se retorna.
+
+2. Diagrama de Estado
+Representa el ciclo de vida del proceso de obtención de ubicación desde que se inicia hasta que se resuelve.
+
+plantuml
+@startuml
+[*] --> SolicitandoGPS : iniciarObtencion()
+
+SolicitandoGPS --> UbicacionObtenida : GPS exitoso
+SolicitandoGPS --> SolicitandoRed : batería crítica / fallo GPS
+
+SolicitandoRed --> UbicacionObtenida : Red exitosa
+SolicitandoRed --> RecuperandoUltima : fallo Red
+
+RecuperandoUltima --> UbicacionObtenida : última ubicación disponible
+
+UbicacionObtenida --> [*]
+@enduml
+Bosquejo:
+Los estados reflejan la estrategia de adquisición en cascada:
+
+SolicitandoGPS: se ha lanzado la petición al GPS.
+
+SolicitandoRed: se ha optado por la red celular (por batería baja o fallo del GPS).
+
+RecuperandoUltima: ambos servicios fallaron, se toma la última ubicación conocida.
+
+UbicacionObtenida: estado final, se ha resuelto una ubicación por algún método.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con estereotipos <<A>> (Actor), <<C>> (Controlador) y <<E>> (Entidad), reflejando la interacción con los servicios externos y otros casos de uso.
+
+plantuml
+@startuml
+actor "Servicio GPS" as gps <<A>>
+actor "Servicio Red Celular" as red <<A>>
+
+class "ControladorObtenerUbicacion" as ctrl <<C>>
+class "ControladorBateria\n(UC-038)" as bat <<C>>
+class "ControladorAlmacenamiento\n(UC-037)" as almacen <<C>>
+class "Ubicacion" as ubic <<E>>
+
+ctrl --> gps : solicita ubicación
+ctrl --> red : solicita ubicación
+ctrl --> bat : consulta nivel de batería
+ctrl --> almacen : guarda ubicación
+
+almacen --> ubic : crea/actualiza
+@enduml
+Bosquejo:
+
+Actores <<A>>: Servicio GPS y Servicio Red Celular, sistemas externos que proporcionan las coordenadas.
+
+Controlador <<C>>: ControladorObtenerUbicacion centraliza la lógica de adquisición.
+
+Controladores auxiliares <<C>>: ControladorBateria (UC‑038) y ControladorAlmacenamiento (UC‑037) representan las dependencias con otros casos de uso.
+
+Entidad <<E>>: Ubicacion contiene latitud, longitud, precisión, método y timestamp.
+Las relaciones muestran que el controlador principal se comunica con los servicios externos y delega la persistencia al controlador de almacenamiento.
+
+4. Diagrama de Colaboración
+Ilustra el intercambio de mensajes entre los objetos durante el flujo exitoso por GPS y el camino alternativo de red celular.
+
+plantuml
+@startuml
+control "ControladorObtenerUbicacion" as ctrl
+actor "Servicio GPS" as gps
+actor "Servicio Red Celular" as red
+control "ControladorBateria" as bat
+control "ControladorAlmacenamiento" as alm
+entity "Ubicacion" as u
+
+ctrl -> gps : 1. solicitarUbicacion(timeout=10s)
+ctrl -> bat : 2. obtenerNivelBateria()
+bat --> ctrl : 3. nivel
+
+alt GPS exitoso y batería no crítica
+  gps --> ctrl : 4. ubicacion(precision)
+  ctrl -> alm : 5. guardarUbicacion(ubic, "GPS")
+else fallo GPS o batería crítica
+  ctrl -> gps : 4a. cancelar()
+  ctrl -> red : 5a. solicitarUbicacion(timeout=10s)
+  red --> ctrl : 6a. ubicacion(precision)
+  ctrl -> alm : 7a. guardarUbicacion(ubic, "Red")
+else red también falla
+  red --> ctrl : 6b. error/timeout
+  ctrl -> alm : 7b. recuperarUltimaUbicacion()
+  alm --> ctrl : 8b. ultimaUbicacion
+  ctrl -> alm : 9b. guardarUbicacion(ultimaUbicacion, "Almacenada")
+end
+
+alm -> u : crear/actualizar
+ctrl --> ctrl : retornar ubicación con metadatos
+@enduml
+Bosquejo:
+Se muestra la secuencia de colaboración:
+
+El controlador solicita la ubicación al GPS y el nivel de batería en paralelo.
+
+Si el GPS es exitoso y la batería no es crítica, se guarda con método "GPS".
+
+Si hay fallo del GPS o la batería es crítica, se cancela el GPS y se intenta la red celular. Si la red responde, se guarda como "Red".
+
+Si ambos servicios fallan, se recupera la última ubicación almacenada y se marca como "Almacenada".
+
+Finalmente, el controlador de almacenamiento persiste la ubicación y el controlador principal devuelve el resultado.
+
+5. Diagrama de Secuencia
+Detalla la interacción temporal, con líneas de vida y fragmentos combinados para modelar los tres escenarios posibles.
+
+plantuml
+@startuml
+participant "ControladorObtenerUbicacion" as Ctrl
+participant "Servicio GPS" as GPS
+participant "Servicio Red Celular" as Red
+participant "ControladorBateria\n(UC-038)" as Bat
+participant "ControladorAlmacenamiento\n(UC-037)" as Alm
+entity "Ubicacion" as U
+
+Ctrl -> GPS : solicitarUbicacion(timeout=10s)
+activate GPS
+Ctrl -> Bat : obtenerNivelBateria()
+activate Bat
+Bat --> Ctrl : nivel
+deactivate Bat
+
+alt batería NO crítica y GPS responde a tiempo
+    GPS --> Ctrl : ubicacion(precision)
+    deactivate GPS
+    Ctrl -> Alm : guardarUbicacion(ubic, "GPS")
+    activate Alm
+    Alm -> U : crear(ubic)
+    activate U
+    U --> Alm : ok
+    deactivate U
+    Alm --> Ctrl : éxito
+    deactivate Alm
+else batería crítica o fallo/timeout GPS
+    Ctrl -> GPS : cancelar()
+    deactivate GPS
+    Ctrl -> Red : solicitarUbicacion(timeout=10s)
+    activate Red
+    alt Red responde
+        Red --> Ctrl : ubicacion(precision)
+        deactivate Red
+        Ctrl -> Alm : guardarUbicacion(ubic, "Red")
+        activate Alm
+        Alm -> U : crear(ubic)
+        U --> Alm : ok
+        deactivate U
+        Alm --> Ctrl : éxito
+        deactivate Alm
+    else Red falla
+        Red --> Ctrl : error/timeout
+        deactivate Red
+        Ctrl -> Alm : recuperarUltimaUbicacion()
+        activate Alm
+        Alm --> Ctrl : ultimaUbicacion
+        Ctrl -> Alm : guardarUbicacion(ultimaUbicacion, "Almacenada")
+        Alm -> U : crear/actualizar
+        activate U
+        U --> Alm : ok
+        deactivate U
+        Alm --> Ctrl : éxito
+        deactivate Alm
+    end
+end
+
+Ctrl -> Ctrl : retornar ubicación con metadatos
+@enduml
+Bosquejo:
+Las líneas de vida muestran la participación temporal de cada componente. El diagrama refleja tres grandes escenarios mediante el uso de alt:
+
+GPS exitoso y batería no crítica → se guarda y finaliza.
+
+Batería crítica o fallo de GPS → se cambia a red celular; si esta responde se guarda con método "Red".
+
+Fallo también de la red → se recupera la última ubicación almacenada y se marca como "Almacenada".
+
+En todos los casos se persiste la ubicación y se retorna al proceso invocante.
+
+Estos diagramas cubren el caso de uso UC‑034 desde las perspectivas de actividad, estado interno del proceso, estructura estática e interacciones, según el Proceso Unificado. Si necesitas algún ajuste o detalle adicional, quedo a tu disposición.
+
+
+
++------------+
+|   UC-035   |
++------------+
+
+Claro, aquí tienes los diagramas para el caso de uso UC-035 – Grabar Audio, modelados según el Proceso Unificado de Desarrollo de Software. Dado que es un proceso automatizado sin intervención directa del usuario, los diagramas se centran en la lógica de control, los servicios del sistema y las entidades involucradas.
+
+1. Diagrama de Actividad
+Representa el flujo automatizado de la grabación de audio, incluyendo la evaluación del nivel de batería, la adaptación de calidad y la segmentación continua.
+
+plantuml
+@startuml
+|Sistema|
+start
+:La alarma se activa (UC-001);
+
+:Inicia el servicio de grabación de audio
+en segundo plano;
+
+:Obtiene nivel de batería
+(ejecuta UC-038);
+
+if (¿Nivel de batería?) then (Normal)
+  :Adopta formato de audio
+  con calidad óptima;
+elseif (Bajo)
+  :Reduce calidad de audio a la mitad
+  y comprime el formato;
+else (Crítico)
+  :Detiene la captura de audio;
+  :Registra limitación por batería;
+  stop
+endif
+
+repeat
+  :Captura flujo de audio;
+  :Divide en segmento de 15 segundos
+  (duración configurable);
+  :Asocia al segmento:
+  - ID de la alarma
+  - Timestamps de inicio y fin;
+  :Guarda el segmento de audio
+  (ejecuta UC-037);
+
+  :Espera siguiente intervalo;
+repeat while (¿Alarma activa? y ¿Batería no crítica?) is (sí)
+-> no
+
+stop
+@enduml
+Bosquejo:
+El diagrama tiene un único carril del Sistema. Comienza con la activación de la alarma. Luego se consulta el nivel de batería (UC-038) y se toma una decisión: calidad normal, calidad reducida (batería baja) o detención total (batería crítica). Si la grabación continúa, entra en un bucle donde se captura el audio, se segmenta cada 15 segundos, se asigna metadatos (ID de alarma, timestamps) y se guarda mediante UC-037. El bucle termina cuando la alarma finaliza o la batería cae a nivel crítico.
+
+2. Diagrama de Estado
+Modela el comportamiento del servicio de grabación de audio durante una alarma activa.
+
+plantuml
+@startuml
+[*] --> Inactivo : alarma no activa
+Inactivo --> GrabandoNormal : alarma activa y batería normal
+Inactivo --> DetenidoCritico : alarma activa y batería crítica
+
+GrabandoNormal --> GrabandoReducido : batería baja
+GrabandoReducido --> GrabandoNormal : batería recupera nivel normal
+GrabandoNormal --> Finalizado : alarma finaliza
+GrabandoReducido --> Finalizado : alarma finaliza
+GrabandoNormal --> DetenidoCritico : batería crítica
+GrabandoReducido --> DetenidoCritico : batería crítica
+
+Finalizado --> [*]
+DetenidoCritico --> [*]
+@enduml
+Bosquejo:
+Los estados reflejan el ciclo de vida del proceso de grabación:
+
+Inactivo: no hay alarma o aún no se inicia la grabación.
+
+GrabandoNormal: captura con calidad óptima (batería suficiente).
+
+GrabandoReducido: captura con calidad reducida debido a batería baja.
+
+Finalizado: la alarma terminó y la grabación cesó.
+
+DetenidoCritico: la grabación se interrumpió por batería crítica.
+Las transiciones muestran que desde los estados de grabación se puede pasar a finalizado (fin de alarma) o a detenido crítico (batería agotada). La calidad puede alternar entre normal y reducida según la batería.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con los estereotipos <<C>> (Controlador) y <<E>> (Entidad). No hay actores humanos ni interfaces de usuario.
+
+plantuml
+@startuml
+class "ControladorGrabacionAudio" as ctrl <<C>>
+class "ControladorBateria\n(UC-038)" as bat <<C>>
+class "ControladorAlmacenamiento\n(UC-037)" as alm <<C>>
+
+class "SegmentoAudio" as seg <<E>>
+class "Alarma" as alarma <<E>>
+class "Configuracion" as config <<E>>
+
+ctrl --> bat : consulta nivel
+ctrl --> alm : guarda segmento
+ctrl --> alarma : obtiene ID y estado
+ctrl --> config : lee parámetros (duración, formatos)
+
+alm --> seg : crea / persiste
+@enduml
+Bosquejo:
+
+Controladores <<C>>:
+
+ControladorGrabacionAudio: orquesta el proceso de grabación.
+
+ControladorBateria (UC‑038) y ControladorAlmacenamiento (UC‑037) son dependencias externas.
+
+Entidades <<E>>:
+
+SegmentoAudio: archivo de audio, metadatos (timestamps, ID alarma).
+
+Alarma: para verificar el estado activo y obtener su identificador.
+
+Configuracion: parámetros como duración del segmento, formatos de audio, umbrales de batería.
+Las relaciones muestran que el controlador principal conoce las entidades y los controladores auxiliares necesarios para la ejecución.
+
+4. Diagrama de Colaboración
+Muestra los mensajes entre los objetos durante el ciclo de grabación continuo.
+
+plantuml
+@startuml
+control ControladorGrabacionAudio
+control ControladorBateria
+control ControladorAlmacenamiento
+entity SegmentoAudio
+entity Alarma
+entity Configuracion
+
+ControladorGrabacionAudio -> ControladorBateria : 1. obtenerNivelBateria()
+ControladorBateria --> ControladorGrabacionAudio : 2. nivel
+ControladorGrabacionAudio -> Configuracion : 3. leerParametros()
+Configuracion --> ControladorGrabacionAudio : duración, formatos, umbrales
+
+alt nivel normal
+  ControladorGrabacionAudio -> ControladorGrabacionAudio : 4. configurarCalidadOptima()
+else nivel bajo
+  ControladorGrabacionAudio -> ControladorGrabacionAudio : 4. configurarCalidadReducida()
+else nivel crítico
+  ControladorGrabacionAudio -> ControladorGrabacionAudio : 4. detenerGrabacion()
+end
+
+loop mientras alarma activa y batería no crítica
+  ControladorGrabacionAudio -> ControladorGrabacionAudio : 5. capturarSegmento(15s)
+  ControladorGrabacionAudio -> SegmentoAudio : 6. crearSegmento(datos, ID alarma, timestamps)
+  ControladorGrabacionAudio -> ControladorAlmacenamiento : 7. guardarSegmento(segmento)
+  ControladorAlmacenamiento -> SegmentoAudio : 8. persistir()
+end
+@enduml
+Bosquejo:
+El controlador principal inicia consultando el nivel de batería (UC‑038) y los parámetros de configuración. Según el nivel, ajusta la calidad o detiene la grabación. Luego, en un bucle continuo, captura el audio en intervalos de 15 segundos, crea un objeto SegmentoAudio con los metadatos (ID de alarma, timestamps) y lo envía al controlador de almacenamiento (UC‑037) para su persistencia. El bucle se mantiene hasta que la alarma finaliza o la batería se vuelve crítica.
+
+5. Diagrama de Secuencia
+Detalla la interacción temporal entre los objetos, con líneas de vida y fragmentos combinados para el ajuste de calidad y el bucle de segmentación.
+
+plantuml
+@startuml
+participant "Controlador\nGrabacionAudio" as Ctrl
+participant "Controlador\nBateria" as Bat
+participant "Configuracion" as Conf
+participant "Controlador\nAlmacenamiento" as Alm
+entity "SegmentoAudio" as Seg
+entity "Alarma" as A
+
+Ctrl -> Bat : obtenerNivelBateria()
+activate Bat
+Bat --> Ctrl : nivel
+deactivate Bat
+Ctrl -> Conf : leerParametros()
+activate Conf
+Conf --> Ctrl : duración, formatos, umbrales
+deactivate Conf
+
+alt nivel normal
+  Ctrl -> Ctrl : configurarCalidadOptima()
+else nivel bajo
+  Ctrl -> Ctrl : configurarCalidadReducida()
+else nivel crítico
+  Ctrl -> Ctrl : detenerGrabacion()
+  note right: Fin del UC
+end
+
+loop [alarma activa y batería no crítica]
+  Ctrl -> Ctrl : capturarSegmento(15s)
+  Ctrl -> Seg : crear(datos, ID alarma, timestamps)
+  activate Seg
+  Seg --> Ctrl : segmento
+  deactivate Seg
+  Ctrl -> Alm : guardarSegmento(segmento)
+  activate Alm
+  Alm -> Seg : persistir()
+  activate Seg
+  Seg --> Alm : ok
+  deactivate Seg
+  Alm --> Ctrl : éxito
+  deactivate Alm
+end
+
+@enduml
+Bosquejo:
+La secuencia comienza con la consulta de batería y parámetros. Un bloque alt decide la configuración de calidad o la detención inmediata. Si la grabación continúa, se entra en un bucle (loop) que se repite cada 15 segundos mientras la alarma esté activa y la batería no sea crítica. En cada iteración se captura el audio, se crea un segmento con metadatos, y se envía a almacenamiento. Las activaciones reflejan el tiempo de vida de cada operación. El diagrama finaliza implícitamente al salir del bucle cuando cambian las condiciones.
+
+Estos diagramas cubren el caso de uso UC‑035 desde las perspectivas de actividad, estado, estructura estática e interacción, siguiendo las pautas del Proceso Unificado. Si necesitas ajustar algún detalle o profundizar en algún aspecto, estaré encantado de ayudarte.
+
+
++------------+
+|   UC-036   |
++------------+
+
+A continuación se presentan los diagramas para el caso de uso UC-036 – Capturar Fotos, según el Proceso Unificado de Desarrollo de Software. Dado que es un proceso automatizado sin intervención directa de un usuario, los diagramas se centran en la lógica de control, los servicios de hardware (cámaras, sensor de luz) y las entidades.
+
+1. Diagrama de Actividad
+Representa el flujo automatizado de captura de fotos, incluyendo la evaluación de batería, luz ambiental, permisos y la iteración periódica.
+
+plantuml
+@startuml
+|Sistema|
+start
+:Inicia el servicio de captura de fotos
+(tras activación de alarma);
+
+repeat
+  :Obtiene nivel de batería
+  (ejecuta UC-038);
+  :Determina nivel de luminosidad
+  ambiental con sensor de luz;
+
+  if (¿Batería crítica?) then (sí)
+    :Detiene el proceso de captura;
+    stop
+  else (no)
+  endif
+
+  if (¿Luz ambiental suficiente en alguna cámara?) then (no)
+    :(No captura por luz insuficiente)
+  else (sí)
+    if (¿Permisos de cámara frontal?) then (no)
+      :Omite cámara frontal;
+    endif
+    if (¿Permisos de cámara trasera?) then (no)
+      :Omite cámara trasera;
+    endif
+    if (¿Ambas cámaras sin permiso?) then (sí)
+      :Detiene el servicio;
+      stop
+    endif
+
+    if (¿Batería baja?) then (sí)
+      :Ajusta calidad de captura a reducida;
+    else (normal)
+      :Configura calidad óptima;
+    endif
+
+    :Captura foto con cada cámara habilitada
+    (enfoque y calidad según batería);
+    :Asigna timestamp, cifra y comprime;
+    :Guarda las capturas
+    (ejecuta UC-037);
+  endif
+
+  :Espera intervalo configurable (5 s por defecto);
+repeat while (¿Alarma activa y batería no crítica?) is (sí)
+-> no
+stop
+@enduml
+Bosquejo:
+El diagrama tiene un único carril del Sistema. Tras activar la alarma, se entra en un bucle que primero consulta la batería (UC‑038) y el sensor de luz. Si la batería es crítica, el proceso se detiene inmediatamente. Si la luz es insuficiente, no se captura nada en esa iteración pero el bucle continúa. Si hay luz, se verifican permisos de cámaras; si ambas están deshabilitadas, el servicio termina. Luego se ajusta la calidad según batería (reducida si batería baja, óptima si normal). Se capturan las fotos, se añaden metadatos, se comprimen y se guardan mediante UC‑037. Finalmente se espera un intervalo (5 s) y se repite mientras la alarma esté activa y la batería no sea crítica.
+
+2. Diagrama de Estado
+Modela el comportamiento del servicio de captura de fotos durante la alarma.
+
+plantuml
+@startuml
+[*] --> Inactivo : alarma no activa
+Inactivo --> CapturandoNormal : alarma activa, batería normal, luz suficiente, permisos OK
+Inactivo --> CapturandoReducido : alarma activa, batería baja, luz suficiente, permisos OK
+Inactivo --> Suspendido : batería crítica / ambas cámaras sin permiso
+
+CapturandoNormal --> CapturandoReducido : batería baja
+CapturandoReducido --> CapturandoNormal : batería recupera nivel normal
+CapturandoNormal --> Suspendido : batería crítica / sin cámaras disponibles
+CapturandoReducido --> Suspendido : batería crítica / sin cámaras disponibles
+CapturandoNormal --> Finalizado : alarma finaliza
+CapturandoReducido --> Finalizado : alarma finaliza
+
+Finalizado --> [*]
+Suspendido --> [*]
+@enduml
+Bosquejo:
+Los estados principales:
+
+Inactivo: no hay alarma activa.
+
+CapturandoNormal: se toman fotos con calidad óptima (batería suficiente, luz y permisos).
+
+CapturandoReducido: se captura con calidad reducida debido a batería baja.
+
+Suspendido: se detuvo la captura por batería crítica o porque ninguna cámara tiene permiso.
+
+Finalizado: la alarma terminó y el servicio cesó.
+Las transiciones muestran los cambios entre calidades según la batería, y la posibilidad de suspensión o finalización.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con estereotipos <<A>> (Actor-externo), <<C>> (Controlador) y <<E>> (Entidad). No hay interfaz de usuario.
+
+plantuml
+@startuml
+actor "Sensor de Luz Ambiental" as luz <<A>>
+actor "Cámara Frontal" as camF <<A>>
+actor "Cámara Trasera" as camT <<A>>
+
+class "ControladorCapturaFotos" as ctrl <<C>>
+class "ControladorBateria\n(UC-038)" as bat <<C>>
+class "ControladorAlmacenamiento\n(UC-037)" as alm <<C>>
+class "Foto" as foto <<E>>
+class "Configuracion" as conf <<E>>
+
+ctrl --> luz : consulta nivel
+ctrl --> camF : captura imagen
+ctrl --> camT : captura imagen
+ctrl --> bat : consulta nivel
+ctrl --> alm : guarda foto
+ctrl --> conf : lee parámetros
+
+alm --> foto : persiste
+@enduml
+Bosquejo:
+
+Actores <<A>>: Sensor de Luz Ambiental, Cámara Frontal y Cámara Trasera (servicios de hardware).
+
+Controladores <<C>>: ControladorCapturaFotos (principal), ControladorBateria (UC‑038), ControladorAlmacenamiento (UC‑037).
+
+Entidades <<E>>: Foto (datos de imagen, metadatos, compresión) y Configuracion (umbrales de luz, calidades, intervalo).
+Las relaciones muestran que el controlador central consulta los servicios externos y delega el almacenamiento en UC‑037.
+
+4. Diagrama de Colaboración
+Muestra el intercambio de mensajes entre los objetos durante un ciclo de captura exitoso y con calidad reducida.
+
+plantuml
+@startuml
+control ControladorCapturaFotos
+actor "Sensor de Luz Ambiental" as luz
+actor "Cámara Frontal" as camF
+actor "Cámara Trasera" as camT
+control ControladorBateria
+control ControladorAlmacenamiento
+entity Foto
+entity Configuracion
+
+ControladorCapturaFotos -> ControladorBateria : 1. obtenerNivelBateria()
+ControladorBateria --> ControladorCapturaFotos : 2. nivel
+ControladorCapturaFotos -> luz : 3. consultarLuzAmbiental()
+luz --> ControladorCapturaFotos : 4. nivelLuz
+ControladorCapturaFotos -> Configuracion : 5. leerUmbrales()
+Configuracion --> ControladorCapturaFotos : umbrales, calidades
+
+alt batería crítica o (luz insuficiente y batería baja?) etc
+  ControladorCapturaFotos -> ControladorCapturaFotos : 6. detenerServicio()
+else condiciones favorables
+  ControladorCapturaFotos -> ControladorCapturaFotos : 6. ajustarCalidad()
+
+  opt cámara frontal habilitada
+    ControladorCapturaFotos -> camF : 7. capturarFoto()
+    camF --> ControladorCapturaFotos : imagen
+  end
+  opt cámara trasera habilitada
+    ControladorCapturaFotos -> camT : 7. capturarFoto()
+    camT --> ControladorCapturaFotos : imagen
+  end
+
+  ControladorCapturaFotos -> Foto : 8. crear(imagen, timestamp, cámara)
+  ControladorCapturaFotos -> ControladorAlmacenamiento : 9. guardarFoto(foto)
+  ControladorAlmacenamiento -> Foto : 10. persistir()
+end
+@enduml
+Bosquejo:
+La secuencia de mensajes en cada iteración:
+
+El controlador principal consulta la batería y el sensor de luz.
+
+Lee la configuración.
+
+Si las condiciones son desfavorables (crítico o sin luz/permisos), se detiene. En caso contrario, ajusta calidad y captura desde las cámaras que tengan permiso.
+
+Por cada cámara habilitada, se obtiene la imagen, se crea una entidad Foto con metadatos, y se envía a guardar mediante UC‑037.
+
+El bucle se repite cada 5 segundos.
+
+5. Diagrama de Secuencia
+Detalla la interacción temporal entre los objetos, incluyendo fragmentos combinados para los diferentes niveles de batería y permisos.
+
+plantuml
+@startuml
+participant "ControladorCapturaFotos" as Ctrl
+participant "ControladorBateria" as Bat
+participant "SensorLuz" as Luz
+participant "Configuracion" as Conf
+participant "Cámara Frontal" as CamF
+participant "Cámara Trasera" as CamT
+participant "ControladorAlmacenamiento" as Alm
+entity "Foto" as F
+
+loop cada 5 segundos [alarma activa y batería no crítica]
+  Ctrl -> Bat : obtenerNivelBateria()
+  activate Bat
+  Bat --> Ctrl : nivel
+  deactivate Bat
+  Ctrl -> Luz : consultarLuzAmbiental()
+  activate Luz
+  Luz --> Ctrl : nivelLuz
+  deactivate Luz
+  Ctrl -> Conf : leerUmbrales()
+  activate Conf
+  Conf --> Ctrl : umbralesLuz, calidades
+  deactivate Conf
+
+  alt batería crítica
+    Ctrl -> Ctrl : detenerServicio()
+    note right: Fin del UC
+  else luz insuficiente y batería baja? (omitir)
+    Ctrl -> Ctrl : omitirCaptura()
+  else condiciones para captura
+    alt batería baja
+      Ctrl -> Ctrl : ajustarCalidadReducida()
+    else batería normal
+      Ctrl -> Ctrl : ajustarCalidadOptima()
+    end
+
+    opt permiso cámara frontal
+      Ctrl -> CamF : capturarFoto()
+      activate CamF
+      CamF --> Ctrl : imagenFrontal
+      deactivate CamF
+      Ctrl -> F : crear(imagen, timestamp, "frontal")
+      activate F
+      F --> Ctrl : foto
+      deactivate F
+      Ctrl -> Alm : guardarFoto(foto)
+      activate Alm
+      Alm -> F : persistir()
+      activate F
+      F --> Alm : ok
+      deactivate F
+      Alm --> Ctrl : éxito
+      deactivate Alm
+    end
+    opt permiso cámara trasera
+      Ctrl -> CamT : capturarFoto()
+      activate CamT
+      CamT --> Ctrl : imagenTrasera
+      deactivate CamT
+      Ctrl -> F : crear(imagen, timestamp, "trasera")
+      activate F
+      F --> Ctrl : foto
+      deactivate F
+      Ctrl -> Alm : guardarFoto(foto)
+      activate Alm
+      Alm -> F : persistir()
+      F --> Alm : ok
+      deactivate F
+      Alm --> Ctrl : éxito
+      deactivate Alm
+    end
+  end
+end
+@enduml
+Bosquejo:
+El diagrama de secuencia muestra un bucle (loop) que se ejecuta cada 5 segundos mientras la alarma esté activa y la batería no sea crítica. En cada iteración:
+
+Se consultan la batería y la luz, y se lee la configuración.
+
+Un bloque alt decide: si batería crítica, se detiene el servicio; si la luz es insuficiente, se omite la captura en esa iteración; si las condiciones son aptas, se ajusta la calidad según la batería.
+
+Luego se intenta capturar de cada cámara (con fragmentos opt para las que tienen permiso), crear la entidad Foto y guardar mediante UC‑037.
+Las activaciones muestran la duración de cada interacción y el flujo secuencial.
+
+Estos diagramas cubren el caso de uso UC‑036 desde las perspectivas de actividad, estado, estructura estática e interacción, siguiendo las pautas del Proceso Unificado. Si necesitas algún ajuste o profundizar en algún escenario, quedo a tu disposición.
+
+
++------------+
+|   UC-037   |
++------------+
+
+A continuación se presentan los diagramas para el caso de uso UC-037 – Almacenar Datos Localmente, modelados según el Proceso Unificado de Desarrollo de Software (Jacobson, Booch, Rumbaugh). Dado que es un proceso de sistema invocado por otros casos de uso, el actor principal se modela como los componentes que solicitan la persistencia.
+
+1. Diagrama de Actividad
+Muestra el flujo de almacenamiento según el tipo de dato, el control de espacio y la creación del registro de pendientes.
+
+plantuml
+@startuml
+|Solicitante (otros UCs)|
+start
+:Solicita persistir un dato;
+
+|Sistema (UC-037)|
+:Determina el tipo de dato;
+
+if (¿Tipo de dato?) then (Estructurado)
+  :Inserta registro en tabla local;
+elseif (Multimedia)
+  :Guarda archivo en directorio
+  con nombre único (ID alarma, timestamp, tipo);
+else (Estado de alarma)
+  :Actualiza bandera de activación
+  y timestamp de inicio;
+endif
+
+:Verifica espacio de almacenamiento;
+
+if (¿Espacio suficiente?) then (no)
+  :Intenta eliminar archivos antiguos
+  ya enviados al CdM;
+  if (¿Espacio suficiente ahora?) then (no)
+    if (¿Sobrescritura de datos antiguos permitida?) then (sí)
+      :Sobrescribe los datos más antiguos;
+    else (no)
+      :Muestra error "Almacenamiento lleno";
+      stop
+    endif
+  else (sí)
+    :Continúa con el guardado;
+  endif
+else (sí)
+  :Continúa con el guardado;
+endif
+
+:Crea o actualiza registro de
+pendiente de transmisión
+(ID, ruta, tipo, intentos fallidos);
+
+:Confirma escritura local;
+stop
+@enduml
+Bosquejo:
+El diagrama emplea dos carriles (Solicitante y Sistema). El flujo principal inicia cuando otro UC solicita persistir un dato. El sistema clasifica el dato: si es estructurado lo inserta en base de datos local, si es multimedia guarda el archivo en un directorio con nombre único, y si es estado de alarma actualiza las marcas de activación. Luego verifica el espacio disponible. Si es insuficiente, intenta eliminar archivos antiguos ya transmitidos; si aún no alcanza, evalúa la política de sobrescritura. Si la política lo permite, sobrescribe los datos más antiguos; si no, muestra un error y termina el caso de uso. Si hay espacio (original o liberado), se crea un registro de pendiente de transmisión y se confirma la escritura local.
+
+2. Diagrama de Estado
+Representa el ciclo de vida de una entidad Dato desde que se recibe para almacenar hasta que queda a la espera de transmisión.
+
+plantuml
+@startuml
+[*] --> Recibido : solicitud de almacenamiento
+Recibido --> Almacenado : guardado local exitoso
+Recibido --> ErrorAlmacenamiento : espacio insuficiente y sin sobrescritura
+Almacenado --> PendienteTransmision : se crea registro de pendiente
+ErrorAlmacenamiento --> [*]
+PendienteTransmision --> [*]
+@enduml
+Bosquejo:
+El diagrama muestra la evolución de un dato a través del proceso:
+
+Recibido: el dato llega desde otro caso de uso.
+
+Almacenado: se ha persistido localmente (base de datos o archivo).
+
+PendienteTransmision: además de guardado, se ha creado una entrada en la tabla de datos pendientes de envío al CdM.
+
+ErrorAlmacenamiento: no se pudo guardar por falta de espacio y las políticas no permiten sobrescribir; el dato se pierde.
+Desde PendienteTransmision el dato podrá eventualmente transmitirse, pero ese paso queda fuera de este UC.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases con estereotipos <<A>>, <<C>> y <<E>>. No hay interfaz de usuario significativa para este caso de uso de sistema.
+
+plantuml
+@startuml
+actor "Solicitante\n(Otros UCs)" as sol <<A>>
+
+class "ControladorAlmacenamientoLocal" as ctrl <<C>>
+
+class "Dato" as dato <<E>>
+class "RegistroPendiente" as pendiente <<E>>
+class "ConfiguracionAlmacenamiento" as config <<E>>
+class "Alarma" as alarma <<E>>
+
+sol --> ctrl : solicita almacenar
+ctrl --> dato : guarda / crea
+ctrl --> pendiente : crea entrada de pendiente
+ctrl --> config : consulta políticas
+ctrl --> alarma : actualiza estado (cuando corresponda)
+@enduml
+Bosquejo:
+
+Actor <<A>>: Solicitante representa cualquier otro caso de uso que necesite persistencia local (ej. UC‑035, UC‑036).
+
+Controlador <<C>>: ControladorAlmacenamientoLocal orquesta la lógica de persistencia.
+
+Entidades <<E>>:
+
+Dato: abstracción de dato estructurado, archivo multimedia o estado de alarma.
+
+RegistroPendiente: entrada en la tabla de trabajos pendientes de transmisión.
+
+ConfiguracionAlmacenamiento: umbrales, política de sobrescritura, formato de nombres.
+
+Alarma: para actualizar la bandera de activación y timestamp.
+Las relaciones muestran que el controlador centraliza las operaciones de persistencia y la creación de registros pendientes, consultando la configuración cuando es necesario.
+
+4. Diagrama de Colaboración
+Muestra el intercambio de mensajes entre los objetos durante la persistencia de un dato multimedia (el tipo más representativo).
+
+plantuml
+@startuml
+actor Solicitante
+control ControladorAlmacenamientoLocal
+entity ConfiguracionAlmacenamiento
+entity Dato
+entity RegistroPendiente
+entity Alarma
+
+Solicitante -> ControladorAlmacenamientoLocal : 1. almacenar(tipo, contenido)
+ControladorAlmacenamientoLocal -> ConfiguracionAlmacenamiento : 2. obtenerPoliticas()
+ConfiguracionAlmacenamiento --> ControladorAlmacenamientoLocal : politicas
+
+ControladorAlmacenamientoLocal -> ControladorAlmacenamientoLocal : 3. verificarEspacio()
+alt espacio suficiente
+  ControladorAlmacenamientoLocal -> Dato : 4. guardar(contenido, ruta)
+  Dato --> ControladorAlmacenamientoLocal : confirmación
+  ControladorAlmacenamientoLocal -> RegistroPendiente : 5. crearEntrada(ruta, tipo)
+  RegistroPendiente --> ControladorAlmacenamientoLocal : ok
+  ControladorAlmacenamientoLocal --> Solicitante : 6. confirmación escritura
+else espacio insuficiente y sobrescritura permitida
+  ControladorAlmacenamientoLocal -> Dato : 7. sobrescribirAntiguo(contenido)
+  Dato --> ControladorAlmacenamientoLocal : confirmación
+  ControladorAlmacenamientoLocal -> RegistroPendiente : 8. crearEntrada(...)
+  ...
+else espacio insuficiente y sin sobrescritura
+  ControladorAlmacenamientoLocal --> Solicitante : 9. error "almacenamiento lleno"
+end
+@enduml
+Bosquejo:
+La colaboración se centra en el controlador, que recibe la solicitud de almacenar. Tras consultar las políticas y verificar el espacio, la rama principal guarda el dato, crea el registro pendiente y confirma. Si el espacio es insuficiente pero se permite sobrescritura, se sobrescribe el dato más antiguo y se continúa con el registro pendiente. Si no hay espacio y no se puede sobrescribir, se devuelve un error. Las entidades Dato y RegistroPendiente son creadas o actualizadas según corresponda.
+
+5. Diagrama de Secuencia
+Describe la interacción temporal detallada, incluyendo fragmentos combinados para los distintos tipos de datos y manejo de espacio.
+
+plantuml
+@startuml
+actor Solicitante
+participant "ControladorAlmacenamientoLocal" as Ctrl
+participant "ConfiguracionAlmacenamiento" as Conf
+participant "Dato" as D
+participant "RegistroPendiente" as RP
+participant "Alarma" as A
+
+Solicitante -> Ctrl : almacenar(tipo, contenido)
+activate Ctrl
+Ctrl -> Conf : obtenerPoliticas()
+activate Conf
+Conf --> Ctrl : politicas (umbrales, sobrescritura)
+deactivate Conf
+
+group verificarEspacio
+  Ctrl -> Ctrl : comprobar espacio disponible
+end
+
+alt espacio suficiente
+  Ctrl -> Ctrl : rutaUnica()
+  opt tipo == EstadoAlarma
+    Ctrl -> A : actualizarBandera(timestamp)
+    activate A
+    A --> Ctrl : ok
+    deactivate A
+  else tipo == Multimedia
+    Ctrl -> D : guardarArchivo(contenido, ruta)
+    activate D
+    D --> Ctrl : éxito
+    deactivate D
+  else tipo == Estructurado
+    Ctrl -> D : insertarRegistro(contenido)
+    activate D
+    D --> Ctrl : éxito
+    deactivate D
+  end
+
+  Ctrl -> RP : crearEntrada(ruta, tipo, intentos=0)
+  activate RP
+  RP --> Ctrl : ok
+  deactivate RP
+  Ctrl --> Solicitante : confirmación escritura
+else espacio insuficiente
+  Ctrl -> Ctrl : intentarLiberarEspacio()
+  alt liberación exitosa
+    ' repite flujo de guardado similar al anterior (omitido por brevedad)
+  else política sobrescritura permitida
+    Ctrl -> D : sobrescribirDatoAntiguo(contenido)
+    activate D
+    D --> Ctrl : éxito
+    deactivate D
+    Ctrl -> RP : crearEntrada(...)
+    activate RP
+    RP --> Ctrl : ok
+    deactivate RP
+    Ctrl --> Solicitante : confirmación
+  else sin sobrescritura
+    Ctrl --> Solicitante : error "Almacenamiento lleno"
+  end
+end
+deactivate Ctrl
+@enduml
+Bosquejo:
+El diagrama de secuencia presenta un actor Solicitante que invoca almacenar. El controlador obtiene las políticas de configuración y verifica el espacio. En el fragmento principal (espacio suficiente), según el tipo de dato se actualiza el estado de la alarma, se guarda un archivo multimedia o se inserta un registro estructurado. Después se crea un RegistroPendiente y se envía confirmación. En el fragmento alternativo (espacio insuficiente), se intenta liberar espacio eliminando datos antiguos; si se logra, se procede con el guardado; si no, se evalúa la política de sobrescritura. Si se puede sobrescribir, se realiza la operación y se crea el pendiente; de lo contrario, se notifica el error. Las activaciones reflejan el ciclo de vida de cada participación.
+
+Estos diagramas cubren el caso de uso UC‑037 desde las perspectivas de actividad, estado de los datos, estructura estática e interacciones, siguiendo el Proceso Unificado. Si necesitas algún ajuste o mayor detalle, quedo a tu disposición.
+
+
++------------+
+|   UC-038   |
++------------+
+
+A continuación se presentan los diagramas para el caso de uso UC‑038 – Consultar Nivel de Batería, modelados según el Proceso Unificado de Desarrollo de Software. Se trata de un servicio del sistema invocado por otros casos de uso, sin interacción humana directa. Los diagramas reflejan la consulta al sistema operativo, la recuperación de umbrales configurados y la clasificación en un estado energético.
+
+1. Diagrama de Actividad
+Flujo simple que muestra la obtención y clasificación del nivel de batería.
+
+plantuml
+@startuml
+|Solicitante|
+start
+:Necesita conocer el nivel de batería;
+
+|Sistema (UC-038)|
+:Consulta al SO el porcentaje actual
+y si está conectado a un cargador;
+
+:Recupera umbrales configurados
+desde preferencias de la aplicación;
+
+:Clasifica el estado según criterios:
+- Normal: cargador conectado o nivel >= umbral normal
+- Regular: nivel < umbral normal
+- Bajo: nivel < umbral regular
+- Crítico: nivel < umbral bajo;
+
+:Devuelve porcentaje y estado clasificado;
+
+|Solicitante|
+:Recibe el resultado;
+stop
+@enduml
+Bosquejo:
+Dos carriles. El solicitante (otro caso de uso) inicia la petición. El sistema obtiene los datos del sistema operativo, carga los umbrales, aplica la clasificación en cascada (Normal, Regular, Bajo, Crítico) y retorna el porcentaje junto con el estado. No hay flujos alternativos porque la clasificación es determinista y siempre exitosa.
+
+2. Diagrama de Estado
+Representa los posibles estados de la batería según los umbrales y las transiciones que ocurren cuando el nivel de carga varía. Este diagrama modela la entidad conceptual Nivel de Batería.
+
+plantuml
+@startuml
+[*] --> Normal : cargador conectado
+[*] --> Normal : nivel >= umbral normal
+
+Normal --> Regular : cargador desconectado y nivel < umbral normal
+Regular --> Normal : cargador conectado o nivel >= umbral normal
+Regular --> Bajo : nivel < umbral regular
+Bajo --> Regular : nivel >= umbral regular (por carga)
+Bajo --> Crítico : nivel < umbral bajo
+Crítico --> Bajo : nivel >= umbral bajo (por carga)
+Normal --> Crítico : nivel < umbral bajo (descarga rápida, omitiendo intermedios)
+Crítico --> Normal : cargador conectado (carga completa)
+@enduml
+Bosquejo:
+Los estados son los cuatro niveles de clasificación definidos en el UC. Se muestran las transiciones causadas por cambios en el porcentaje o la conexión al cargador. El estado Normal es el punto de partida más favorable; desde él se puede degradar progresivamente o pasar directamente a Crítico en caso de descarga abrupta. La recarga revierte las transiciones.
+
+3. Diagrama de Clases de Análisis
+Identifica las clases participantes con estereotipos <<A>> (Actor), <<I>> (Interfaz), <<C>> (Controlador) y <<E>> (Entidad).
+
+plantuml
+@startuml
+actor Solicitante <<A>>
+actor "Sistema Operativo" as SO <<A>>
+
+class "IServicioBateria" as servicio <<I>>
+class "ControladorBateria" as ctrl <<C>>
+class "ConfiguracionUmbrales" as config <<E>>
+class "ResultadoBateria" as resultado <<E>>
+
+Solicitante --> servicio : consulta
+servicio --> ctrl : obtiene nivel
+ctrl --> SO : consulta porcentaje/conexión
+ctrl --> config : lee umbrales
+ctrl --> resultado : crea resultado
+
+SO --> ctrl : entrega datos
+config --> ctrl : umbrales
+ctrl --> servicio : retorna resultado
+servicio --> Solicitante : resultado
+@enduml
+Bosquejo:
+
+Actores <<A>>: Solicitante (cualquier UC que requiera el nivel) y Sistema Operativo (fuente del porcentaje de batería y estado de carga).
+
+Interfaz <<I>>: IServicioBateria expone el método consultarNivel() y encapsula la llamada.
+
+Controlador <<C>>: ControladorBateria implementa la lógica de clasificación.
+
+Entidades <<E>>:
+
+ConfiguracionUmbrales: almacena los valores de los umbrales (normal, regular, bajo).
+
+ResultadoBateria: objeto que contiene el porcentaje y el estado clasificado, devuelto al solicitante.
+Las relaciones reflejan el flujo de dependencias: el controlador consulta al SO y a la configuración, produce un resultado y lo entrega a la interfaz.
+
+4. Diagrama de Colaboración
+Muestra los mensajes intercambiados durante la ejecución típica de la consulta.
+
+plantuml
+@startuml
+actor Solicitante
+boundary IServicioBateria
+control ControladorBateria
+actor "Sistema Operativo" as SO
+entity ConfiguracionUmbrales
+entity ResultadoBateria
+
+Solicitante -> IServicioBateria : 1. consultarNivel()
+IServicioBateria -> ControladorBateria : 2. obtenerNivel()
+ControladorBateria -> SO : 3. getBatteryPercentage()
+SO --> ControladorBateria : 4. porcentaje, conectado
+ControladorBateria -> ConfiguracionUmbrales : 5. getUmbrales()
+ConfiguracionUmbrales --> ControladorBateria : umbrales
+ControladorBateria -> ControladorBateria : 6. clasificar(porcentaje, umbrales, conectado)
+ControladorBateria -> ResultadoBateria : 7. crear(porcentaje, estado)
+ControladorBateria --> IServicioBateria : 8. resultado
+IServicioBateria --> Solicitante : 9. resultado
+@enduml
+Bosquejo:
+La secuencia es lineal. El solicitante llama a la interfaz, que delega en el controlador. Este consulta al sistema operativo (porcentaje y conexión) y a la configuración (umbrales), aplica la clasificación y crea un objeto ResultadoBateria. Finalmente, el resultado se propaga de vuelta al solicitante.
+
+5. Diagrama de Secuencia
+Describe la interacción temporal con líneas de vida y activaciones.
+
+plantuml
+@startuml
+actor Solicitante
+participant "IServicioBateria" as Interfaz
+participant "ControladorBateria" as Ctrl
+actor "Sistema Operativo" as SO
+participant "ConfiguracionUmbrales" as Conf
+entity "ResultadoBateria" as Res
+
+Solicitante -> Interfaz : consultarNivel()
+activate Interfaz
+Interfaz -> Ctrl : obtenerNivel()
+activate Ctrl
+Ctrl -> SO : getBatteryPercentage()
+activate SO
+SO --> Ctrl : porcentaje, conectado
+deactivate SO
+Ctrl -> Conf : getUmbrales()
+activate Conf
+Conf --> Ctrl : umbrales
+deactivate Conf
+Ctrl -> Ctrl : clasificar(porcentaje, umbrales, conectado)
+Ctrl -> Res : crear(porcentaje, estado)
+activate Res
+Res --> Ctrl : resultado
+deactivate Res
+Ctrl --> Interfaz : resultado
+deactivate Ctrl
+Interfaz --> Solicitante : resultado (porcentaje, estado)
+deactivate Interfaz
+@enduml
+Bosquejo:
+El diagrama de secuencia refleja el mismo flujo que la colaboración, pero con barras de activación que muestran el tiempo de vida de cada objeto. El controlador obtiene los datos, los procesa y construye el resultado. Todo el proceso es síncrono y devuelve inmediatamente el estado clasificado.
+
+Estos diagramas cubren el caso de uso UC‑038 desde las perspectivas de actividad, estados posibles de la batería, estructura estática e interacciones, siguiendo el Proceso Unificado. Si se requiere algún ajuste o extensión, estoy a tu disposición.
+

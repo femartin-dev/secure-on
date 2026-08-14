@@ -1,0 +1,42 @@
+version: '3.8'
+
+x-common-env: &common-env
+  SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/secure_on_db
+  APP_REPOSITORY_PATH_EVIDENCIAS: /secure-on/evidences
+
+services:
+
+  ms-gateway:
+    image: ms-gateway
+    ports:
+      - "8090:8090"
+    environment:
+      <<: *common-env
+      API_GATEWAY_CONFIG_SERVICES_URLS_APP_MOVIL: http://host.docker.internal:8091
+      API_GATEWAY_CONFIG_SERVICES_URLS_CMD_CONTROL: http://host.docker.internal:8092
+      API_GATEWAY_CONFIG_SERVICES_URLS_SEGURIDAD: http://host.docker.internal:8093
+
+  ms-app-movil:
+    image: ms-app-movil
+    ports:
+      - "8091:8091"
+    environment:
+      <<: *common-env
+    volumes:
+      - C:/Users/fjmv2/Proyectos/Repositorios/secure-on/evidencias:/secure-on/evidences   
+
+  ms-cdm-control:
+    image: ms-cdm-control
+    ports:
+      - "8092:8092"
+    environment:
+      <<: *common-env
+    volumes:
+      - C:/Users/fjmv2/Proyectos/Repositorios/secure-on/evidencias:/secure-on/evidences 
+
+  ms-seguridad:
+    image: ms-seguridad 
+    ports:
+      - "8093:8093"
+    environment:
+      <<: *common-env

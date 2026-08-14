@@ -49,13 +49,9 @@ public class AsignacionService {
     public Page<AlarmaOperador> listarAlarmas(Integer estadoAlarmaId, Integer prioridadId,
                                     OffsetDateTime fechaDesde, OffsetDateTime fechaHasta,
                                     UUID operadorId, Integer estadoAsigId, Pageable pageable) {
-        Operador operador = operadorService.obtenerPorId(operadorId);
-        EstadoAlarma estadoAlarma = catalogoService.getEstadoAlarma(estadoAlarmaId);
-        EstadoAsignacion estadoAsignacion = catalogoService.getEstadoAsignacion(estadoAsigId);
-        PrioridadAlarma prioridad = prioridadService.getPrioridadAlarma(prioridadId);
-        return alarmaOperadorRepository.buscarConFiltros(estadoAlarma, prioridad, 
-                                                        fechaDesde, fechaHasta, operador, 
-                                                        estadoAsignacion, pageable);
+        return alarmaOperadorRepository.buscarConFiltros(estadoAlarmaId, prioridadId, 
+                                                        fechaDesde, fechaHasta, operadorId, 
+                                                        estadoAsigId, pageable);
     }
 
     // Asignación automática: selecciona un operador disponible

@@ -37,11 +37,12 @@ public class WsMensajeriaService {
         this.url = url + path;
     }
     
-    private void enviarMensajeHttp(EventoDTO mensaje) {
+    private void enviarMensajeHttp(UUID to, EventoDTO mensaje) {
         
         try {
+            String newurl = url + (to == null ? "" : "/" + to.toString());
             ResponseEntity<Void> response = 
-                    restTemplate.postForEntity( url, mensaje, Void.class );
+                    restTemplate.postForEntity(newurl, mensaje, Void.class );
 
             if (response.getStatusCode() == HttpStatus.ACCEPTED) {
                 log.info("Mensaje encolado correctamente");
@@ -53,6 +54,10 @@ public class WsMensajeriaService {
         } catch (Exception e) {
             log.error("Error al enviar mensaje: {}", e.getMessage());
         }
+    }
+
+    private void enviarMensajeHttp(EventoDTO mensaje) {
+        this.enviarMensajeHttp(null, mensaje);
     }
 
     public void publicarNuevaAlarma(Alarma alarma) {

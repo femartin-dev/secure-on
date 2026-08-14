@@ -24,7 +24,7 @@ public class LoginAppRequest {
     @Pattern(regexp = "\\+?[0-9]{10,15}", message = "{err.phone.not-valid}")
     private String telefono;
 
-    private UUID dispositivoAppId;
+    private String dispositivoAppId;
     
     @NotBlank
     private String password;

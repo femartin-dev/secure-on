@@ -4,7 +4,8 @@
 export const environment = {
   production: false,
   logSensitiveData: true,
-  apiUrl: 'http://localhost:8090/api/secure-on',
-  socketUrl: 'ws://localhost:8090/ws/secure-on',
-  googleMapsApiKey: 'AIzaSyAlTK4mI1tcPSl_aOwuB8NupV2NHE7aEwg'
+  apiUrl: 'http://localhost:8090',
+  socketUrl: 'ws://localhost:8090',
+  //googleMapsApiKey: 'AIzaSyAlTK4mI1tcPSl_aOwuB8NupV2NHE7aEwg'
+  googleMapsApiKey: 'AIzaSyAVTJarhjLI4orv6NxrRGE1eNID_ja1mHg'
 };

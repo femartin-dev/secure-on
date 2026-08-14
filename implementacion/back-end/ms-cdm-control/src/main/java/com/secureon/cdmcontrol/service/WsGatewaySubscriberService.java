@@ -15,6 +15,7 @@ import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import com.secureon.common.dto.AlarmaDTO;
+import com.secureon.common.dto.UbicacionDTO;
 import com.secureon.common.property.WsDestinoEnum;
 
 import jakarta.annotation.PostConstruct;
@@ -99,6 +100,8 @@ public class WsGatewaySubscriberService {
 
     private void subscribeToTopics(StompSession session) {
         String destinoAlarmaNueva = WsDestinoEnum.TOPIC_ALARMA_NUEVA.getPath();
+        String destinoAlarmaFinalizacion = WsDestinoEnum.TOPIC_ALARMA_FINALIZACION.getPath();
+        String destinoAlertaUbicacion = WsDestinoEnum.TOPIC_UBICACION_REALTIME.getPath();
         if (!StringUtils.hasText(destinoAlarmaNueva)) {
             log.warn("Destino TOPIC_ALARMA_NUEVA no configurado");
             return;
@@ -125,7 +128,41 @@ public class WsGatewaySubscriberService {
                 }
             }
         });
-
         log.info("Suscrito a {}", destinoAlarmaNueva);
+        session.subscribe(destinoAlarmaFinalizacion, new StompFrameHandler() {
+            @Override
+            public Type getPayloadType(StompHeaders headers) {
+                log.debug("Suscripcion {} recibe headers {}", destinoAlarmaFinalizacion, headers);
+                return AlarmaDTO.class;
+            }
+
+            @Override
+            public void handleFrame(StompHeaders headers, Object payload) {
+                log.debug("handleFrame ejecutado en {} con payloadType={}",
+                        destinoAlarmaFinalizacion,
+                        payload != null ? payload.getClass().getName() : "null");
+            }
+        });
+        log.info("Suscrito a {}", destinoAlarmaFinalizacion);
+
+        session.subscribe(destinoAlertaUbicacion, new StompFrameHandler() {
+            @Override
+            public Type getPayloadType(StompHeaders headers) {
+                log.debug("Suscripcion {} recibe headers {}", destinoAlertaUbicacion, headers);
+                return UbicacionDTO.class;
+            }
+
+            @Override
+            public void handleFrame(StompHeaders headers, Object payload) {
+                log.debug("handleFrame ejecutado en {} con payloadType={}",
+                        destinoAlertaUbicacion,
+                        payload != null ? payload.getClass().getName() : "null");
+            }
+        });
+        log.info("Suscrito a {}", destinoAlertaUbicacion);
+
+
+        
     }
+
 }

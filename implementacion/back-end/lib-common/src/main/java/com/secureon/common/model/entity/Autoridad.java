@@ -4,6 +4,9 @@ import java.util.UUID;
 
 import org.locationtech.jts.geom.Point;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.secureon.common.model.converter.PointSerializer;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,6 +32,7 @@ public class Autoridad {
     private TipoAutoridad tipoAutoridad;
 
     @Column(columnDefinition = "geography(Point,4326)")
+    @JsonSerialize(using = PointSerializer.class)
     private Point ubicacionAutoridad;
 
     private String nombre;

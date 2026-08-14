@@ -21,6 +21,7 @@ import {
 import { Ubicacion, LocationData, toUbicacion } from '../models/evidence.models';
 import { ConfigService } from './config.service';
 import { QueueService } from './queue.service';
+import { MetodoActivacion, PrioridadAlarma } from '@app/utils/constants.util';
 
 @Injectable({
   providedIn: 'root',
@@ -146,112 +147,6 @@ export class AlarmService {
       this.preAlarmTimerId = null;
     }
     this.preAlarmCountdownSubject.next(0);
-  }
-
-
-  /**
-   * Start cancellation countdown
-   */
-  private startCancellationCountdown(seconds: number): void {
-    let count = seconds;
-    this.cancellationCountdownSubject.next(count);
-
-    this.cancellationTimerId = setInterval(() => {
-      count--;
-      this.cancellationCountdownSubject.next(count);
-
-      if (count <= 0) {
-        clearInterval(this.cancellationTimerId);
-        this.handleAlarmExpiration();
-      }
-    }, 1000);
-  }
-
-  /**
-   * Handle alarm expiration (time ran out)
-   * PUT /servicios-moviles/v1/alarma/{alarmaId}/finalizar
-   */
-  private async handleAlarmExpiration(): Promise<void> {
-    try {
-      const user = this.authService.getCurrentUser();
-      const alarm = this.activeAlarmSubject.value;
-      const location = await this.geolocationService.getCurrentLocation();
-
-      if (!user || !alarm || !location) {
-        throw new Error('Missing data for alarm expiration');
-      }
-
-      // Finalize the alarm via PUT /{alarmaId}/finalizar
-      const finalizeRequest: AlarmFinalizationRequest = {
-        motivo: 'Tiempo expirado',
-        detalles: 'La alarma no fue cancelada dentro del tiempo límite',
-      };
-
-      await this.http
-        .put(
-          `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.ALARM_BASE}/${alarm.alarmaId}/finalizar`,
-          finalizeRequest
-        )
-        .toPromise();
-
-      this.alarmStatusSubject.next('FINALIZADA');
-      this.notificationService.showInfo('Dispositivo bloqueado - Alarma enviada al CDM');
-
-      // Stop location updates
-      this.stopLocationUpdates();
-
-      // Log to local storage
-      await this.logIncident(alarm.alarmaId, 'FINALIZADA', location);
-    } catch (error) {
-      console.error('Error handling alarm expiration:', error);
-      this.notificationService.showError('Error al bloquear dispositivo');
-    }
-  }
-
-  /**
-   * Cancel (finalize) alarm with verification method
-   * PUT /servicios-moviles/v1/alarma/{alarmaId}/finalizar
-   */
-  async cancelAlarm(method: string, value: string): Promise<boolean> {
-    try {
-      const user = this.authService.getCurrentUser();
-      const alarm = this.activeAlarmSubject.value;
-      const location = await this.geolocationService.getCurrentLocation();
-
-      if (!user || !alarm || !location) {
-        throw new Error('Missing data for cancellation');
-      }
-
-      const request: AlarmFinalizationRequest = {
-        motivo: `Cancelada por usuario (${method})`,
-        detalles: `Método: ${method}`,
-      };
-
-      await this.http
-        .put(
-          `${API_CONFIG.MS_APP_MOVIL.baseUrl}${API_CONFIG.ENDPOINTS.ALARM_BASE}/${alarm.alarmaId}/finalizar`,
-          request
-        )
-        .toPromise();
-
-      this.alarmStatusSubject.next('CANCELADA');
-      this.stopAlarmTimers();
-      this.stopLocationUpdates();
-
-      this.notificationService.showSuccess('Alarma cancelada correctamente');
-
-      // Log to local storage
-      await this.logIncident(alarm.alarmaId, 'CANCELADA', location, method);
-
-      // Reset state
-      this.resetAlarmState();
-
-      return true;
-    } catch (error) {
-      console.error('Error cancelling alarm:', error);
-      this.notificationService.showError('Error al cancelar alarma');
-      return false;
-    }
   }
 
   /**
@@ -388,17 +283,14 @@ export class AlarmService {
    */
   async finalizeAlarm(method: string, value: string): Promise<boolean> {
     try {
-      const user = this.authService.getCurrentUser();
-      const alarm = this.activeAlarmSubject.value;
-      const location = await this.geolocationService.getCurrentLocation();
 
-      if (!user || !alarm || !location) {
-        throw new Error('Missing data for finalization');
+      const alarm = this.activeAlarmSubject.value;
+      if (!alarm) {
+        throw new Error('No existe alarma activa para finalizar.');
       }
 
       const request: AlarmFinalizationRequest = {
-        motivo: `Desactivada por usuario (${method})`,
-        detalles: `Método: ${method}`,
+        fechaFinalizacion: new Date().toISOString(),
       };
 
       await this.http
@@ -415,7 +307,7 @@ export class AlarmService {
       this.notificationService.showSuccess('Alarma desactivada correctamente');
 
       // Log to local storage
-      await this.logIncident(alarm.alarmaId, 'FINALIZADA', location, method);
+      await this.logIncident(alarm.alarmaId, 'FINALIZADA');
 
       // Reset state
       this.resetAlarmState();
@@ -440,8 +332,8 @@ export class AlarmService {
       const request: AlarmActivationRequest = {
         usuarioId: user?.id ?? '',
         dispositivoId: user?.dispositivoId ?? '',
-        metodoActivacion: 1,
-        prioridad: 2,
+        metodoActivacion: MetodoActivacion.MANUAL,
+        prioridad: PrioridadAlarma.NORMAL,
         ubicacion: location ? toUbicacion(location) : undefined,
       };
 
@@ -482,9 +374,9 @@ export class AlarmService {
    * Log incident to local storage (for MVP 2)
    */
   private async logIncident(
-    alarmaId: string,
-    status: AlarmStatus,
-    location: LocationData,
+    alarmaId?: string,
+    status?: AlarmStatus,
+    location?: LocationData,
     method?: string
   ): Promise<void> {
     try {

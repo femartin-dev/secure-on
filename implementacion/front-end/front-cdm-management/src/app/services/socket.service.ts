@@ -1,18 +1,21 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Alert, Location } from '../models/alert.models';
+import { Alarm, Location } from '../models/alarm.models';
 import { ApiConfigService } from '../config/api-config.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class SocketService {
   private socket: Socket | null = null;
   private connectionSubject = new BehaviorSubject<boolean>(false);
-  private alertUpdatedSubject = new BehaviorSubject<Alert | null>(null);
-  private alertCreatedSubject = new BehaviorSubject<Alert | null>(null);
-  private locationUpdatedSubject = new BehaviorSubject<{ alertId: string; location: Location } | null>(null);
+  private alertUpdatedSubject = new BehaviorSubject<Alarm | null>(null);
+  private alertCreatedSubject = new BehaviorSubject<Alarm | null>(null);
+  private locationUpdatedSubject = new BehaviorSubject<{
+    alarmaId: string;
+    location: Location;
+  } | null>(null);
 
   public isConnected$ = this.connectionSubject.asObservable();
   public alertUpdated$ = this.alertUpdatedSubject.asObservable();
@@ -25,13 +28,13 @@ export class SocketService {
 
   private initializeConnection(): void {
     const socketUrl = this.apiConfig.getSocketUrl();
-    
+
     this.socket = io(socketUrl, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: 5,
-      transports: ['websocket', 'polling']
+      transports: ["websocket", "polling"],
     });
 
     this.setupListeners();
@@ -40,30 +43,33 @@ export class SocketService {
   private setupListeners(): void {
     if (!this.socket) return;
 
-    this.socket.on('connect', () => {
-      console.log('Socket connected');
+    this.socket.on("connect", () => {
+      console.log("Socket connected");
       this.connectionSubject.next(true);
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    this.socket.on("disconnect", () => {
+      console.log("Socket disconnected");
       this.connectionSubject.next(false);
     });
 
-    this.socket.on('alert:created', (alert: Alert) => {
+    this.socket.on("alert:created", (alert: Alarm) => {
       this.alertCreatedSubject.next(alert);
     });
 
-    this.socket.on('alert:updated', (alert: Alert) => {
+    this.socket.on("alert:updated", (alert: Alarm) => {
       this.alertUpdatedSubject.next(alert);
     });
 
-    this.socket.on('alert:location', (data: { alertId: string; location: Location }) => {
-      this.locationUpdatedSubject.next(data);
-    });
+    this.socket.on(
+      "alert:location",
+      (data: { alarmaId: string; location: Location }) => {
+        this.locationUpdatedSubject.next(data);
+      },
+    );
 
-    this.socket.on('error', (error: any) => {
-      console.error('Socket error:', error);
+    this.socket.on("error", (error: any) => {
+      console.error("Socket error:", error);
     });
   }
 

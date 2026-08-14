@@ -24,7 +24,6 @@ import lombok.Data;
 public class AlarmaResponse {
     private UUID asignacionId;
     private UUID alarmaId;
-    private AlarmaResponse alarma;
     private PersonaResponse operador;
     private PersonaResponse usuario;
     private DispositivoResponse dispositivo;
@@ -83,6 +82,7 @@ public class AlarmaResponse {
                 .max(Comparator.comparing(Ubicacion::getFechaToma))
                 .map(UbicacionResponse::fromEntity)
                 .orElse(null);
+
     }
 
     private static List<UbicacionResponse> getUbicacionesAnteriores(Alarma a) {

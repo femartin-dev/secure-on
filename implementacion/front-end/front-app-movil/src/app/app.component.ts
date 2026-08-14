@@ -5,33 +5,36 @@ import { App } from '@capacitor/app';
 import { filter, take } from 'rxjs/operators';
 
 import { AuthService } from './services/auth.service';
+import { DeviceService } from './services/device.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
   title = 'SecureOn';
   isLoading = false;
+  isNativePlatform = true;//Capacitor.isNativePlatform();
 
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {
+  constructor(private authService: AuthService, private router: Router) {
     this.initializeApp();
   }
 
   ngOnInit(): void {
     // Wait until the auth state has been restored from storage before checking
-    this.authService.authReady$.pipe(
-      filter(ready => ready),
-      take(1)
-    ).subscribe(() => {
-      if (!this.authService.getToken()) {
-        this.router.navigate(['/login']);
-      }
-    });
+    this.authService.authReady$
+      .pipe(
+        filter((ready) => ready),
+        take(1)
+      )
+      .subscribe(() => {
+        if (!this.authService.getToken()) {
+          this.router.navigate(['/login']);
+        } else {
+          this.router.navigate(['/main']);
+        }
+      });
   }
 
   async initializeApp(): Promise<void> {
@@ -62,7 +65,7 @@ export class AppComponent implements OnInit {
         if (currentUrl === '/login' || currentUrl === '/') {
           App.exitApp();
         } else {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/main']);
         }
       });
     } catch (error) {

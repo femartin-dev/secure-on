@@ -58,7 +58,7 @@
       </div>
       <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-700 shadow-sm bg-slate-800/50">
         <!-- Google Maps Embed -->
-        <div *ngIf="mapUrl" class="absolute inset-0">
+        <div *ngIf="mapUrl && mapLoadState === 'ready'" class="absolute inset-0">
           <iframe
             [src]="mapUrl"
             width="100%" height="100%"
@@ -69,8 +69,13 @@
           </iframe>
         </div>
         <!-- Map placeholder (while loading) -->
-        <div *ngIf="!mapUrl" class="absolute inset-0 bg-slate-900 flex items-center justify-center">
+        <div *ngIf="mapLoadState === 'loading'" class="absolute inset-0 bg-slate-900 flex items-center justify-center">
           <span class="material-symbols-outlined animate-spin text-primary text-3xl">sync</span>
+        </div>
+        <div *ngIf="mapLoadState === 'error'" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-2 px-4 text-center">
+          <span class="material-symbols-outlined text-red-400 text-3xl">location_off</span>
+          <p class="text-sm text-slate-300">No se pudo cargar el mapa.</p>
+          <p class="text-xs text-slate-500">Verifica permisos de ubicación y conexión a Internet.</p>
         </div>
         <!-- Pulsing dot overlay centered -->
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-10">

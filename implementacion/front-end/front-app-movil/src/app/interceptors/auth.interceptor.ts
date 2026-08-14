@@ -27,14 +27,18 @@ export class AuthInterceptor implements HttpInterceptor {
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true',
+        },
       });
     } else {
       request = request.clone({
         setHeaders: {
-          'Content-Type': 'application/json'
-        }
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true',
+        },
       });
     }
 

@@ -2193,66 +2193,93 @@ Formal (PlantUML)
 plantuml
 @startuml
 |Usuario|
-|Sistema|
 start
-:Usuario accede a "Contactos de Emergencia" desde Configuración;
-:Sistema carga y muestra lista actual de contactos con:\n- Nombre, Relación, Canales, Dirección\n- Botones: Editar, Eliminar, Añadir, Ordenar, Guardar, Cancelar;
+:Accede a "Contactos de Emergencia" desde Configuración;
+|Sistema|
+:Carga y muestra lista actual de contactos con:\n- Nombre, Relación, Canales, Dirección\n- Botones: Editar, Eliminar, Añadir, Ordenar, Guardar, Cancelar;
 
 repeat
-  :Usuario selecciona acción;
-  switch (Acción)
+  |Usuario|
+  :Selecciona acción;
+  |Sistema|
+  switch (Acción seleccionada)
   case (Añadir contacto)
-    :Sistema muestra opción: Importar o Ingreso manual;
+    |Sistema|
+    :Muestra opción: Importar o Ingreso manual;
     if (¿Importar?) then (Sí)
-      :Sistema muestra lista de contactos del dispositivo (máx 200);
-      :Usuario selecciona uno o varios y confirma;
+      |Sistema|
+      :Muestra lista de contactos del dispositivo (máx 200);
+      |Usuario|
+      :Selecciona uno o varios y confirma;
     else (No)
-      :Sistema muestra formulario de creación manual;
-      :Usuario ingresa datos y confirma;
+      |Sistema|
+      :Muestra formulario de creación manual;
+      |Usuario|
+      :Ingresa datos y confirma;
     endif
-    :Sistema valida formato y disponibilidad de canales;
+    |Sistema|
+    :Valida formato y disponibilidad de canales;
     if (¿Datos válidos?) then (No)
-      :Sistema muestra errores y hace foco en campos inválidos;
-      -> vuelve a edición;
+      |Sistema|
+      :Muestra errores y hace foco en campos inválidos;
+      note left: El usuario corrige y el sistema vuelve a validar
+      :Guarda temporalmente y refresca lista;
     else (Sí)
-      :Sistema guarda temporalmente y refresca lista;
+      :Guarda temporalmente y refresca lista;
     endif
   case (Editar contacto)
-    :Usuario selecciona contacto y presiona Editar;
-    :Sistema muestra formulario con datos actuales;
-    :Usuario modifica y confirma;
-    :Sistema valida datos;
-    if (¿Válidos?) then (No) -> muestra errores;
-    else (Sí) -> guarda temporal y refresca;
+    |Usuario|
+    :Selecciona contacto y presiona Editar;
+    |Sistema|
+    :Muestra formulario con datos actuales;
+    |Usuario|
+    :Modifica y confirma;
+    |Sistema|
+    :Valida datos;
+    if (¿Válidos?) then (No)
+      :Muestra errores;
+      note left: El usuario corrige y se repite la validación
+    else (Sí)
+      :Guarda temporal y refresca;
     endif
   case (Eliminar contacto)
-    :Usuario selecciona contacto y presiona Eliminar;
-    :Sistema muestra diálogo de confirmación;
+    |Usuario|
+    :Selecciona contacto y presiona Eliminar;
+    |Sistema|
+    :Muestra diálogo de confirmación;
     if (¿Confirma?) then (Sí)
-      :Sistema elimina fila y refresca lista;
+      :Elimina fila y refresca lista;
     else (No)
-      :Sistema cierra diálogo;
+      :Cierra diálogo;
     endif
   case (Ordenar contactos)
-    :Usuario presiona Ordenar;
-    :Sistema muestra controles de posición (primero, arriba, abajo, último) y permite arrastrar;
-    :Usuario reordena y confirma o cancela;
-    if (¿Confirma?) then (Sí) -> guarda temporal y refresca;
-    else (No) -> descarta cambios y refresca;
+    |Usuario|
+    :Presiona Ordenar;
+    |Sistema|
+    :Muestra controles de posición y permite arrastrar;
+    |Usuario|
+    :Reordena y confirma o cancela;
+    if (¿Confirma?) then (Sí)
+      |Sistema|
+      :Guarda temporal y refresca;
+    else (No)
+      :Descarta cambios y refresca;
     endif
   case (Guardar)
-    :Sistema guarda cambios localmente y sincroniza con servidor en segundo plano;
+    |Sistema|
+    :Guarda cambios localmente y sincroniza con servidor en segundo plano;
     stop
   case (Cancelar / Salir)
-    :Sistema muestra diálogo de confirmación para descartar cambios;
+    |Sistema|
+    :Muestra diálogo de confirmación para descartar cambios;
     if (¿Confirma descartar?) then (Sí)
-      :Sistema descarta cambios y vuelve a Configuración;
+      :Descarta cambios y vuelve a Configuración;
       stop
     else (No)
-      :Sistema cierra diálogo y continúa;
+      :Cierra diálogo y continúa;
     endif
   endswitch
-repeat while (Acción != Guardar y Acción != Cancelar exitoso)
+repeat while (Acción no es Guardar ni Cancelar)
 @enduml
 📝 Bosquejo del Diagrama de Actividad
 text

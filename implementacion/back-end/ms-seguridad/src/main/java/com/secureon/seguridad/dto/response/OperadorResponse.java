@@ -20,7 +20,7 @@ public class OperadorResponse {
     private String apellido;
     private Integer legajo;
     private String email;
-    private String usuario;
+    private String telefono;
     private Boolean esAdministrador;
     private UUID supervisorId;
     private OffsetDateTime fechaRegistro;
@@ -32,7 +32,7 @@ public class OperadorResponse {
                                 .apellido(operador.getApellido())
                                 .legajo(operador.getLegajo())
                                 .email(operador.getEmail())
-                                .usuario(operador.getTelefono())
+                                .telefono(operador.getTelefono())
                                 .esAdministrador(operador.getEsAdministrador())
                                 .supervisorId(operador.getSupervisor() != null ? operador.getSupervisor().getId() : null)
                                 .fechaRegistro(operador.getFechaRegistro())
